@@ -47,12 +47,14 @@ class ButtonGroup(
     @Transient private val downButtons = mutableListOf<Button>()
     private fun slideToButton(button:Button, pointer:UInt){
         if(button.pointerId != pointer){
-            downButtons.add(button)
-            button.slidePress(pointer) { !isKeyPressed(it) }
-            if (downButtons.size > typeValue) {
+            var removedButton:Button? = null
+            if (downButtons.size + 1 > typeValue) {
                 downButtons[0].slideUp { !button.key.contains(it) }
+                removedButton = downButtons[0]
                 downButtons.removeAt(0)
             }
+            downButtons.add(button)
+            button.slidePress(pointer) { removedButton?.key?.contains(it) != true && !isKeyPressed(it) }
         } else {
             if(button !== downButtons.last()){
                 downButtons.remove(button)

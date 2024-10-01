@@ -3,6 +3,8 @@ package button
 import drawScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import mainContainer
+
 @Serializable
 class Button(
     val name:String,
@@ -13,6 +15,13 @@ class Button(
         private set(value) {
             field = value
             drawScope.invalidate(this)
+            if(key.contains(0u) && !pressed){
+                if(drawScope.showStatus){
+                    drawScope.hideButtons(this)
+                } else {
+                    drawScope.showButtons { mainContainer.forEachButton(it) }
+                }
+            }
         }
     inline val pressed get() = pointerId != 0u
     fun press(pointer:UInt){

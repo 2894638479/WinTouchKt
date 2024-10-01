@@ -26,3 +26,20 @@ fun DrawScope.drawButtons(
         }
     }
 }
+
+@OptIn(ExperimentalForeignApi::class)
+fun DrawScope.drawButton(
+    hdc:HDC?,
+    button: Button,
+){
+    val rect = button.rect
+    val text = button.name
+
+    SelectObject(hdc,if (button.pressed) colorBrushBright else colorBrushDark)
+    Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom)
+
+    SelectObject(hdc,textBrush)
+    memScoped {
+        TextOut!!(hdc, rect.left, rect.top, text.wcstr.ptr, text.length)
+    }
+}
