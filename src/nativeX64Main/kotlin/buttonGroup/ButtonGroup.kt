@@ -21,11 +21,12 @@ class ButtonGroup(
         if(buttons.isEmpty()) throw IllegalArgumentException("creating an empty buttonGroup")
     }
     enum class GroupType{
-        Static,Slide
+        Static,Slide,MoveMouse
     }
     val type:GroupType get() {
         return if (typeValue > 0) GroupType.Slide
         else if (typeValue == 0) GroupType.Static
+        else if(typeValue == -1) GroupType.MoveMouse
         else throw IllegalStateException("unknown group type: $typeValue")
     }
     @Transient val rect = run {
@@ -64,6 +65,9 @@ class ButtonGroup(
     }
     fun dispatchMoveEvent(info: TouchInfo) = when(type) {
         GroupType.Static -> {  }
+        GroupType.MoveMouse -> {
+            
+        }
         GroupType.Slide -> {
             for(button in buttons){
                 if(info.inRect(button.rect)){

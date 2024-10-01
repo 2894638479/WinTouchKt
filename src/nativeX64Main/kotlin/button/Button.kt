@@ -13,24 +13,20 @@ class Button(
 ) {
     @Transient var pointerId = 0u
         private set(value) {
-            field = value
-            drawScope.invalidate(this)
-            if(key.contains(0u) && !pressed){
-                if(drawScope.showStatus){
-                    drawScope.hideButtons(this)
-                } else {
-                    drawScope.showButtons { mainContainer.forEachButton(it) }
-                }
+            if(field != value) {
+                field = value
+                drawScope.invalidate(this)
+                processSpecialKey(this)
             }
         }
     inline val pressed get() = pointerId != 0u
     fun press(pointer:UInt){
-        pointerId = pointer
         sendAllKeyEvent(key, KEYEVENT_DOWN)
+        pointerId = pointer
     }
     fun up(){
-        pointerId = 0u
         sendAllKeyEvent(key, KEYEVENT_UP)
+        pointerId = 0u
     }
     fun slidePress(pointer:UInt,filter:(UByte)->Boolean){
         sendAllKeyEventFilter(key, KEYEVENT_DOWN,filter)

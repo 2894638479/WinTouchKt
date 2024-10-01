@@ -8,7 +8,6 @@ const val windowName = "window"
 @OptIn(ExperimentalForeignApi::class)
 fun window(onInitialized:(HWND?)->Unit):Unit = memScoped {
     val hInstance = GetModuleHandle!!(null)
-    setHook(hInstance)
 
     val wcex : WNDCLASSEXW = alloc()
     wcex.apply {
@@ -36,6 +35,7 @@ fun window(onInitialized:(HWND?)->Unit):Unit = memScoped {
         null,null, hInstance, null
     )
     onInitialized(hwnd)
+    RegisterTouchWindow(hwnd, 0u)
     ShowWindow(hwnd, SW_SHOW)
     UpdateWindow(hwnd)
 

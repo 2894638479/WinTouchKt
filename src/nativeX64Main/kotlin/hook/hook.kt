@@ -6,10 +6,18 @@ import platform.windows.*
 
 @OptIn(ExperimentalForeignApi::class)
 private var hook: HHOOK? = null
+@OptIn(ExperimentalForeignApi::class)
+val hooked get() = hook != null
 
 @OptIn(ExperimentalForeignApi::class)
 fun setHook(hInstance:HMODULE?){
-    //hook = SetWindowsHookEx!!(WH_MOUSE_LL, staticCFunction(::hookMouseProc), hInstance, 0u)
+    hook = SetWindowsHookEx!!(WH_MOUSE_LL, staticCFunction(::hookMouseProc), hInstance, 0u)
+}
+
+@OptIn(ExperimentalForeignApi::class)
+fun unHook(){
+    UnhookWindowsHookEx(hook)
+    hook = null
 }
 
 @OptIn(ExperimentalForeignApi::class)
@@ -22,6 +30,10 @@ private fun hookMouseProc(nCode:Int, wParam:WPARAM, lParam:LPARAM):LRESULT{
             }
             WM_MOUSEMOVE -> {
             }
+//            WM_RBUTTONDOWN -> {
+//            }
+//            WM_RBUTTONUP -> {
+//            }
             else -> return CallNextHookEx(hook, nCode, wParam, lParam)
         }
         return 1
