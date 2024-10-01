@@ -3,7 +3,13 @@ typedef struct {
     int pointX;
     int pointY;
 } TouchInfo;
+typedef struct {
+    int size;
+    TouchInfo *infos;
+    unsigned long *flags;
+} TouchInfos;
+void destructTouchInfos(TouchInfos* infos);
 void getTouchInfo(unsigned long long wParam,TouchInfo *ptr);
 int getMouseX(long long lParam);
 int getMouseY(long long lParam);
-
+void touchInput(long long lParam,unsigned long long wParam,TouchInfos *p);

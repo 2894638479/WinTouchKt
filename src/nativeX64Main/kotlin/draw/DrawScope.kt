@@ -35,7 +35,7 @@ class DrawScope(val hWnd: HWND?) {
         val hdc = BeginPaint(hWnd,ps.ptr)
         if (bitmap == null) bitmap = CreateCompatibleBitmap(hdc, size.cx, size.cy)
         val hdcMem = CreateCompatibleDC(hdc).apply {
-            SetTextColor(this, BLUE) // 字体颜色
+            SetTextColor(this, RED) // 字体颜色
             SetBkMode(this, TRANSPARENT) // 字体背景
         }
         SelectObject(hdcMem, bitmap)
