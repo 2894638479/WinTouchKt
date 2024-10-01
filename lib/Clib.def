@@ -1,0 +1,4 @@
+headers = Clib/src/main.h
+headerFilter = Clib/src/*
+staticLibraries = main.lib
+libraryPaths = F:/WinTouchKt/lib/Clib
