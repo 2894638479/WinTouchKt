@@ -7,7 +7,11 @@ import kotlinx.cinterop.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import libs.Clib.TouchInfo
+import platform.windows.INPUT_MOUSE
+import platform.windows.MOUSEEVENTF_WHEEL
 import sendInput.moveCursor
+import sendInput.scroll
+import sendInput.sendInput
 
 @Serializable
 @OptIn(ExperimentalForeignApi::class)
@@ -17,10 +21,10 @@ class ButtonGroup(
     private val offset: Point
 ) {
     init {
-        if(buttons.isEmpty()) throw IllegalArgumentException("creating an empty buttonGroup")
+        if(buttons.isEmpty()) error("creating an empty buttonGroup")
     }
     enum class GroupType{
-        Static,Slide,MoveMouse
+        Static,Slide,MoveMouse,Scroll
     }
     companion object{
         const val MAX_SENSITIVITY = 1024
@@ -29,9 +33,16 @@ class ButtonGroup(
         return if (typeValue > 0) GroupType.Slide
         else if (typeValue == 0) GroupType.Static
         else if(typeValue >= -MAX_SENSITIVITY) GroupType.MoveMouse
-        else throw IllegalStateException("unknown group type: $typeValue")
+        else if(typeValue >= -MAX_SENSITIVITY * 2) GroupType.Scroll
+        else error("unknown group type: $typeValue")
     }
-    val sensitivity get() = - typeValue / MAX_SENSITIVITY.toFloat() * 10
+    val sensitivity:Float get() {
+        return when(type){
+            GroupType.MoveMouse -> - typeValue / MAX_SENSITIVITY.toFloat() * 10
+            GroupType.Scroll -> - (MAX_SENSITIVITY + typeValue) / MAX_SENSITIVITY.toFloat() * 10
+            else -> error("type $type shouldn't have sensitivity")
+        }
+    }
     @Transient val rect = run {
         buttons.forEach { it.rect += offset }
         buttons[0].rect.copy().apply {
@@ -69,20 +80,20 @@ class ButtonGroup(
     private var lastTouchPoint:Point? = null
     fun dispatchMoveEvent(info: TouchInfo) = when(type) {
         GroupType.Static -> {  }
-        GroupType.MoveMouse -> lastTouchPoint?.let{
-            memScoped {
-                lastTouchPoint?.let {
-                    moveCursor(sensitivity,it,info)
-                }
-                lastTouchPoint = Point(info.pointX,info.pointY)
-            }
-        }
         GroupType.Slide -> {
             for(button in buttons){
                 if(info.inRect(button.rect)){
                     slideToButton(button,info.id)
                 }
             }
+        }
+        GroupType.MoveMouse -> lastTouchPoint?.let{
+            lastTouchPoint?.let { moveCursor(sensitivity,it,info) }
+            lastTouchPoint = Point(info.pointX,info.pointY)
+        }
+        GroupType.Scroll -> {
+            lastTouchPoint?.let { scroll(sensitivity,it,info) }
+            lastTouchPoint = Point(info.pointX,info.pointY)
         }
     }
     fun dispatchDownEvent(info: TouchInfo):Boolean {
