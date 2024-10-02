@@ -6,10 +6,8 @@ import button.inRect
 import kotlinx.cinterop.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.encodeToString
 import libs.Clib.TouchInfo
-import kotlinx.serialization.json.Json
-import platform.windows.*
+import sendInput.moveCursor
 
 @Serializable
 @OptIn(ExperimentalForeignApi::class)
@@ -106,11 +104,6 @@ class ButtonGroup(
             (info.id == it.pointerId).apply {
                 if(this){
                     it.up()
-                    if(type == GroupType.MoveMouse){
-                        lastTouchPoint?.let {
-                            moveCursor(sensitivity, it, info)
-                        }
-                    }
                     lastTouchPoint = null
                 }
             }

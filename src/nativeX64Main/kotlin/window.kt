@@ -1,14 +1,12 @@
-import hook.setHook
 import kotlinx.cinterop.*
 import platform.windows.*
 
-const val className = "MyWindow"
-const val windowName = "window"
+const val className = "WinTouchKt"
+const val windowName = "winTouch"
 
 @OptIn(ExperimentalForeignApi::class)
 fun window(onInitialized:(HWND?)->Unit):Unit = memScoped {
     val hInstance = GetModuleHandle!!(null)
-
     val wcex : WNDCLASSEXW = alloc()
     wcex.apply {
         cbSize = sizeOf<WNDCLASSEXW>().toUInt()
@@ -35,7 +33,7 @@ fun window(onInitialized:(HWND?)->Unit):Unit = memScoped {
         null,null, hInstance, null
     )
     onInitialized(hwnd)
-    RegisterTouchWindow(hwnd, 0u)
+    RegisterTouchWindow(hwnd, (TWF_WANTPALM or TWF_FINETOUCH).toUInt())
     ShowWindow(hwnd, SW_SHOW)
     UpdateWindow(hwnd)
 

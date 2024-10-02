@@ -27,7 +27,7 @@ kotlin {
         }
         binaries{
             executable(listOf(RELEASE)){
-//                this.linkerOpts += "-mwindows"
+                this.linkerOpts += "-mwindows"
             }
         }
     }

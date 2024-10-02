@@ -55,15 +55,15 @@ fun WndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
 //            destructTouchInfos(inputs.ptr)
 //        }
 
-        WM_MOUSEMOVE  -> {
-            println("move")
-        }
-        WM_LBUTTONDOWN -> {
-            println("down")
-        }
-        WM_LBUTTONUP -> {
-            println("up")
-        }
+//        WM_MOUSEMOVE  -> {
+//            println("move")
+//        }
+//        WM_LBUTTONDOWN -> {
+//            println("down")
+//        }
+//        WM_LBUTTONUP -> {
+//            println("up")
+//        }
 //        WM_LBUTTONDOWN -> {
 //            SetCapture(hWnd)
 //            mouseInput(lParam) { mainContainer.down(it) }

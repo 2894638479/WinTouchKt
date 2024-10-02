@@ -1,8 +1,9 @@
 package draw
 
-import button.*
+import button.Button
+import button.height
+import button.width
 import kotlinx.cinterop.*
-import mainContainer
 import platform.windows.*
 
 

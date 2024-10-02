@@ -1,9 +1,14 @@
 package draw
 
 import button.Button
-import button.Rect
-import kotlinx.cinterop.*
-import platform.windows.*
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.invoke
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.wcstr
+import platform.windows.HDC
+import platform.windows.Rectangle
+import platform.windows.SelectObject
+import platform.windows.TextOut
 
 
 @OptIn(ExperimentalForeignApi::class)

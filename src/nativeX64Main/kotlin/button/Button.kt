@@ -3,7 +3,7 @@ package button
 import drawScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import mainContainer
+import sendInput.*
 
 @Serializable
 class Button(
@@ -16,24 +16,23 @@ class Button(
             if(field != value) {
                 field = value
                 drawScope.invalidate(this)
-                processSpecialKey(this)
             }
         }
     inline val pressed get() = pointerId != 0u
     fun press(pointer:UInt){
-        sendAllKeyEvent(key, KEYEVENT_DOWN)
+        sendAllKeyEvent(KEYEVENT_DOWN)
         pointerId = pointer
     }
     fun up(){
-        sendAllKeyEvent(key, KEYEVENT_UP)
+        sendAllKeyEvent(KEYEVENT_UP)
         pointerId = 0u
     }
     fun slidePress(pointer:UInt,filter:(UByte)->Boolean){
-        sendAllKeyEventFilter(key, KEYEVENT_DOWN,filter)
+        sendAllKeyEventFilter(KEYEVENT_DOWN,filter)
         pointerId = pointer
     }
     fun slideUp(filter:(UByte)->Boolean){
-        sendAllKeyEventFilter(key, KEYEVENT_UP,filter)
+        sendAllKeyEventFilter(KEYEVENT_UP,filter)
         pointerId = 0u
     }
 }
