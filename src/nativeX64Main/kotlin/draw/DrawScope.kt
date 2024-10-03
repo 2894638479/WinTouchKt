@@ -27,7 +27,13 @@ class DrawScope(val hWnd: HWND?) {
     private val invalidButtons = mutableSetOf<Button>()
     fun invalidate(button:Button) {
         invalidButtons += button
-        InvalidateRect(hWnd,null,TRUE)
+//        val rect = alloc<RECT> {
+//            left = button.rect.left
+//            top = button.rect.top
+//            right = button.rect.right
+//            bottom = button.rect.bottom
+//        }
+        InvalidateRect(hWnd,null, FALSE)
     }
 
     private var bitmap:HBITMAP? = null

@@ -10,7 +10,7 @@ const val KEY_HIDE:UByte = 0u
 val KEY_LBUTTON:UByte = VK_LBUTTON.toUByte()
 val KEY_RBUTTON:UByte = VK_RBUTTON.toUByte()
 val KEY_MBUTTON:UByte = VK_MBUTTON.toUByte()
-const val KEY_EXIT:UByte = 254u
+const val KEY_EXIT:UByte = 255u
 
 
 
