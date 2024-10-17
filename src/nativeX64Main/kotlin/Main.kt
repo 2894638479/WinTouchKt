@@ -11,8 +11,16 @@ val mainContainer get() = mainContainerRaw!!
 
 
 @OptIn(ExperimentalForeignApi::class)
-fun main() {
-    mainContainerRaw = Json.decodeFromString(readFile("data.json"))
+fun main(args:Array<String>) {
+    val dataPath = when(args.size){
+        0 -> "data.json"
+        1 -> args[0]
+        else -> {
+            println("too many arguments")
+            error("too many arguments")
+        }
+    }
+    mainContainerRaw = Json.decodeFromString(readFile(dataPath))
     window { hWnd ->
         drawScopeRaw = DrawScope(hWnd)
         mainContainer.invalidate = drawScope::invalidate
