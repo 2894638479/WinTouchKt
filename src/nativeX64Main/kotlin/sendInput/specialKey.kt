@@ -45,7 +45,7 @@ fun Button.processSpecialKey(key:UByte, keyEvent:UInt):Boolean {
                 if (drawScope.showStatus) {
                     drawScope.hideButtons(this)
                 } else {
-                    drawScope.showButtons { mainContainer.forEachButton(it) }
+                    drawScope.showButtons()
                 }
             }
         }

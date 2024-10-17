@@ -1,5 +1,8 @@
 package button
 
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import platform.windows.RECT
@@ -22,6 +25,13 @@ data class Rect(
         top = this@Rect.top
         right = this@Rect.right
         bottom = this@Rect.bottom
+    }
+    @OptIn(ExperimentalForeignApi::class)
+    inline fun withRECT(block: RECT.()->Unit) = memScoped {
+        alloc<RECT> {
+            copyThis()
+            block()
+        }
     }
     operator fun plus(other:Rect):Rect{
         return Rect(
@@ -46,3 +56,15 @@ data class Rect(
 }
 inline val RECT.width get() = right - left
 inline val RECT.height get() = bottom - top
+fun RECT.equal(other:RECT):Boolean {
+    return left == other.left
+            && right == other.right
+            && top == other.top
+            && bottom == other.bottom
+}
+fun RECT.copyFrom(other:RECT){
+    left = other.left
+    right = other.right
+    top = other.top
+    bottom = other.bottom
+}

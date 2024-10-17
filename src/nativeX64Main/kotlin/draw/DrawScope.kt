@@ -1,49 +1,49 @@
 package draw
 
-import button.Button
-import button.height
-import button.width
+import button.*
 import kotlinx.cinterop.*
+import platform.gdiplus.GdiplusShutdown
+import platform.gdiplus.GdiplusStartup
 import platform.windows.*
 
 
 @OptIn(ExperimentalForeignApi::class)
-class DrawScope(val hWnd: HWND?) {
-    val colorBrushBright = CreateSolidBrush(rgb(200,200,200))
-    val colorBrushDark = CreateSolidBrush(rgb(50,50,50))
-    val colorBrushBlack = CreateSolidBrush(rgb(0,0,0))
-    val textBrush = GetStockObject(DEFAULT_GUI_FONT)
+class DrawScope(private val hWnd: HWND?) {
 
-    val drawArea = nativeHeap.alloc<RECT>().apply { GetClientRect(hWnd, this.ptr) }
-    private val size = nativeHeap.alloc<SIZE>().apply { cx = drawArea.width; cy = drawArea.height }
-    private val pt = nativeHeap.alloc<POINT>().apply { x = drawArea.left;y = drawArea.top }
-    private val blendFunction = nativeHeap.alloc<BLENDFUNCTION>().apply {
-        SourceConstantAlpha = 128u
-        AlphaFormat = AC_SRC_OVER.toUByte()
-        BlendOp = 0u
-        BlendFlags = 0u
+    private val drawArea = nativeHeap.alloc<RECT> { GetClientRect(hWnd, this.ptr) }
+    private val size = nativeHeap.alloc<SIZE> {cx = drawArea.width; cy = drawArea.height}
+    private val pt = nativeHeap.alloc<POINT> {x = drawArea.left; y = drawArea.top}
+    private fun updateDrawArea() = memScoped {
+        val newArea = alloc<RECT> { GetClientRect(hWnd, this.ptr) }
+        if(!drawArea.equal(newArea)){
+            drawArea.copyFrom(newArea)
+            onAreaChange()
+        }
     }
-
-    private val invalidButtons = mutableSetOf<Button>()
-    fun invalidate(button:Button) {
-        invalidButtons += button
-//        val rect = alloc<RECT> {
-//            left = button.rect.left
-//            top = button.rect.top
-//            right = button.rect.right
-//            bottom = button.rect.bottom
-//        }
-        InvalidateRect(hWnd,null, FALSE)
+    private fun onAreaChange(){
+        size.cx = drawArea.width
+        size.cy = drawArea.height
+        pt.x = drawArea.left
+        pt.y = drawArea.top
+        bitmap = null
+        buttons { invalidate(it) }
+    }
+    var alpha get() = blendFunction.SourceConstantAlpha
+        set(value) { blendFunction.SourceConstantAlpha = value }
+    private val blendFunction = nativeHeap.alloc<BLENDFUNCTION> {
+        SourceConstantAlpha = 255u
+        AlphaFormat = 0u
+        BlendOp = AC_SRC_OVER.toUByte()
+        BlendFlags = 0u
     }
 
     private var bitmap:HBITMAP? = null
     private inline fun withHdcMem(block:(HDC?)->Unit){
         val ps = nativeHeap.alloc<PAINTSTRUCT>()
         val hdc = BeginPaint(hWnd,ps.ptr)
-        if (bitmap == null) bitmap = CreateCompatibleBitmap(hdc, size.cx, size.cy)
+        if (bitmap == null) bitmap = CreateCompatibleBitmap(hdc,size.cx,size.cy)
         val hdcMem = CreateCompatibleDC(hdc).apply {
-            SetTextColor(this, RED) // 字体颜色
-            SetBkMode(this, TRANSPARENT) // 字体背景
+            SetBkMode(this, TRANSPARENT)
         }
         SelectObject(hdcMem, bitmap)
         block(hdcMem)
@@ -51,7 +51,14 @@ class DrawScope(val hWnd: HWND?) {
         EndPaint(hWnd,ps.ptr)
     }
 
+    private val invalidButtons = mutableSetOf<Button>()
+    fun invalidate(button:Button) {
+        invalidButtons += button
+        InvalidateRect(hWnd,null, FALSE)
+    }
+
     fun updateWindow() {
+        updateDrawArea()
         if(invalidButtons.isNotEmpty()){
             withHdcMem{ hdcMem ->
                 drawButtons(hdcMem, invalidButtons)
@@ -64,25 +71,34 @@ class DrawScope(val hWnd: HWND?) {
     var showStatus = true
         private set
     fun hideButtons(controller: Button) = withHdcMem { hdcMem ->
-        SelectObject(hdcMem,colorBrushBlack)
+        SelectObject(hdcMem,BLACK.brush)
         Rectangle(hdcMem,drawArea.left,drawArea.top,drawArea.right,drawArea.bottom)
         drawButton(hdcMem,controller)
         updateLayeredWindow(hdcMem)
         showStatus = false
     }
-    fun showButtons(iterator:((Button)->Unit)->Unit){
-        iterator{
-            invalidButtons.add(it)
-        }
+
+    fun showButtons(){
+        buttons { invalidate(it) }
         updateWindow()
         showStatus = true
     }
-    private fun updateLayeredWindow(hdc:HDC?) = UpdateLayeredWindow(hWnd, null, null, size.ptr, hdc, pt.ptr, 0u, blendFunction.ptr, (ULW_ALPHA or ULW_COLORKEY).toUInt())
+    private var buttons:((Button)->Unit)->Unit = {  }
+    fun addButtons(newButtons:((Button)->Unit)->Unit){
+        val oldButtons = buttons
+        buttons = {
+            oldButtons(it)
+            newButtons(it)
+        }
+        newButtons { invalidate(it) }
+    }
+    private fun updateLayeredWindow(hdc:HDC?) {
+        UpdateLayeredWindow(hWnd, null, null, size.ptr, hdc, pt.ptr, 0u, blendFunction.ptr, (ULW_COLORKEY or ULW_ALPHA).toUInt())
+    }
     fun destruct(){
-        nativeHeap.free(blendFunction)
         nativeHeap.free(drawArea)
-        DeleteObject(colorBrushDark)
-        DeleteObject(colorBrushBright)
-        DeleteObject(textBrush)
+        nativeHeap.free(size)
+        nativeHeap.free(pt)
+        nativeHeap.free(blendFunction)
     }
 }

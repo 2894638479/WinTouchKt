@@ -64,15 +64,15 @@ fun WndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
 //        WM_LBUTTONUP -> {
 //            println("up")
 //        }
-//        WM_LBUTTONDOWN -> {
-//            SetCapture(hWnd)
-//            mouseInput(lParam) { mainContainer.down(it) }
-//        }
-//        WM_MOUSEMOVE -> mouseInput(lParam) { mainContainer.move(it) }
-//        WM_LBUTTONUP -> {
-//            ReleaseCapture()
-//            mouseInput(lParam) { mainContainer.up(it) }
-//        }
+        WM_LBUTTONDOWN -> {
+            SetCapture(hWnd)
+            mouseInput(lParam) { mainContainer.down(it) }
+        }
+        WM_MOUSEMOVE -> mouseInput(lParam) { mainContainer.move(it) }
+        WM_LBUTTONUP -> {
+            ReleaseCapture()
+            mouseInput(lParam) { mainContainer.up(it) }
+        }
         else -> return DefWindowProcW(hWnd, uMsg, wParam, lParam)
     }
     return 0

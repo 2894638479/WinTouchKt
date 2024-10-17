@@ -1,8 +1,11 @@
 package buttonGroup
 
 import button.Button
+import button.HasButtonConfigs
 import button.Point
 import button.inRect
+import container.Container
+import draw.Color
 import kotlinx.cinterop.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -18,10 +21,21 @@ import sendInput.sendInput
 class ButtonGroup(
     val buttons: List<Button>,
     val typeValue:Int,
-    private val offset: Point
-) {
+    private val offset: Point,
+    override var textColor:Color? = null,
+    override var textColorPressed: Color? = null,
+    override var color:Color? = null,
+    override var colorPressed:Color? = null,
+    override var textSize:Byte? = null,
+):HasButtonConfigs {
     init {
         if(buttons.isEmpty()) error("creating an empty buttonGroup")
+    }
+    override fun copyConfig(other: HasButtonConfigs) {
+        super.copyConfig(other)
+        buttons.forEach {
+            it.copyConfig(this)
+        }
     }
     enum class GroupType{
         Static,Slide,MoveMouse,Scroll
@@ -60,16 +74,16 @@ class ButtonGroup(
         return false
     }
     @Transient private val downButtons = mutableListOf<Button>()
-    private fun slideToButton(button:Button, pointer:UInt){
+    private fun slideToButton(button:Button, pointer:UInt,invalidate:(Button)->Unit){
         if(button.pointerId != pointer){
             var removedButton:Button? = null
             if (downButtons.size + 1 > typeValue) {
-                downButtons[0].slideUp { !button.key.contains(it) }
+                downButtons[0].slideUp(invalidate) { !button.key.contains(it) }
                 removedButton = downButtons[0]
                 downButtons.removeAt(0)
             }
             downButtons.add(button)
-            button.slidePress(pointer) { removedButton?.key?.contains(it) != true && !isKeyPressed(it) }
+            button.slidePress(pointer,invalidate) { removedButton?.key?.contains(it) != true && !isKeyPressed(it) }
         } else {
             if(button !== downButtons.last()){
                 downButtons.remove(button)
@@ -78,12 +92,12 @@ class ButtonGroup(
         }
     }
     private var lastTouchPoint:Point? = null
-    fun dispatchMoveEvent(info: TouchInfo) = when(type) {
+    fun dispatchMoveEvent(info: TouchInfo,invalidate:(Button)->Unit) = when(type) {
         GroupType.Static -> {  }
         GroupType.Slide -> {
             for(button in buttons){
                 if(info.inRect(button.rect)){
-                    slideToButton(button,info.id)
+                    slideToButton(button,info.id,invalidate)
                 }
             }
         }
@@ -96,25 +110,25 @@ class ButtonGroup(
             lastTouchPoint = Point(info.pointX,info.pointY)
         }
     }
-    fun dispatchDownEvent(info: TouchInfo):Boolean {
+    fun dispatchDownEvent(info: TouchInfo,invalidate:(Button)->Unit):Boolean {
         if(!info.inRect(rect)){
             return false
         }
         for(button in buttons){
             if(info.inRect(button.rect)){
                 downButtons.add(button)
-                button.press(info.id)
+                button.press(info.id,invalidate)
                 lastTouchPoint = Point(info.pointX,info.pointY)
                 return true
             }
         }
         return false
     }
-    fun dispatchUpEvent(info: TouchInfo) {
+    fun dispatchUpEvent(info: TouchInfo,invalidate:(Button)->Unit) {
         downButtons.removeAll {
             (info.id == it.pointerId).apply {
                 if(this){
-                    it.up()
+                    it.up(invalidate)
                     lastTouchPoint = null
                 }
             }

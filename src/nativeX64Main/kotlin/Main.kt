@@ -9,12 +9,15 @@ private var mainContainerRaw: Container? = null
 val drawScope get() = drawScopeRaw!!
 val mainContainer get() = mainContainerRaw!!
 
+
 @OptIn(ExperimentalForeignApi::class)
 fun main() {
     mainContainerRaw = Json.decodeFromString(readFile("data.json"))
     window { hWnd ->
         drawScopeRaw = DrawScope(hWnd)
-        mainContainer.forEachButton { drawScope.invalidate(it) }
+        mainContainer.invalidate = drawScope::invalidate
+        drawScope.addButtons(mainContainer::forEachButton)
+        drawScope.alpha = mainContainer.alpha
         println("initialized")
     }
 }

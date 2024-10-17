@@ -1,20 +1,24 @@
 {
+    "textSize": 0,
+    "alpha": 255,
     "groups": [
         {
+            "textColor": {"r": 0,"g": 255,"b": 0},
             "typeValue": 0,
             "offset": {"x": 500,"y": 0},
             "buttons": [
                 {
+                    "textSize": 10,
+                    "textColor": {"r": 255,"g": 0,"b": 255},
+                    "color": {"r": 0,"g": 255,"b": 0},
+                    "colorPressed": {"r": 0,"g": 0,"b": 0},
+                    "textColorPressed": {"r": 255,"g": 255,"b": 255},
                     "name": "hide",
                     "key": [0],
                     "rect": {"l": 0,"t": 0,"r": 50,"b": 50}
                 }, {
-                    "name": "hook",
-                    "key": [255],
-                    "rect": {"l": 100,"t": 0,"r": 150,"b": 50}
-                }, {
                     "name": "exit",
-                    "key": [254],
+                    "key": [255],
                     "rect": {"l": 200,"t": 0,"r": 250,"b": 50}
                 }
             ]
@@ -23,6 +27,7 @@
             "offset": {"x": 0,"y": 400},
             "buttons": [
                 {
+                    "textSize": 100,
                     "name": "tab",
                     "key": [9],
                     "rect": {"l": 0,"t": 0,"r": 140,"b": 70}
@@ -31,6 +36,7 @@
         }, {
             "typeValue": 1,
             "offset": {"x": 100,"y": 500},
+            "textColor": {"r": 0,"g": 255,"b": 255},
             "buttons": [
                 {
                     "name": "wa",

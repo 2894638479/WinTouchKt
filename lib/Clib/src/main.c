@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <minwindef.h>
 #include <windowsx.h>
+#include <wingdi.h>
+#include <winnt.h>
 #include <winuser.h>
 
 void getTouchInfo(unsigned long long wParam, TouchInfo *ptr){
