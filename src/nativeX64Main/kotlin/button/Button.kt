@@ -1,10 +1,12 @@
 package button
 
-import container.Container
 import draw.Color
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import sendInput.*
+import sendInput.KEYEVENT_DOWN
+import sendInput.KEYEVENT_UP
+import sendInput.sendAllKeyEvent
+import sendInput.sendAllKeyEventFilter
 
 @Serializable
 class Button(

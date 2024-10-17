@@ -4,17 +4,13 @@ import button.Button
 import button.HasButtonConfigs
 import button.Point
 import button.inRect
-import container.Container
 import draw.Color
-import kotlinx.cinterop.*
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import libs.Clib.TouchInfo
-import platform.windows.INPUT_MOUSE
-import platform.windows.MOUSEEVENTF_WHEEL
 import sendInput.moveCursor
 import sendInput.scroll
-import sendInput.sendInput
 
 @Serializable
 @OptIn(ExperimentalForeignApi::class)

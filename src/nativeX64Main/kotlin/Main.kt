@@ -1,7 +1,7 @@
-import draw.DrawScope
-import kotlinx.cinterop.ExperimentalForeignApi
 import container.Container
+import draw.DrawScope
 import file.readFile
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.json.Json
 
 private var drawScopeRaw: DrawScope? = null

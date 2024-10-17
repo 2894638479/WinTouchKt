@@ -27,8 +27,7 @@ kotlin {
         }
         binaries{
             executable(listOf(RELEASE)){
-                linkerOpts += "-mwindows"
-                linkerOpts += "-lMSImg32"
+                linkerOpts("-mwindows")
             }
         }
     }

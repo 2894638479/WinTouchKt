@@ -2,8 +2,6 @@ package draw
 
 import button.*
 import kotlinx.cinterop.*
-import platform.gdiplus.GdiplusShutdown
-import platform.gdiplus.GdiplusStartup
 import platform.windows.*
 
 
