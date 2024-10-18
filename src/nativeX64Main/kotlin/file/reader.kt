@@ -1,10 +1,7 @@
 package file
 
 import container.Container
-import error.argumentManyError
-import error.fileOpenError
-import error.jsonDecodeError
-import error.notPlaceJsonError
+import error.*
 import kotlinx.cinterop.*
 import kotlinx.serialization.json.Json
 import platform.posix.*
@@ -13,7 +10,11 @@ val defaultDataPath = "data.json"
 
 @OptIn(ExperimentalForeignApi::class)
 fun readFile(filePath: String,bufferSize:Int = 1024) = memScoped {
-    val file = fopen(filePath, "r") ?: fileOpenError(filePath)
+    val file = fopen(filePath, "r") ?: if(access(filePath, F_OK) == 0){
+        fileOpenError(filePath)
+    } else {
+        fileNotExists(filePath)
+    }
     val buffer = allocArray<ByteVar>(bufferSize)
     val stringBuilder = StringBuilder()
     while (true) {
@@ -52,6 +53,6 @@ fun readContainer(args:Array<String>):Container{
     try {
         return Json.decodeFromString(str)
     } catch (e:Exception) {
-        jsonDecodeError(fileName)
+        jsonDecodeError(fileName,e)
     }
 }

@@ -4,16 +4,19 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.wcstr
+import platform.windows.MB_ICONERROR
 import platform.windows.MB_OK
 import platform.windows.MessageBox
 
 @OptIn(ExperimentalForeignApi::class)
-fun errorBox(error: String):Nothing = memScoped {
-    MessageBox!!(null,error.wcstr.ptr,"WinTouchKt: error".wcstr.ptr, MB_OK.toUInt())
+fun errorBox(error: String, e:Exception? = null):Nothing = memScoped {
+    var str = error
+    if(e != null) str += ("\n\n" + e.message)
+    MessageBox!!(null, str.wcstr.ptr, "WinTouchKt: error".wcstr.ptr, (MB_OK or MB_ICONERROR).toUInt())
     error(error)
 }
 
-fun errorBox(errorCn:String,errorEn:String): Nothing = errorBox(errorCn + "\n\n" + errorEn)
+fun errorBox(errorCn:String,errorEn:String,e:Exception? = null): Nothing = errorBox(errorCn + "\n\n" + errorEn,e)
 
 fun emptyGroupError():Nothing = errorBox(
     "配置中含有空的group",
@@ -32,19 +35,35 @@ fun emptyContainerError():Nothing = errorBox(
 )
 
 fun fileOpenError(fileName:String):Nothing = errorBox(
-    "无法打开文件，或文件不存在：$fileName",
+    "无法打开文件：$fileName",
     "cannot open file: $fileName"
 )
 
-fun jsonDecodeError(fileName: String):Nothing = if(fileName.endsWith(".json")) {
+fun fileNotExists(fileName: String):Nothing = if(
+    Regex("^[1-9a-zA-Z\\s/.,;()~'\"-]*$").matches(fileName)
+) {
+    errorBox(
+        "文件不存在：$fileName",
+        "file not exists: $fileName"
+    )
+} else {
+    errorBox(
+        "文件不存在，或路径中含有非英文字符：$fileName",
+        "file not exists: $fileName"
+    )
+}
+
+fun jsonDecodeError(fileName: String,e:Exception? = null):Nothing = if(fileName.endsWith(".json")) {
     errorBox(
         "json解析错误，可能是格式不正确或变量名不对：$fileName",
-        "json decode error: $fileName"
+        "json decode error: $fileName",
+        e
     )
 } else {
     errorBox(
         "json解析错误，可能文件不是.json格式：$fileName",
-        "json decode error: $fileName"
+        "json decode error: $fileName",
+        e
     )
 }
 

@@ -1,6 +1,5 @@
 import container.Container
 import draw.DrawScope
-import error.argumentManyError
 import file.readContainer
 import kotlinx.cinterop.ExperimentalForeignApi
 
@@ -13,7 +12,6 @@ val mainContainer get() = mainContainerRaw!!
 @OptIn(ExperimentalForeignApi::class)
 fun main(args:Array<String>) {
     mainContainerRaw = readContainer(args)
-
     window { hWnd ->
         drawScopeRaw = DrawScope(hWnd)
         mainContainer.invalidate = drawScope::invalidate
