@@ -4,6 +4,8 @@ import button.Button
 import button.HasButtonConfigs
 import buttonGroup.ButtonGroup
 import draw.Color
+import error.emptyContainerError
+import error.emptyGroupError
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -14,15 +16,15 @@ import touch.TouchReceiver
 @Serializable
 class Container(
     val groups:List<ButtonGroup>,
+    val alpha:UByte = 128u,
     override var textColor:Color? = null,
     override var textColorPressed: Color? = null,
     override var color:Color? = null,
     override var colorPressed:Color? = null,
-    override var textSize:Byte? = null,
-    val alpha:UByte = 128u
+    override var textSize:Byte? = null
 ):TouchReceiver,HasButtonConfigs{
     init {
-        if(groups.isEmpty()) error("creating an empty group")
+        if(groups.isEmpty()) emptyContainerError()
         groups.forEach {
             it.copyConfig(this)
         }

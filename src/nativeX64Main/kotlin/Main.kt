@@ -1,8 +1,8 @@
 import container.Container
 import draw.DrawScope
-import file.readFile
+import error.argumentManyError
+import file.readContainer
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.serialization.json.Json
 
 private var drawScopeRaw: DrawScope? = null
 private var mainContainerRaw: Container? = null
@@ -12,15 +12,8 @@ val mainContainer get() = mainContainerRaw!!
 
 @OptIn(ExperimentalForeignApi::class)
 fun main(args:Array<String>) {
-    val dataPath = when(args.size){
-        0 -> "data.json"
-        1 -> args[0]
-        else -> {
-            println("too many arguments")
-            error("too many arguments")
-        }
-    }
-    mainContainerRaw = Json.decodeFromString(readFile(dataPath))
+    mainContainerRaw = readContainer(args)
+
     window { hWnd ->
         drawScopeRaw = DrawScope(hWnd)
         mainContainer.invalidate = drawScope::invalidate

@@ -5,6 +5,9 @@ import button.HasButtonConfigs
 import button.Point
 import button.inRect
 import draw.Color
+import error.emptyGroupError
+import error.groupTypeError
+import error.logicError
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -12,11 +15,11 @@ import libs.Clib.TouchInfo
 import sendInput.moveCursor
 import sendInput.scroll
 
-@Serializable
 @OptIn(ExperimentalForeignApi::class)
+@Serializable
 class ButtonGroup(
     val buttons: List<Button>,
-    val typeValue:Int,
+    private val typeValue:Int,
     private val offset: Point,
     override var textColor:Color? = null,
     override var textColorPressed: Color? = null,
@@ -25,7 +28,7 @@ class ButtonGroup(
     override var textSize:Byte? = null,
 ):HasButtonConfigs {
     init {
-        if(buttons.isEmpty()) error("creating an empty buttonGroup")
+        if(buttons.isEmpty()) emptyGroupError()
     }
     override fun copyConfig(other: HasButtonConfigs) {
         super.copyConfig(other)
@@ -44,13 +47,13 @@ class ButtonGroup(
         else if (typeValue == 0) GroupType.Static
         else if(typeValue >= -MAX_SENSITIVITY) GroupType.MoveMouse
         else if(typeValue >= -MAX_SENSITIVITY * 2) GroupType.Scroll
-        else error("unknown group type: $typeValue")
+        else groupTypeError(typeValue)
     }
     val sensitivity:Float get() {
         return when(type){
             GroupType.MoveMouse -> - typeValue / MAX_SENSITIVITY.toFloat() * 10
             GroupType.Scroll -> - (MAX_SENSITIVITY + typeValue) / MAX_SENSITIVITY.toFloat() * 10
-            else -> error("type $type shouldn't have sensitivity")
+            else -> logicError("type $type shouldn't have sensitivity")
         }
     }
     @Transient val rect = run {
