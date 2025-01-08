@@ -1,15 +1,11 @@
 package button
 
 import draw.Color
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import sendInput.KEYEVENT_DOWN
 import sendInput.KEYEVENT_UP
 import sendInput.sendAllKeyEvent
 import sendInput.sendAllKeyEventFilter
 
-@Serializable
 class Button(
     val name:String,
     val key:List<UByte>,
@@ -20,27 +16,27 @@ class Button(
     override var colorPressed:Color? = null,
     override var textSize:Byte? = null,
 ):HasButtonConfigs {
-    @Transient var pointerId = 0u
+    var count = 0u
         private set
-    inline val pressed get() = pointerId != 0u
-    fun press(pointer:UInt,invalidate:(Button)->Unit){
+    inline val pressed get() = count != 0u
+    fun down(invalidate:(Button)->Unit){
         sendAllKeyEvent(KEYEVENT_DOWN)
-        pointerId = pointer
+        count++
         invalidate(this)
     }
     fun up(invalidate:(Button)->Unit){
         sendAllKeyEvent(KEYEVENT_UP)
-        pointerId = 0u
+        count--
         invalidate(this)
     }
-    fun slidePress(pointer:UInt,invalidate:(Button)->Unit,filter:(UByte)->Boolean){
+    fun slideDown(invalidate:(Button)->Unit,filter:(UByte)->Boolean){
         sendAllKeyEventFilter(KEYEVENT_DOWN,filter)
-        pointerId = pointer
+        count++
         invalidate(this)
     }
     fun slideUp(invalidate:(Button)->Unit,filter:(UByte)->Boolean){
         sendAllKeyEventFilter(KEYEVENT_UP,filter)
-        pointerId = 0u
+        count--
         invalidate(this)
     }
 }

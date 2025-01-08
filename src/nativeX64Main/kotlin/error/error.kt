@@ -77,7 +77,22 @@ fun argumentManyError():Nothing = errorBox(
     "too many arguments"
 )
 
-fun groupTypeError(value:Int):Nothing = errorBox(
+fun groupTypeError(value:UByte):Nothing = errorBox(
     "未知的group类型：$value",
     "unknown group type: $value"
+)
+
+fun slideCountError(value: UInt):Nothing = errorBox(
+    "slideCount错误：$value",
+    "slide count error: $value"
+)
+
+fun nullPtrError():Nothing = errorBox(
+    "空指针异常，可能是程序逻辑出错",
+    "null pointer exception"
+)
+
+fun holdIndexError(value:Int):Nothing = errorBox(
+    "holdIndex错误：$value，请确认此值>=0，<按钮总个数",
+    "holdIndex Error"
 )

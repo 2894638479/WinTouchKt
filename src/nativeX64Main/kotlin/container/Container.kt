@@ -2,20 +2,16 @@ package container
 
 import button.Button
 import button.HasButtonConfigs
-import buttonGroup.ButtonGroup
+import buttonGroup.Group
 import draw.Color
 import error.emptyContainerError
-import error.emptyGroupError
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import libs.Clib.TouchInfo
 import touch.TouchReceiver
 
 @OptIn(ExperimentalForeignApi::class)
-@Serializable
 class Container(
-    val groups:List<ButtonGroup>,
+    val groups:List<Group>,
     val alpha:UByte = 128u,
     override var textColor:Color? = null,
     override var textColorPressed: Color? = null,
@@ -52,7 +48,7 @@ class Container(
         return true
     }
 
-    @Transient val activePointers = mutableMapOf<UInt, ButtonGroup>()
+    val activePointers = mutableMapOf<UInt, Group>()
     inline fun forEachButton(block:(Button)->Unit){
         for(group in groups){
             for(button in group.buttons){
@@ -61,5 +57,5 @@ class Container(
         }
     }
 
-    @Transient var invalidate: (Button) -> Unit = {  }
+    var invalidate: (Button) -> Unit = {  }
 }

@@ -51,7 +51,7 @@ fun readContainer(args:Array<String>):Container{
         else throw e
     }
     try {
-        return Json.decodeFromString(str)
+        return Json.decodeFromString<ContainerJson>(str).toContainer()
     } catch (e:Exception) {
         jsonDecodeError(fileName,e)
     }

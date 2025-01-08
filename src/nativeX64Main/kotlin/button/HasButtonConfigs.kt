@@ -17,3 +17,11 @@ interface HasButtonConfigs {
         textSize = textSize ?: other.textSize
     }
 }
+
+class buttonConfigs(
+    override var textColor: Color? = null,
+    override var textColorPressed: Color? = null,
+    override var color: Color? = null,
+    override var colorPressed: Color? = null,
+    override var textSize:Byte? = null,
+) : HasButtonConfigs
