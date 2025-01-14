@@ -39,19 +39,10 @@ fun fileOpenError(fileName:String):Nothing = errorBox(
     "cannot open file: $fileName"
 )
 
-fun fileNotExists(fileName: String):Nothing = if(
-    Regex("^[1-9a-zA-Z\\s/.,;()~'\"-]*$").matches(fileName)
-) {
-    errorBox(
-        "文件不存在：$fileName",
-        "file not exists: $fileName"
-    )
-} else {
-    errorBox(
-        "文件不存在，或路径中含有非英文字符：$fileName",
-        "file not exists: $fileName"
-    )
-}
+fun fileNotExists(fileName: String):Nothing = errorBox(
+    "文件不存在：$fileName",
+    "file not exists: $fileName"
+)
 
 fun jsonDecodeError(fileName: String,e:Exception? = null):Nothing = if(fileName.endsWith(".json")) {
     errorBox(
@@ -95,4 +86,9 @@ fun nullPtrError():Nothing = errorBox(
 fun holdIndexError(value:Int):Nothing = errorBox(
     "holdIndex错误：$value，请确认此值>=0，<按钮总个数",
     "holdIndex Error"
+)
+
+fun entryParaError():Nothing = errorBox(
+    "入口点参数错误",
+    "entry parament error"
 )

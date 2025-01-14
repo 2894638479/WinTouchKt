@@ -4,7 +4,7 @@
     "groups": [
         {
             "textColor": {"r": 0,"g": 255,"b": 0},
-            "typeValue": 0,
+            "type": 0,
             "offset": {"x": 500,"y": 0},
             "buttons": [
                 {
@@ -23,7 +23,7 @@
                 }
             ]
         }, {
-            "typeValue": 0,
+            "type": 0,
             "offset": {"x": 0,"y": 400},
             "buttons": [
                 {
@@ -34,7 +34,7 @@
                 }
             ]
         }, {
-            "typeValue": 1,
+            "type": 2,
             "offset": {"x": 100,"y": 500},
             "textColor": {"r": 0,"g": 255,"b": 255},
             "buttons": [
@@ -73,8 +73,9 @@
                 }
             ]
         }, {
-            "typeValue": 2,
+            "type": 1,
             "offset": {"x": 1000,"y": 600},
+            "slideCount": 2,
             "buttons": [
                 {
                     "name": "z",
@@ -95,7 +96,8 @@
                 }
             ]
         }, {
-            "typeValue": -200,
+            "type": 9,
+            "sensitivity": 10,
             "offset": {"x": 1000,"y": 400},
             "buttons": [
                 {

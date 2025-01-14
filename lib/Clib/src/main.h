@@ -1,3 +1,14 @@
+
+
+char* readFile(char* path);
+char* GBKToUTF8(char* gbkStr);
+unsigned short* UTF8ToUTF16(char* utf8Str);
+void freeStr(char* str);
+
+
+
+
+
 typedef struct {
     unsigned int id;
     int pointX;
