@@ -16,11 +16,12 @@ class HoldSlideGroup(
     init {
         if(holdIndex !in buttons.indices) holdIndexError(holdIndex)
     }
+    private inline val holdButton get() = buttons[holdIndex]
     override fun dispatchMoveEvent(info: TouchInfo, invalidate: (Button) -> Unit) {
         val btns = pointers[info.id] ?: nullPtrError()
         firstOrNull(info.pointX,info.pointY)?.apply {
-            if(btns[0] == buttons[holdIndex]){
-                if(this != buttons[holdIndex]) {
+            if(btns[0] == holdButton){
+                if(this != holdButton) {
                     if (btns.size == 1) {
                         down(invalidate)
                         btns.add(this)
@@ -34,7 +35,9 @@ class HoldSlideGroup(
                     }
                 }
             } else {
-                slide(btns[0],this,btns,invalidate)
+                if(this != holdButton) {
+                    slide(btns[0], this, btns, invalidate)
+                }
             }
         }
     }
