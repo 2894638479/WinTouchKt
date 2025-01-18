@@ -1,11 +1,12 @@
 import kotlinx.cinterop.*
+import libs.Clib.hwndHolder
 import platform.windows.*
 
 const val className = "WinTouchKt"
 const val windowName = "winTouch"
 
 @OptIn(ExperimentalForeignApi::class)
-fun window(onInitialized:(HWND?)->Unit):Unit = memScoped {
+fun window(onInitialized:( CPointer<hwndHolder>?)->Unit):Unit = memScoped {
     val hInstance = GetModuleHandle!!(null)
     val wcex : WNDCLASSEXW = alloc()
     wcex.apply {
@@ -29,11 +30,11 @@ fun window(onInitialized:(HWND?)->Unit):Unit = memScoped {
         className.wcstr.ptr,
         windowName.wcstr.ptr,
         WS_OVERLAPPEDWINDOW.toUInt(),
-        CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
+        CW_USEDEFAULT, CW_USEDEFAULT, 0,0,
         null,null, hInstance, null
     )
-    onInitialized(hwnd)
     RegisterTouchWindow(hwnd, (TWF_WANTPALM or TWF_FINETOUCH).toUInt())
+    onInitialized(hwnd?.reinterpret())
     ShowWindow(hwnd, SW_SHOW)
     UpdateWindow(hwnd)
 

@@ -1,4 +1,4 @@
-headers = Clib/src/main.h
+headers = Clib/src/main.h Clib/src/direct2d.h
 headerFilter = Clib/src/*
 staticLibraries = main.lib
 libraryPaths = F:/WinTouchKt/lib/Clib

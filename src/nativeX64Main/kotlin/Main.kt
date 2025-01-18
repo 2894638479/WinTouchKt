@@ -1,5 +1,6 @@
 import container.Container
 import draw.DrawScope
+import draw.DrawScopeDirect2D
 import error.entryParaError
 import file.readContainer
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -10,7 +11,8 @@ import libs.Clib.freeStr
 
 private var drawScopeRaw: DrawScope? = null
 private var mainContainerRaw: Container? = null
-val drawScope get() = drawScopeRaw!!
+val drawScope:DrawScope get() = drawScopeRaw!!
+val drawScopeNullable:DrawScope? get() = drawScopeRaw
 val mainContainer get() = mainContainerRaw!!
 
 @OptIn(ExperimentalForeignApi::class)
@@ -32,10 +34,9 @@ fun Main(args: Array<String>) {
         println(arg)
     }
     mainContainerRaw = readContainer(args)
-    window { hWnd ->
-        drawScopeRaw = DrawScope(hWnd)
+    window { hwnd ->
+        drawScopeRaw = DrawScopeDirect2D(hwnd,mainContainer::forEachButton)
         mainContainer.invalidate = drawScope::invalidate
-        drawScope.addButtons(mainContainer::forEachButton)
         drawScope.alpha = mainContainer.alpha
         println("initialized")
     }

@@ -92,3 +92,28 @@ fun entryParaError():Nothing = errorBox(
     "入口点参数错误",
     "entry parament error"
 )
+
+fun fontWeightError(min:UShort,max:UShort,cur:UShort):Nothing = errorBox(
+    "字体粗细错误：必须位于 $min~$max 之间，当前为$cur",
+    "font weight error: must between $min~$max, current:$cur"
+)
+
+fun fontStyleError(cur:String,list:Set<String>):Nothing = errorBox(
+    "未知字体样式：$cur，可选：$list",
+    "unknown font style: $cur, available: $list"
+)
+
+fun fontCreateError():Nothing = errorBox(
+    "字体创建失败",
+    "font create error"
+)
+
+fun brushCreateError():Nothing = errorBox(
+    "笔刷创建失败",
+    "brush create error"
+)
+
+fun direct2dInitializeError():Nothing = errorBox(
+    "direct2d初始化失败",
+    "direct2d initialize error"
+)
