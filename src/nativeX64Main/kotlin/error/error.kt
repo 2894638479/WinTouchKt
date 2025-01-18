@@ -4,10 +4,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.wcstr
-import platform.windows.MB_ICONERROR
-import platform.windows.MB_ICONINFORMATION
-import platform.windows.MB_OK
-import platform.windows.MessageBox
+import platform.windows.*
 
 @OptIn(ExperimentalForeignApi::class)
 fun infoBox(infoCn:String,infoEn:String) = memScoped {

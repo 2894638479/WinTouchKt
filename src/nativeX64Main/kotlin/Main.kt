@@ -7,6 +7,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
 import libs.Clib.GBKToUTF8
+import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
 import platform.posix.exit
 import platform.windows.Sleep
@@ -19,6 +20,7 @@ val mainContainer get() = mainContainerRaw!!
 
 @OptIn(ExperimentalForeignApi::class)
 fun main(){
+    PrepareForUIAccess()
     val argc = platform.posix.__argc
     val argv = platform.posix.__argv
     Main(Array(argc - 1){ i ->

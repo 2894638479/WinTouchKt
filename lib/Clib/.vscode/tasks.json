@@ -1,0 +1,53 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "obj",
+            "type": "shell",
+            "command": "clang",
+            "args": [
+                "-c",
+                "${workspaceRoot}/src/main.c",
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "obj2",
+            "type": "shell",
+            "command": "clang",
+            "args": [
+                "-c",
+                "${workspaceRoot}/src/direct2d.cpp",
+                "-fno-exceptions",
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "lib",
+            "type": "shell",
+            "command": "lld-link",
+            "args": [
+                "/LIB",
+                "${workspaceRoot}/main.o",
+                "${workspaceRoot}/direct2d.o",
+                "${workspaceRoot}/uiaccess.o",
+                "/SUBSYSTEM:WINDOWS",
+                "${workspaceRoot}/lib/d2d1.lib",
+                "${workspaceRoot}/lib/dwrite.lib",
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "obj","obj2"
+            ],
+        }
+    ]
+}
