@@ -5,18 +5,26 @@ import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.wcstr
 import platform.windows.MB_ICONERROR
+import platform.windows.MB_ICONINFORMATION
 import platform.windows.MB_OK
 import platform.windows.MessageBox
 
 @OptIn(ExperimentalForeignApi::class)
-fun errorBox(error: String, e:Exception? = null):Nothing = memScoped {
+fun infoBox(infoCn:String,infoEn:String) = memScoped {
+    MessageBox!!(null, (infoCn + "\n\n" + infoEn).wcstr.ptr, "WinTouchKt: info".wcstr.ptr, (MB_OK or MB_ICONINFORMATION).toUInt())
+}
+
+@OptIn(ExperimentalForeignApi::class)
+fun errorBox(error: String, e:Exception? = null,beforeExit:()->Unit = {}):Nothing = memScoped {
     var str = error
     if(e != null) str += ("\n\n" + e.message)
     MessageBox!!(null, str.wcstr.ptr, "WinTouchKt: error".wcstr.ptr, (MB_OK or MB_ICONERROR).toUInt())
+    beforeExit()
     error(error)
 }
 
-fun errorBox(errorCn:String,errorEn:String,e:Exception? = null): Nothing = errorBox(errorCn + "\n\n" + errorEn,e)
+fun errorBox(errorCn:String,errorEn:String,e:Exception? = null,beforeExit:()->Unit = {}): Nothing
+    = errorBox(errorCn + "\n\n" + errorEn,e,beforeExit)
 
 fun emptyGroupError():Nothing = errorBox(
     "配置中含有空的group",
@@ -44,19 +52,12 @@ fun fileNotExists(fileName: String):Nothing = errorBox(
     "file not exists: $fileName"
 )
 
-fun jsonDecodeError(fileName: String,e:Exception? = null):Nothing = if(fileName.endsWith(".json")) {
-    errorBox(
-        "json解析错误，可能是格式不正确或变量名不对：$fileName",
-        "json decode error: $fileName",
-        e
-    )
-} else {
-    errorBox(
-        "json解析错误，可能文件不是.json格式：$fileName",
-        "json decode error: $fileName",
-        e
-    )
-}
+fun jsonDecodeError(e:Exception? = null):Nothing = errorBox(
+    "json解析错误，可能是格式不正确或变量名不对",
+    "json decode error",
+    e
+)
+
 
 fun notPlaceJsonError():Nothing = errorBox(
     "检测到data.json不存在，请在当前目录放置data.json或把配置文件拖到exe上",
@@ -116,4 +117,37 @@ fun brushCreateError():Nothing = errorBox(
 fun direct2dInitializeError():Nothing = errorBox(
     "direct2d初始化失败",
     "direct2d initialize error"
+)
+
+fun argumentUsageInfo() = infoBox(
+    "用法：\n" +
+            "\tWinTouchKt <配置文件路径>\n" +
+            "\tWinTouchKt -d <配置文件内容>\n" +
+            "参数：\n" +
+            "\t-s <延迟启动时间（毫秒）>\n" +
+            "\t-d <json内容>\n" +
+            "\t-h 显示帮助"
+    ,
+    "usage:\n" +
+            "\tWinTouchKt <json path>\n" +
+            "\tWinTouchKt -d <json string content>\n" +
+            "options:\n" +
+            "\t-s <delay time(ms)>\n" +
+            "\t-d <json content>\n" +
+            "\t-h show help window"
+)
+
+fun unknownArgError(arg:String):Nothing = errorBox(
+    "未知参数：$arg",
+    "unknown argument:$arg"
+){ argumentUsageInfo() }
+
+fun unknownOptError(arg:String,opt:String):Nothing = errorBox(
+    "未知参数：$arg $opt",
+    "unknown argument:$arg $opt"
+){ argumentUsageInfo() }
+
+fun noProfileError():Nothing = errorBox(
+    "未传入配置文件。请把配置拖到exe上，或者在命令行中一第一个参数传入",
+    "no profile provided. please drag file on exe or pass as first argument"
 )

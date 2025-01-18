@@ -1,12 +1,15 @@
 import container.Container
 import draw.DrawScope
-import error.entryParaError
-import file.readContainer
+import error.*
+import file.readFile
+import file.toContainer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
 import libs.Clib.GBKToUTF8
 import libs.Clib.freeStr
+import platform.posix.exit
+import platform.windows.Sleep
 
 private var drawScopeRaw: DrawScope? = null
 private var mainContainerRaw: Container? = null
@@ -29,14 +32,47 @@ fun main(){
 
 @OptIn(ExperimentalForeignApi::class)
 fun Main(args: Array<String>) {
-    for (arg in args) {
-        println(arg)
-    }
-    mainContainerRaw = readContainer(args)
+    processArgs(args)
     window { hwnd ->
         drawScopeRaw = DrawScope(hwnd,mainContainer::forEachButton)
         mainContainer.invalidate = drawScope::invalidate
         drawScope.alpha = mainContainer.alpha
         println("initialized")
     }
+}
+
+fun processArgs(args:Array<String>){
+    var jsonCont:String? = null
+    var argTask:((String)->Unit)? = null
+    var sleepTime = 0u
+    args.forEachIndexed { index, arg ->
+        argTask?.let {
+            it(arg)
+            argTask = null
+            return@forEachIndexed
+        }
+        if(arg.startsWith('-')){
+            when(arg){
+                "-s" -> argTask = {
+                    sleepTime = it.toUIntOrNull() ?: unknownOptError("-s",it)
+                }
+                "-h" -> {
+                    argumentUsageInfo()
+                    exit(0)
+                }
+                "-d" -> argTask = {
+                    jsonCont = it
+                }
+                else -> unknownArgError(arg)
+            }
+        } else {
+            if(index == 0) {
+                jsonCont = readFile(arg) ?: fileOpenError(arg)
+            } else {
+                unknownArgError(arg)
+            }
+        }
+    }
+    mainContainerRaw = jsonCont?.toContainer() ?: noProfileError()
+    if(sleepTime != 0u) Sleep(sleepTime)
 }
