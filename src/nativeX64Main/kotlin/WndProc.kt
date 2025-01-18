@@ -1,9 +1,5 @@
-import draw.DrawScope
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.invoke
-import kotlinx.cinterop.reinterpret
-import libs.Clib.hwndHolder
 import platform.windows.*
 import touch.mouseInput
 import touch.pointerInput

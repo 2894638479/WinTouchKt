@@ -1,12 +1,9 @@
 package draw
 
 import button.Button
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.internal.CStruct
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import libs.Clib.d2dCreateSolidColorBrush
-import platform.windows.*
+import platform.windows.COLORREF
 
 fun rgb(r: UByte, g: UByte, b: UByte): COLORREF {
     return (r.toUInt() or (g.toUInt() shl 8) or (b.toUInt() shl 16))

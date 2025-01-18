@@ -1,6 +1,5 @@
 import container.Container
 import draw.DrawScope
-import draw.DrawScopeDirect2D
 import error.entryParaError
 import file.readContainer
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -35,7 +34,7 @@ fun Main(args: Array<String>) {
     }
     mainContainerRaw = readContainer(args)
     window { hwnd ->
-        drawScopeRaw = DrawScopeDirect2D(hwnd,mainContainer::forEachButton)
+        drawScopeRaw = DrawScope(hwnd,mainContainer::forEachButton)
         mainContainer.invalidate = drawScope::invalidate
         drawScope.alpha = mainContainer.alpha
         println("initialized")

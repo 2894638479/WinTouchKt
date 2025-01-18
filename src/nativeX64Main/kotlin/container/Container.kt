@@ -48,7 +48,7 @@ class Container(
         return true
     }
 
-    val activePointers = mutableMapOf<UInt, Group>()
+    private val activePointers = mutableMapOf<UInt, Group>()
     inline fun forEachButton(block:(Button)->Unit){
         for(group in groups){
             for(button in group.buttons){

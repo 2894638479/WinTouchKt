@@ -1,11 +1,9 @@
 package draw
 
-import button.HasButtonConfigs
 import error.fontStyleError
 import error.fontWeightError
-import kotlinx.cinterop.*
+import kotlinx.cinterop.ExperimentalForeignApi
 import libs.Clib.FONT_STYLE
-import platform.windows.*
 
 @OptIn(ExperimentalForeignApi::class)
 data class Font(
