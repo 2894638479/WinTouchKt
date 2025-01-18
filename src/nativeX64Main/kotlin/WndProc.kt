@@ -9,7 +9,7 @@ const val WM_POINTERUP = 0x0247
 const val WM_POINTERUPDATE = 0x0245
 
 @OptIn(ExperimentalForeignApi::class)
-fun WndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
+fun wndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
     fun default() = DefWindowProcW(hWnd, uMsg, wParam, lParam)
     when (uMsg.toInt()) {
         WM_CREATE -> {

@@ -30,5 +30,12 @@ kotlin {
                 linkerOpts += "-mwindows"
             }
         }
+        tasks.named("linkReleaseExecutableNativeX64"){
+            doLast {
+                exec {
+                    commandLine("mt","-manifest","main.manifest","-outputresource:build/bin/nativeX64/releaseExecutable/WinTouchKt.exe")
+                }
+            }
+        }
     }
 }

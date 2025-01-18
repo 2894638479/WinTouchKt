@@ -11,7 +11,7 @@ fun window(onInitialized:( CPointer<hwndHolder>?)->Unit):Unit = memScoped {
     val wcex : WNDCLASSEXW = alloc()
     wcex.apply {
         cbSize = sizeOf<WNDCLASSEXW>().toUInt()
-        lpfnWndProc = staticCFunction(::WndProc)
+        lpfnWndProc = staticCFunction(::wndProc)
         style = 0u
         cbClsExtra = 0
         cbWndExtra = 0
