@@ -10,6 +10,10 @@ import platform.windows.*
 fun infoBox(infoCn:String,infoEn:String) = memScoped {
     MessageBox!!(null, (infoCn + "\n\n" + infoEn).wcstr.ptr, "WinTouchKt: info".wcstr.ptr, (MB_OK or MB_ICONINFORMATION).toUInt())
 }
+@OptIn(ExperimentalForeignApi::class)
+fun infoBox(info:String) = memScoped {
+    MessageBox!!(null, (info).wcstr.ptr, "WinTouchKt: info".wcstr.ptr, (MB_OK or MB_ICONINFORMATION).toUInt())
+}
 
 @OptIn(ExperimentalForeignApi::class)
 fun errorBox(error: String, e:Exception? = null,beforeExit:()->Unit = {}):Nothing = memScoped {
@@ -91,7 +95,7 @@ fun entryParaError():Nothing = errorBox(
     "entry parament error"
 )
 
-fun fontWeightError(min:UShort,max:UShort,cur:UShort):Nothing = errorBox(
+fun fontWeightError(min:UShort,max:UShort,cur:Int):Nothing = errorBox(
     "字体粗细错误：必须位于 $min~$max 之间，当前为$cur",
     "font weight error: must between $min~$max, current:$cur"
 )

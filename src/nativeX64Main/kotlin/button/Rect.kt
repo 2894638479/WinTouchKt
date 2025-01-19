@@ -1,46 +1,20 @@
 package button
 
+import draw.paramBuffer
+import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.memScoped
-import kotlinx.serialization.SerialName
+import kotlinx.cinterop.ptr
 import kotlinx.serialization.Serializable
-import platform.windows.RECT
+import libs.Clib.*
 import kotlin.math.max
 import kotlin.math.min
 
-@Serializable
-data class Rect(
-    @SerialName("l") var left:Int,
-    @SerialName("t") var top:Int,
-    @SerialName("r") var right:Int,
-    @SerialName("b") var bottom:Int,
+class MutableRect(
+    var left:Float,
+    var top:Float,
+    var right:Float,
+    var bottom:Float,
 ){
-    constructor(rect:RECT) : this(rect.left,rect.top,rect.right,rect.bottom)
-    val width get() = right - left
-    val height get() = bottom - top
-
-    fun RECT.copyThis() = apply {
-        left = this@Rect.left
-        top = this@Rect.top
-        right = this@Rect.right
-        bottom = this@Rect.bottom
-    }
-    @OptIn(ExperimentalForeignApi::class)
-    inline fun withRECT(block: RECT.()->Unit) = memScoped {
-        alloc<RECT> {
-            copyThis()
-            block()
-        }
-    }
-    operator fun plus(other:Rect):Rect{
-        return Rect(
-            min(left,other.left),
-            min(top,other.top),
-            max(right,other.right),
-            max(bottom,other.bottom)
-        )
-    }
     operator fun plusAssign(other:Rect){
         left = min(left,other.left)
         top = min(top,other.top)
@@ -53,18 +27,39 @@ data class Rect(
         right += point.x
         bottom += point.y
     }
+    fun toRect():Rect = Rect(left, top, right, bottom)
 }
-inline val RECT.width get() = right - left
-inline val RECT.height get() = bottom - top
-fun RECT.equal(other:RECT):Boolean {
-    return left == other.left
-            && right == other.right
-            && top == other.top
-            && bottom == other.bottom
-}
-fun RECT.copyFrom(other:RECT){
-    left = other.left
-    right = other.right
-    top = other.top
-    bottom = other.bottom
+
+@Serializable
+class Rect(
+    val left:Float,
+    val top:Float,
+    val right:Float,
+    val bottom:Float
+):Shape{
+    fun toMutableRect():MutableRect = MutableRect(left, top, right, bottom)
+    override fun containPoint(x: Float, y: Float): Boolean {
+        return x > left
+                && y > top
+                && x < right
+                && y < bottom
+    }
+    @OptIn(ExperimentalForeignApi::class)
+    override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
+        d2dFillRect(paramBuffer.rect.apply {
+            l = left
+            t = top
+            r = right
+            b = bottom
+            this.target = target
+            brush = config.brush
+        }.ptr)
+        if(config.outlineWidth > 0f){
+            d2dDrawRect(paramBuffer.rect.apply {
+                brush = config.brushOutline
+            }.ptr,config.outlineWidth)
+        }
+    }
+    override val innerRect: Rect get() = this
+    override val outerRect: Rect get() = this
 }

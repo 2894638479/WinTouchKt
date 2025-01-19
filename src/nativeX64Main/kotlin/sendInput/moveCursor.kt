@@ -4,14 +4,16 @@ import button.Point
 import kotlinx.cinterop.*
 import libs.Clib.TouchInfo
 import platform.windows.*
+import touch.TouchReceiver
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalForeignApi::class)
-fun moveCursor(sensitivity:Float,before:Point,moved:TouchInfo) = memScoped {
-    fun getMoveDistance(before:Int,after:Int):Int{
-        return ((after - before) * sensitivity).toInt()
+fun moveCursor(sensitivity:Float,before:Point,moved:TouchReceiver.TouchEvent) = memScoped {
+    fun getMoveDistance(before:Float,after:Float):Int{
+        return ((after - before) * sensitivity).roundToInt()
     }
-    val xMove = getMoveDistance(before.x,moved.pointX)
-    val yMove = getMoveDistance(before.y,moved.pointY)
+    val xMove = getMoveDistance(before.x,moved.x)
+    val yMove = getMoveDistance(before.y,moved.y)
     if(xMove == 0 && yMove == 0) return@memScoped
     sendInput {
         type = INPUT_MOUSE.toUInt()

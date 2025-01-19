@@ -1,14 +1,6 @@
-#include <cstddef>
-#include <d2d1.h>
 #include <d2d1helper.h>
+#include <dcommon.h>
 #include <dwrite.h>
-#include <unknwn.h>
-#include <vcruntime_typeinfo.h>
-#include <windef.h>
-#include <winerror.h>
-#include <wingdi.h>
-#include <winnt.h>
-#include <winuser.h>
 
 extern "C" {
 #include "direct2d.h"
@@ -117,17 +109,34 @@ void d2dEndDraw(d2dTargetHolder* target){
 }
 
 
-void d2dDrawRect(d2dTargetHolder* target,d2dSolidColorBrushHolder* brush,float l,float t,float r,float b){
-    cvt(target)->FillRectangle(D2D1::RectF(l,t,r,b), cvt(brush));
+
+void d2dDrawRect(d2dDrawRectPara* para,float outlineWidth){
+    cvt(para->target)->DrawRectangle(D2D1::RectF(para->l,para->t,para->r,para->b),cvt(para->brush),outlineWidth);
+}
+void d2dFillRect(d2dDrawRectPara* para){
+    cvt(para->target)->FillRectangle(D2D1::RectF(para->l,para->t,para->r,para->b),cvt(para->brush));
 }
 
-void d2dDrawText(d2dTargetHolder* target,d2dSolidColorBrushHolder* brush,d2dTextFormatHolder* format,unsigned short* text,float l,float t,float r,float b){
-    cvt(target)->DrawText(
+void d2dFillRoundedRect(d2dDrawRectPara* para,float rx,float ry){
+    cvt(para->target)->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(para->l,para->t,para->r,para->b), rx, ry),cvt(para->brush));
+}
+void d2dDrawRoundedRect(d2dDrawRectPara* para,float rx,float ry,float outlineWidth){
+    cvt(para->target)->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(para->l,para->t,para->r,para->b), rx, ry),cvt(para->brush),outlineWidth);
+}
+
+void d2dDrawRound(d2dDrawRoundPara*para,float outlineWidth){
+    cvt(para->target)->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(para->x,para->y), para->rx, para->ry),cvt(para->brush),outlineWidth);
+}
+void d2dFillRound(d2dDrawRoundPara*para){
+    cvt(para->target)->FillEllipse(D2D1::Ellipse(D2D1::Point2F(para->x,para->y), para->rx, para->ry),cvt(para->brush));
+}
+void d2dDrawText(d2dDrawRectPara* para,d2dTextFormatHolder* format,unsigned short* text){
+    cvt(para->target)->DrawText(
         (wchar_t*)text,                    // 要绘制的文字
         wcslen((wchar_t*)text),            // 文字长度
         cvt(format),             // 文字格式
-        D2D1::RectF(l,t,r,b),  // 绘制区域
-        cvt(brush)                  // 文字颜色
+        D2D1::RectF(para->l,para->t,para->r,para->b),  // 绘制区域
+        cvt(para->brush)                  // 文字颜色
     );
 }
 
@@ -137,23 +146,27 @@ Point d2dGetDpi(d2dTargetHolder* target){
     return dpi;
 }
 
-/*
-LRESULT (*wndProcPtr)(hwndHolder *, unsigned int, unsigned long long, long long);
-void d2dSetWndProc(LRESULT (*func)(hwndHolder *, unsigned int, unsigned long long, long long)){
-    wndProcPtr = func;
+void d2dClear(d2dTargetHolder* target){
+    cvt(target)->Clear();
+}
+long long (*WindowProc)(hwndHolder *, unsigned int, unsigned long long, long long) = nullptr;
+
+void setWndProc(long long (*func)(hwndHolder *, unsigned int, unsigned long long, long long)){
+    WindowProc = func;
 }
 
-LRESULT WindowProc(HWND__ *p0, unsigned int p1, unsigned long long p2, long long p3)
-{
-    return wndProcPtr(cvt(p0),p1,p2,p3);
+long long WndProc(HWND__ * p0, unsigned int p1, unsigned long long p2, long long p3){
+    return WindowProc(cvt(p0),p1,p2,p3);
 }
-hwndHolder* d2dWindowStep1() {
+
+int windowStep1() {
+    // 创建窗口
     HINSTANCE hInstance = GetModuleHandle(NULL);
 
     // 设置 WNDCLASSEX 结构体
     WNDCLASSEX wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.lpfnWndProc = WindowProc;  // 窗口过程
+    wcex.lpfnWndProc = WndProc;  // 窗口过程
     wcex.hInstance = hInstance;
     wcex.lpszClassName = "SampleWindowClass";  // 窗口类名
     wcex.hCursor = LoadCursor(NULL, IDC_ARROW);  // 默认光标
@@ -161,6 +174,13 @@ hwndHolder* d2dWindowStep1() {
     wcex.hIcon = LoadIcon(NULL, IDI_APPLICATION);  // 默认图标
     wcex.hIconSm = LoadIcon(NULL, IDI_APPLICATION);  // 小图标
 
+    int result = RegisterClassEx(&wcex);
+    if(result == 0) return 1;
+    return 0;
+}
+
+hwndHolder* windowStep2() {
+    HINSTANCE hInstance = GetModuleHandle(NULL);
     // 创建窗口
     HWND hwnd = CreateWindowEx(
         WS_EX_TOOLWINDOW | WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE,  // 扩展样式
@@ -171,24 +191,19 @@ hwndHolder* d2dWindowStep1() {
         NULL, NULL, hInstance, NULL  // 父窗口、菜单、实例句柄、附加参数
     );
     RegisterTouchWindow(hwnd, TWF_WANTPALM | TWF_FINETOUCH);
-
     return cvt(hwnd);
 }
 
-void d2dWindowStep2(hwndHolder*hwnd){
+void windowStep3(hwndHolder* hwnd){
     ShowWindow(cvt(hwnd), SW_SHOW);
     UpdateWindow(cvt(hwnd));
+
+    // 主消息循环
     MSG msg = { };
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
 }
-*/
-
-void d2dClear(d2dTargetHolder* target){
-    cvt(target)->Clear();
-}
-
 
 }

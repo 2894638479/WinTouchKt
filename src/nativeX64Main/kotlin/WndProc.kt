@@ -3,6 +3,7 @@ import kotlinx.cinterop.invoke
 import platform.windows.*
 import touch.mouseInput
 import touch.pointerInput
+import touch.toEvent
 
 const val WM_POINTERDOWN = 0x0246
 const val WM_POINTERUP = 0x0247
@@ -24,19 +25,19 @@ fun wndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
             drawScopeNullable?.resize()
         }
         WM_ERASEBKGND -> {  }
-        WM_POINTERDOWN -> pointerInput(wParam) { mainContainer.down(it) }
-        WM_POINTERUPDATE -> pointerInput(wParam) { mainContainer.move(it) }
-        WM_POINTERUP -> pointerInput(wParam) { mainContainer.up(it) }
+        WM_POINTERDOWN -> pointerInput(wParam) { mainContainer.down(it.toEvent()) }
+        WM_POINTERUPDATE -> pointerInput(wParam) { mainContainer.move(it.toEvent()) }
+        WM_POINTERUP -> pointerInput(wParam) { mainContainer.up(it.toEvent()) }
         WM_LBUTTONDOWN -> {
             SetCapture(hWnd)
-            mouseInput(lParam) { mainContainer.down(it) }
+            mouseInput(lParam) { mainContainer.down(it.toEvent()) }
         }
         WM_MOUSEMOVE -> mouseInput(lParam) {
-            mainContainer.move(it)
+            mainContainer.move(it.toEvent())
         }
         WM_LBUTTONUP -> {
             ReleaseCapture()
-            mouseInput(lParam) { mainContainer.up(it) }
+            mouseInput(lParam) { mainContainer.up(it.toEvent()) }
         }
         else -> return default()
     }

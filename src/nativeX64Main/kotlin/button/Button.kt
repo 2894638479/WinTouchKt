@@ -1,6 +1,5 @@
 package button
 
-import draw.Color
 import sendInput.KEYEVENT_DOWN
 import sendInput.KEYEVENT_UP
 import sendInput.sendAllKeyEvent
@@ -9,13 +8,11 @@ import sendInput.sendAllKeyEventFilter
 class Button(
     val name:String,
     val key:List<UByte>,
-    val rect:Rect,
-    override var textColor:Color? = null,
-    override var textColorPressed: Color? = null,
-    override var color:Color? = null,
-    override var colorPressed:Color? = null,
-    override var textSize:Byte? = null,
-):HasButtonConfigs {
+    val shape:Shape,
+    val style: ButtonStyle,
+    val stylePressed: ButtonStyle
+){
+    inline val currentStyle get() = if(pressed) stylePressed else style
     var count = 0u
         private set
     inline val pressed get() = count != 0u
@@ -39,4 +36,5 @@ class Button(
         count--
         invalidate(this)
     }
+    fun inArea(x:Float,y:Float) = shape.containPoint(x,y)
 }

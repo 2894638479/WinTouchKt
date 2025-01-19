@@ -71,10 +71,31 @@ void d2dFreeTextFormat(d2dTextFormatHolder*);
 void d2dBeginDraw(d2dTargetHolder* target);
 void d2dEndDraw(d2dTargetHolder* target);
 
-void d2dDrawRect(d2dTargetHolder* target,d2dSolidColorBrushHolder* brush,float l,float t,float r,float b);
+typedef struct{
+    d2dTargetHolder *target;
+    d2dSolidColorBrushHolder* brush;
+    float l;float t;float r;float b;
+}d2dDrawRectPara;
 
+void d2dDrawRect(d2dDrawRectPara* para,float outlineWidth);
+void d2dFillRect(d2dDrawRectPara* para);
+void d2dDrawText(d2dDrawRectPara* para,d2dTextFormatHolder* format,unsigned short* text);
+void d2dFillRoundedRect(d2dDrawRectPara* para,float rx,float ry);
+void d2dDrawRoundedRect(d2dDrawRectPara* para,float rx,float ry,float outlineWidth);
 
-void d2dDrawText(d2dTargetHolder* target,d2dSolidColorBrushHolder* brush,d2dTextFormatHolder* format,unsigned short* text,float l,float t,float r,float b);
+typedef struct{
+    d2dTargetHolder *target;
+    d2dSolidColorBrushHolder *brush;
+    float x;float y;float rx; float ry;
+}d2dDrawRoundPara;
+
+void d2dDrawRound(d2dDrawRoundPara*para,float outlineWidth);
+void d2dFillRound(d2dDrawRoundPara*para);
+
+typedef union{
+    d2dDrawRectPara rect;
+    d2dDrawRoundPara round;
+}d2dDrawParaBuffer;
 
 
 typedef struct {
@@ -86,6 +107,7 @@ Point d2dGetDpi(d2dTargetHolder* target);
 
 void d2dClear(d2dTargetHolder* target);
 
-// void d2dSetWndProc(long long (*func)(hwndHolder *, unsigned int, unsigned long long, long long));
-// hwndHolder* d2dWindowStep1();
-// void d2dWindowStep2(hwndHolder*hwnd);
+int windowStep1();
+hwndHolder* windowStep2();
+void windowStep3(hwndHolder* hwnd);
+void setWndProc(long long (*func)(hwndHolder *, unsigned int, unsigned long long, long long));

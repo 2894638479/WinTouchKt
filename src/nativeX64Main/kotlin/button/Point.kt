@@ -6,20 +6,11 @@ import libs.Clib.TouchInfo
 
 @Serializable
 class Point (
-    val x:Int,
-    val y:Int
-){
-    fun inRect(rect:Rect):Boolean = inRect(rect,x,y)
-}
+    val x:Float,
+    val y:Float
+)
 
-
-
-@OptIn(ExperimentalForeignApi::class)
-fun TouchInfo.inRect(rect:Rect) = inRect(rect,pointX,pointY)
-
-
-
-fun inRect(rect:Rect,x:Int,y:Int):Boolean = x > rect.left
+fun inRect(rect:Rect,x:Float,y:Float):Boolean = x > rect.left
         && y > rect.top
         && x < rect.right
         && y < rect.bottom

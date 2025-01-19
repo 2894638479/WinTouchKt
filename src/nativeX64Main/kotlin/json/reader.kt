@@ -1,4 +1,4 @@
-package file
+package json
 
 import container.Container
 import error.jsonDecodeError

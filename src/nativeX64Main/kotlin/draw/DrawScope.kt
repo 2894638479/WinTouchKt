@@ -1,9 +1,8 @@
 package draw
 
 import button.Button
-import error.brushCreateError
 import error.direct2dInitializeError
-import error.fontCreateError
+import error.infoBox
 import kotlinx.cinterop.*
 import libs.Clib.*
 import platform.windows.*
@@ -11,15 +10,20 @@ import platform.windows.*
 @OptIn(ExperimentalForeignApi::class)
 class DrawScope(
     private val hwnd:  CPointer<hwndHolder>?,
-    val iterateButtons: ((Button) -> Unit) -> Unit
 ) {
+    var iterateButtons: ((Button) -> Unit) -> Unit = {}
+        set(value)  {
+            field = value
+            value { invalidButtons += it }
+        }
     var alpha: UByte = 128u
-    init{
-        SetLayeredWindowAttributes(hwnd?.reinterpret(),0u,alpha, LWA_ALPHA.toUInt() or LWA_COLORKEY.toUInt())
-    }
+        set(value) {
+            field = value
+            SetLayeredWindowAttributes(hwnd?.reinterpret(),0u,value, LWA_ALPHA.toUInt() or LWA_COLORKEY.toUInt())
+        }
+    init{ alpha = 128u }
     var showStatus = true
         private set
-    private var allInvalid = true
     private val factory : CPointerVar<d2dFactoryHolder> = nativeHeap
         .alloc<CPointerVar<d2dFactoryHolder>> {
             if(d2dCreateFactory(ptr) != 0) direct2dInitializeError()
@@ -32,6 +36,10 @@ class DrawScope(
         .alloc<CPointerVar<d2dWriteFactoryHolder>> {
             if(d2dCreateWriteFactory(ptr) != 0) direct2dInitializeError()
         }
+    fun initStore(){
+        Store.target = target.value
+        Store.writeFactory = writeFactory.value
+    }
     private inline fun d2dDraw(block:()->Unit){
         d2dBeginDraw(target.value)
         block()
@@ -54,7 +62,7 @@ class DrawScope(
         iterateButtons { invalidButtons += it }
     }
 
-    private val invalidButtons = mutableSetOf<Button>().apply { iterateButtons{ add(it) } }
+    private val invalidButtons = mutableSetOf<Button>()
     fun invalidate(button: Button) {
         invalidButtons += button
         InvalidateRect(hwnd?.reinterpret(),null,1)
@@ -69,79 +77,19 @@ class DrawScope(
     }
     fun showButtons() {
         showStatus = true
-        allInvalid = true
     }
 
     private fun drawButton(button:Button){
-        val scaleX:Float
-        val scaleY:Float
-        d2dGetDpi(target.value).useContents {
-            scaleX = 96f/x
-            scaleY = 96f/y
+        button.apply {
+            shape.d2dDraw(target.value,currentStyle)
+            shape.d2dDrawText(target.value,currentStyle,name)
         }
-        val l = button.rect.left.toFloat() * scaleX
-        val t = button.rect.top.toFloat() * scaleY
-        val r = button.rect.right.toFloat() * scaleX
-        val b = button.rect.bottom.toFloat() * scaleY
-        d2dDrawRect(
-            target.value,
-            brush(button.rectC),
-            l,t,r,b
-        )
-//        d2dDrawText(
-//            target.value,
-//            brush(button.textC),
-//            font()
-//        )
-    }
-    private fun eraseButton(button:Button){
-        val l = button.rect.left.toFloat()
-        val t = button.rect.top.toFloat()
-        val r = button.rect.right.toFloat()
-        val b = button.rect.bottom.toFloat()
-        d2dDrawRect(
-            target.value,
-            brush(BLACK),
-            l,t,r,b
-        )
     }
 
-    private val brushes = mutableMapOf<Color,CValuesRef<d2dSolidColorBrushHolder>>()
-    private val fonts = mutableMapOf<Font,CValuesRef<d2dTextFormatHolder>>()
-    private fun font(key:Font) = fonts[key] ?: memScoped {
-        val font = nativeHeap.alloc<CPointerVar<d2dTextFormatHolder>>()
-        d2dCreateTextFormat(
-            writeFactory.value,
-            font.ptr,
-            key.family?.wcstr,
-            key.size,
-            key.weight,
-            key.style,
-            FONT_STRETCH_MEDIUM
-        )
-        val fontPtr = font.value ?: fontCreateError()
-        fonts[key] = fontPtr
-        fontPtr
-    }
-    private fun brush(key:Color) = brushes[key] ?: memScoped {
-        val brush = nativeHeap.alloc<CPointerVar<d2dSolidColorBrushHolder>>()
-        d2dCreateSolidColorBrush(
-            target.value,
-            brush.ptr,
-            key.r.toFloat() / 255f,
-            key.g.toFloat() / 255f,
-            key.b.toFloat() / 255f,
-            1f
-        )
-        val brushPtr = brush.value ?: brushCreateError()
-        brushes[key] = brushPtr
-        brushPtr
-    }
     fun destruct() {
         d2dFreeFactory(factory.value)
         d2dFreeTarget(target.value)
         d2dFreeWriteFactory(writeFactory.value)
-        for((_,it) in brushes) { d2dFreeSolidColorBrush(it) }
-        for((_,it) in fonts) { d2dFreeTextFormat(it) }
+        iterateButtons = {}
     }
 }

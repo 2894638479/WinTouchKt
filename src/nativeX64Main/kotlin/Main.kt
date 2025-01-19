@@ -1,8 +1,9 @@
 import container.Container
 import draw.DrawScope
+import draw.Store
 import error.*
-import file.readFile
-import file.toContainer
+import json.readFile
+import json.toContainer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
@@ -20,7 +21,7 @@ val mainContainer get() = mainContainerRaw!!
 
 @OptIn(ExperimentalForeignApi::class)
 fun main(){
-    PrepareForUIAccess()
+//    PrepareForUIAccess()
     val argc = platform.posix.__argc
     val argv = platform.posix.__argv
     Main(Array(argc - 1){ i ->
@@ -34,16 +35,24 @@ fun main(){
 
 @OptIn(ExperimentalForeignApi::class)
 fun Main(args: Array<String>) {
-    processArgs(args)
+    val result = processArgs(args)
+    result.sleepTime.let { if(it > 0u) Sleep(it) }
     window { hwnd ->
-        drawScopeRaw = DrawScope(hwnd,mainContainer::forEachButton)
+        drawScopeRaw = DrawScope(hwnd)
+        drawScope.initStore()
+        mainContainerRaw = result.jsonStr.toContainer()
+        drawScope.iterateButtons = mainContainer::forEachButton
         mainContainer.invalidate = drawScope::invalidate
         drawScope.alpha = mainContainer.alpha
-        println("initialized")
     }
 }
 
-fun processArgs(args:Array<String>){
+class ArgParseResult(
+    val jsonStr:String,
+    val sleepTime:UInt
+)
+
+fun processArgs(args:Array<String>):ArgParseResult{
     var jsonCont:String? = null
     var argTask:((String)->Unit)? = null
     var sleepTime = 0u
@@ -75,6 +84,5 @@ fun processArgs(args:Array<String>){
             }
         }
     }
-    mainContainerRaw = jsonCont?.toContainer() ?: noProfileError()
-    if(sleepTime != 0u) Sleep(sleepTime)
+    return ArgParseResult(jsonCont ?: noProfileError(),sleepTime)
 }

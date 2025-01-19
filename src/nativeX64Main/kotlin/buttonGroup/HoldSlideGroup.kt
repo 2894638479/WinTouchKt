@@ -5,7 +5,7 @@ import button.Point
 import error.holdIndexError
 import error.nullPtrError
 import kotlinx.cinterop.ExperimentalForeignApi
-import libs.Clib.TouchInfo
+import touch.TouchReceiver
 
 @OptIn(ExperimentalForeignApi::class)
 class HoldSlideGroup(
@@ -17,9 +17,9 @@ class HoldSlideGroup(
         if(holdIndex !in buttons.indices) holdIndexError(holdIndex)
     }
     private inline val holdButton get() = buttons[holdIndex]
-    override fun dispatchMoveEvent(info: TouchInfo, invalidate: (Button) -> Unit) {
-        val btns = pointers[info.id] ?: nullPtrError()
-        firstOrNull(info.pointX,info.pointY)?.apply {
+    override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {
+        val btns = pointers[event.id] ?: nullPtrError()
+        firstOrNull(event.x, event.y)?.apply {
             if(btns[0] == holdButton){
                 if(this != holdButton) {
                     if (btns.size == 1) {

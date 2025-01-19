@@ -1,31 +1,20 @@
 package container
 
 import button.Button
-import button.HasButtonConfigs
 import buttonGroup.Group
-import draw.Color
 import error.emptyContainerError
 import kotlinx.cinterop.ExperimentalForeignApi
-import libs.Clib.TouchInfo
 import touch.TouchReceiver
 
 @OptIn(ExperimentalForeignApi::class)
 class Container(
     val groups:List<Group>,
     val alpha:UByte = 128u,
-    override var textColor:Color? = null,
-    override var textColorPressed: Color? = null,
-    override var color:Color? = null,
-    override var colorPressed:Color? = null,
-    override var textSize:Byte? = null
-):TouchReceiver,HasButtonConfigs{
+):TouchReceiver{
     init {
         if(groups.isEmpty()) emptyContainerError()
-        groups.forEach {
-            it.copyConfig(this)
-        }
     }
-    override fun down(info: TouchInfo):Boolean {
+    override fun down(info: TouchReceiver.TouchEvent):Boolean {
         groups.firstOrNull{
             it.dispatchDownEvent(info,invalidate)
         }?.let {
@@ -35,7 +24,7 @@ class Container(
         return false
     }
 
-    override fun up(info: TouchInfo):Boolean {
+    override fun up(info: TouchReceiver.TouchEvent):Boolean {
         activePointers[info.id]?.let{
             it.dispatchUpEvent(info,invalidate)
             activePointers.remove(info.id)
@@ -43,7 +32,7 @@ class Container(
         return true
     }
 
-    override fun move(info: TouchInfo):Boolean {
+    override fun move(info: TouchReceiver.TouchEvent):Boolean {
         activePointers[info.id]?.dispatchMoveEvent(info,invalidate) ?: return false
         return true
     }

@@ -3,20 +3,20 @@ package buttonGroup
 import button.Button
 import button.Point
 import kotlinx.cinterop.ExperimentalForeignApi
-import libs.Clib.TouchInfo
+import touch.TouchReceiver
 
 @OptIn(ExperimentalForeignApi::class)
 class HoldGroup(
     buttons: List<Button>,
     offset: Point,
 ) : Group(buttons,offset) {
-    override fun dispatchMoveEvent(info: TouchInfo, invalidate: (Button) -> Unit) {}
-    override fun dispatchDownEvent(info: TouchInfo, invalidate: (Button) -> Unit): Boolean {
-        firstOrNull(info.pointX,info.pointY)?.run{
+    override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}
+    override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean {
+        firstOrNull(event.x, event.y)?.run{
             if(pressed) up(invalidate)
             else down(invalidate)
             return true
         } ?: return false
     }
-    override fun dispatchUpEvent(info: TouchInfo, invalidate: (Button) -> Unit) {}
+    override fun dispatchUpEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}
 }
