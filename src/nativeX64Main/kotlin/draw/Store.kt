@@ -2,7 +2,6 @@ package draw
 
 import error.brushCreateError
 import error.fontCreateError
-import error.infoBox
 import error.nullPtrError
 import kotlinx.cinterop.*
 import libs.Clib.*
@@ -16,11 +15,14 @@ object Store {
     fun font(key:Font) = fonts[key] ?: memScoped {
         val font = nativeHeap.alloc<CPointerVar<d2dTextFormatHolder>>()
         val family = key.family ?: ""
+        val dpiScale = d2dGetDpi(target).useContents {
+            192f / (x + y)
+        }
         d2dCreateTextFormat(
             writeFactory ?: nullPtrError(),
             font.ptr,
             family.wcstr,
-            key.size,
+            key.size * dpiScale,
             key.weight,
             key.style,
             FONT_STRETCH_MEDIUM

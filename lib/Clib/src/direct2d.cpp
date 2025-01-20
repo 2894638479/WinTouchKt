@@ -73,7 +73,7 @@ HRESULT d2dCreateTextFormat(
     enum FONT_STYLE style,
     enum FONT_STRETCH strech
 ){
-    return cvt(factory)->CreateTextFormat(
+    const auto code = cvt(factory)->CreateTextFormat(
         (wchar_t*)fontFamily,
         NULL,
         (DWRITE_FONT_WEIGHT)weight,
@@ -83,6 +83,11 @@ HRESULT d2dCreateTextFormat(
         L"zh-CN",
         cvt(format)
     );
+    if(code == 0){
+        cvt(*format)->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+        cvt(*format)->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    }
+    return code;
 }
 
 void d2dFreeFactory(d2dFactoryHolder* p){
