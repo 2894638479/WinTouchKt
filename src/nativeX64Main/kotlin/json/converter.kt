@@ -26,9 +26,22 @@ fun ColorJson.toColor():Color{
 }
 
 fun PointJson.toPoint() = Point(x,y)
-fun RectJson.toRect(outlineWidth: Float) = Rect(left, top, right, bottom, outlineWidth)
+fun RectJson.toRect(outlineWidth: Float) = Rect(
+    x - 0.5f * w,
+    y - 0.5f * h,
+    x + 0.5f * w,
+    y + 0.5f * h,
+    outlineWidth
+)
 fun RoundJson.toRound(outlineWidth: Float) = Round(x, y, r, outlineWidth)
-fun RoundedRectJson.toRoundedRect(outlineWidth: Float) = RoundedRect(left, top, right, bottom, r, outlineWidth)
+fun RoundedRectJson.toRoundedRect(outlineWidth: Float) = RoundedRect(
+    x - 0.5f * w,
+    y - 0.5f * h,
+    x + 0.5f * w,
+    y + 0.5f * h,
+    r,
+    outlineWidth
+)
 
 fun ButtonStyleJson.toButtonStyle(pressed:Boolean, scale:Float) = ButtonStyle(
     pressed,

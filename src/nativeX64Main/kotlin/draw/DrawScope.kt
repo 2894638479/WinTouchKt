@@ -2,6 +2,7 @@ package draw
 
 import button.Button
 import error.direct2dInitializeError
+import error.infoBox
 import kotlinx.cinterop.*
 import libs.Clib.*
 import platform.windows.InvalidateRect
@@ -49,9 +50,14 @@ class DrawScope(
         block()
         d2dEndDraw(target.value)
     }
+    private var clear = false
     fun onDraw() {
-        if(invalidButtons.isNotEmpty()) {
+        if(invalidButtons.isNotEmpty() || clear) {
             d2dDraw {
+                if(clear) {
+                    clear = false
+                    d2dClear(target.value)
+                }
                 invalidButtons.forEach {
                     drawButton(it)
                 }
@@ -62,24 +68,23 @@ class DrawScope(
 
     fun resize() {
         d2dResizeRenderTarget(target.value,hwnd)
-        iterateButtons { invalidButtons += it }
+        iterateButtons { invalidate(it) }
     }
 
-    private val invalidButtons = mutableSetOf<Button>()
+    private val invalidButtons = mutableListOf<Button>()
     fun invalidate(button: Button) {
         invalidButtons += button
         InvalidateRect(hwnd?.reinterpret(),null,1)
     }
 
     fun hideButtons(controller: Button) {
-        iterateButtons {
-            if(it != controller) {
-                invalidate(it)
-            }
-        }
+        showStatus = false
+        clear = true
+        invalidate(controller)
     }
     fun showButtons() {
         showStatus = true
+        iterateButtons {invalidate(it)}
     }
 
     private fun drawButton(button:Button){
