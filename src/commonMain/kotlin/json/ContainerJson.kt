@@ -8,5 +8,6 @@ class ContainerJson(
     val scale:Float = 1f,
     val groups:List<GroupJson> = emptyList(),
     val style: ButtonStyleJson? = null,
-    val stylePressed: ButtonStyleJson? = null
+    val stylePressed: ButtonStyleJson? = null,
+    val outlineWidth:Float? = null
 )

@@ -11,5 +11,5 @@ data class ButtonJson(
     val key:List<UByte>,
     val style: ButtonStyleJson? = null,
     val stylePressed: ButtonStyleJson? = null,
-    val outlineWidth:Float = 0f
+    val outlineWidth:Float? = null
 )

@@ -6,6 +6,5 @@ import kotlinx.serialization.Serializable
 class RoundJson(
     val x:Float,
     val y:Float,
-    val r:Float,
-    val outlineWidth:Float = 0f
+    val r:Float
 )

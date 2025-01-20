@@ -13,4 +13,5 @@ data class GroupJson(
     val holdIndex:Int = 0,
     val style: ButtonStyleJson? = null,
     val stylePressed: ButtonStyleJson? = null,
+    val outlineWidth:Float? = null
 )
