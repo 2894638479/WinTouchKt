@@ -1,7 +1,7 @@
 plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20-Beta1"
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
 }
 
