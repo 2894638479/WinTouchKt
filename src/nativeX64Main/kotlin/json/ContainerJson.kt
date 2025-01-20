@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 class ContainerJson(
     val alpha:UByte = 128u,
+    val scale:Float = 1f,
     val groups:List<GroupJson> = emptyList(),
     val style: ButtonStyleJson? = null,
     val stylePressed: ButtonStyleJson? = null
@@ -20,7 +21,7 @@ class ContainerJson(
         val style = style?.setDefault(style) ?: ButtonStyleJson()
         val stylePressed = stylePressed?.setDefault(stylePressed) ?: ButtonStyleJson()
         return Container(
-            groups.map { it.toGroup(style, stylePressed) },
+            groups.map { it.toGroup(style, stylePressed,scale) },
             alpha
         )
     }

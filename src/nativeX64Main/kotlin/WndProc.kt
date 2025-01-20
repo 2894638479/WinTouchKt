@@ -16,10 +16,10 @@ fun wndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
         WM_CREATE -> {
             SetWindowLongPtr!!(hWnd, GWL_STYLE, (WS_POPUP or WS_VISIBLE.toUInt()).toLong())
             SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_SHOWWINDOW.toUInt())
-            InvalidateRect(hWnd,null,TRUE)
         }
         WM_PAINT -> {
-            drawScope.onDraw()
+            drawScopeNullable?.onDraw()
+            ValidateRect(hWnd,null)
         }
         WM_SIZE -> {
             drawScopeNullable?.resize()
@@ -39,7 +39,9 @@ fun wndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
             ReleaseCapture()
             mouseInput(lParam) { mainContainer.up(it.toEvent()) }
         }
-        else -> return default()
+        else -> {
+            return default()
+        }
     }
     return 0
 }

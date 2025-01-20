@@ -1,6 +1,7 @@
 package json
 
 import container.Container
+import error.infoBox
 import error.jsonDecodeError
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cstr

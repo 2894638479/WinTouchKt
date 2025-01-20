@@ -2,6 +2,7 @@ package json
 
 import button.*
 import error.errorBox
+import error.infoBox
 import error.nullPtrError
 import kotlinx.serialization.Serializable
 
@@ -15,7 +16,7 @@ data class ButtonJson(
     val style: ButtonStyleJson? = null,
     val stylePressed:ButtonStyleJson? = null
 ){
-    fun toButton(style: ButtonStyleJson, stylePressed: ButtonStyleJson):Button{
+    fun toButton(style: ButtonStyleJson, stylePressed: ButtonStyleJson,offset:Point, scale:Float):Button{
         var shapeCount = 0
         rect?.let { shapeCount++ }
         round?.let { shapeCount++ }
@@ -25,9 +26,9 @@ data class ButtonJson(
         return Button(
             name,
             key,
-            shape,
-            (this.style?.setDefault(style) ?: style).toButtonStyle(false),
-            (this.stylePressed?.setDefault(stylePressed) ?: stylePressed).toButtonStyle(true)
+            shape.offset(offset).rescaled(scale),
+            (this.style?.setDefault(style) ?: style).toButtonStyle(false,scale),
+            (this.stylePressed?.setDefault(stylePressed) ?: stylePressed).toButtonStyle(true,scale)
         )
     }
 }

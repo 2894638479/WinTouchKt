@@ -2,6 +2,7 @@ package draw
 
 import error.brushCreateError
 import error.fontCreateError
+import error.infoBox
 import error.nullPtrError
 import kotlinx.cinterop.*
 import libs.Clib.*
@@ -14,23 +15,17 @@ object Store {
     var target: CValuesRef<d2dTargetHolder>? = null
     fun font(key:Font) = fonts[key] ?: memScoped {
         val font = nativeHeap.alloc<CPointerVar<d2dTextFormatHolder>>()
+        val family = key.family ?: ""
         d2dCreateTextFormat(
-//            writeFactory ?: nullPtrError(),
-//            font.ptr,
-//            key.family?.wcstr,
-//            key.size,
-//            key.weight,
-//            key.style,
-//            FONT_STRETCH_MEDIUM
-                    writeFactory ?: nullPtrError(),
-            null,
-            "Jetbrians Mono".wcstr.ptr,
-            24f,
-            500u,
-            FONT_STYLE.FONT_STYLE_NORMAL,
+            writeFactory ?: nullPtrError(),
+            font.ptr,
+            family.wcstr,
+            key.size,
+            key.weight,
+            key.style,
             FONT_STRETCH_MEDIUM
-        )
-        val fontPtr = font.value ?: fontCreateError()
+        ).let { if(it != 0) fontCreateError(family) }
+        val fontPtr = font.value ?: fontCreateError(family)
         fonts[key] = fontPtr
         fontPtr
     }

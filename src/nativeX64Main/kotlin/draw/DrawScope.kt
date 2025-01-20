@@ -2,10 +2,12 @@ package draw
 
 import button.Button
 import error.direct2dInitializeError
-import error.infoBox
 import kotlinx.cinterop.*
 import libs.Clib.*
-import platform.windows.*
+import platform.windows.InvalidateRect
+import platform.windows.LWA_ALPHA
+import platform.windows.LWA_COLORKEY
+import platform.windows.SetLayeredWindowAttributes
 
 @OptIn(ExperimentalForeignApi::class)
 class DrawScope(
@@ -31,6 +33,8 @@ class DrawScope(
     private val target :CPointerVar<d2dTargetHolder> = nativeHeap
         .alloc<CPointerVar<d2dTargetHolder>> {
             if(d2dCreateTarget(factory.value,ptr,hwnd?.reinterpret()) != 0) direct2dInitializeError()
+            //关闭抗锯齿，避免边缘带线
+            d2dSetAntialiasMode(value,false)
         }
     private val writeFactory:CPointerVar<d2dWriteFactoryHolder> = nativeHeap
         .alloc<CPointerVar<d2dWriteFactoryHolder>> {
@@ -54,7 +58,6 @@ class DrawScope(
                 invalidButtons.clear()
             }
         }
-        ValidateRect(hwnd?.reinterpret(),null)
     }
 
     fun resize() {
@@ -82,7 +85,8 @@ class DrawScope(
     private fun drawButton(button:Button){
         button.apply {
             shape.d2dDraw(target.value,currentStyle)
-            shape.d2dDrawText(target.value,currentStyle,name)
+            if(name.isNotEmpty())
+                shape.d2dDrawText(target.value,currentStyle,name)
         }
     }
 

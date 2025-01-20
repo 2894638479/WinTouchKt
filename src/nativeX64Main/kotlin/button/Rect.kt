@@ -1,9 +1,11 @@
 package button
 
 import draw.paramBuffer
+import draw.rescaleDpi
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.useContents
 import kotlinx.serialization.Serializable
 import libs.Clib.*
 import kotlin.math.max
@@ -53,6 +55,7 @@ class Rect(
             b = bottom
             this.target = target
             brush = config.brush
+            rescaleDpi(target)
         }.ptr)
         if(config.outlineWidth > 0f){
             d2dDrawRect(paramBuffer.rect.apply {
@@ -60,6 +63,25 @@ class Rect(
             }.ptr,config.outlineWidth)
         }
     }
+
+    override fun rescaled(scale: Float): Shape {
+        return Rect(
+            left*scale,
+            top*scale,
+            right*scale,
+            bottom*scale
+        )
+    }
+
+    override fun offset(offset: Point): Shape {
+        return Rect(
+            left + offset.x,
+            top + offset.y,
+            right + offset.x,
+            bottom + offset.y
+        )
+    }
+
     override val innerRect: Rect get() = this
     override val outerRect: Rect get() = this
 }

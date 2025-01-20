@@ -1,6 +1,5 @@
 import container.Container
 import draw.DrawScope
-import draw.Store
 import error.*
 import json.readFile
 import json.toContainer
@@ -21,7 +20,6 @@ val mainContainer get() = mainContainerRaw!!
 
 @OptIn(ExperimentalForeignApi::class)
 fun main(){
-//    PrepareForUIAccess()
     val argc = platform.posix.__argc
     val argv = platform.posix.__argv
     Main(Array(argc - 1){ i ->
@@ -34,13 +32,13 @@ fun main(){
 }
 
 @OptIn(ExperimentalForeignApi::class)
-fun Main(args: Array<String>) {
-    val result = processArgs(args)
-    result.sleepTime.let { if(it > 0u) Sleep(it) }
+fun Main(args: Array<String>) = processArgs(args).apply {
+    if(uiAccess) PrepareForUIAccess()
+    if(sleepTime > 0u) Sleep(sleepTime)
     window { hwnd ->
         drawScopeRaw = DrawScope(hwnd)
         drawScope.initStore()
-        mainContainerRaw = result.jsonStr.toContainer()
+        mainContainerRaw = jsonStr.toContainer()
         drawScope.iterateButtons = mainContainer::forEachButton
         mainContainer.invalidate = drawScope::invalidate
         drawScope.alpha = mainContainer.alpha
@@ -49,13 +47,15 @@ fun Main(args: Array<String>) {
 
 class ArgParseResult(
     val jsonStr:String,
-    val sleepTime:UInt
+    val sleepTime:UInt,
+    val uiAccess:Boolean
 )
 
 fun processArgs(args:Array<String>):ArgParseResult{
     var jsonCont:String? = null
     var argTask:((String)->Unit)? = null
     var sleepTime = 0u
+    var uiAccess = true
     args.forEachIndexed { index, arg ->
         argTask?.let {
             it(arg)
@@ -74,6 +74,7 @@ fun processArgs(args:Array<String>):ArgParseResult{
                 "-d" -> argTask = {
                     jsonCont = it
                 }
+                "-u" -> uiAccess = false
                 else -> unknownArgError(arg)
             }
         } else {
@@ -84,5 +85,5 @@ fun processArgs(args:Array<String>):ArgParseResult{
             }
         }
     }
-    return ArgParseResult(jsonCont ?: noProfileError(),sleepTime)
+    return ArgParseResult(jsonCont ?: noProfileError(),sleepTime,uiAccess)
 }

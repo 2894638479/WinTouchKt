@@ -10,7 +10,6 @@ import touch.TouchReceiver
 @ExperimentalForeignApi
 abstract class Group(
     val buttons: List<Button>,
-    private val offset: Point,
 ){
     init {
         if(buttons.isEmpty()) emptyGroupError()

@@ -1,3 +1,4 @@
+#include <d2d1.h>
 #include <d2d1helper.h>
 #include <dcommon.h>
 #include <dwrite.h>
@@ -80,7 +81,7 @@ HRESULT d2dCreateTextFormat(
         (DWRITE_FONT_STRETCH)strech,
         fontSize,
         L"zh-CN",
-        (IDWriteTextFormat **)format
+        cvt(format)
     );
 }
 
@@ -118,7 +119,9 @@ void d2dFillRect(d2dDrawRectPara* para){
 }
 
 void d2dFillRoundedRect(d2dDrawRectPara* para,float rx,float ry){
+    cvt(para->target)->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
     cvt(para->target)->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(para->l,para->t,para->r,para->b), rx, ry),cvt(para->brush));
+    cvt(para->target)->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 }
 void d2dDrawRoundedRect(d2dDrawRectPara* para,float rx,float ry,float outlineWidth){
     cvt(para->target)->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(para->l,para->t,para->r,para->b), rx, ry),cvt(para->brush),outlineWidth);
@@ -132,12 +135,30 @@ void d2dFillRound(d2dDrawRoundPara*para){
 }
 void d2dDrawText(d2dDrawRectPara* para,d2dTextFormatHolder* format,unsigned short* text){
     cvt(para->target)->DrawText(
-        (wchar_t*)text,                    // 要绘制的文字
-        wcslen((wchar_t*)text),            // 文字长度
-        cvt(format),             // 文字格式
-        D2D1::RectF(para->l,para->t,para->r,para->b),  // 绘制区域
-        cvt(para->brush)                  // 文字颜色
+        (wchar_t*)text,
+        wcslen((wchar_t*)text),
+        cvt(format),
+        D2D1::RectF(para->l,para->t,para->r,para->b),
+        cvt(para->brush)
     );
+}
+
+D2D1_ANTIALIAS_MODE antialiasMode(bool enable){
+    if(enable) return D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
+    return D2D1_ANTIALIAS_MODE_ALIASED;
+}
+
+void d2dPushClip(d2dDrawRectPara* para,bool antialias){
+    auto clipRect = D2D1::Rect(para->l, para->t, para->r, para->b);
+    cvt(para->target)->PushAxisAlignedClip(clipRect, antialiasMode(antialias));
+}
+
+void d2dPopClip(d2dTargetHolder* target){
+    cvt(target)->PopAxisAlignedClip();
+}
+
+void d2dSetAntialiasMode(d2dTargetHolder* target,bool enable){
+    cvt(target)->SetAntialiasMode(antialiasMode(enable));
 }
 
 Point d2dGetDpi(d2dTargetHolder* target){
@@ -148,62 +169,6 @@ Point d2dGetDpi(d2dTargetHolder* target){
 
 void d2dClear(d2dTargetHolder* target){
     cvt(target)->Clear();
-}
-long long (*WindowProc)(hwndHolder *, unsigned int, unsigned long long, long long) = nullptr;
-
-void setWndProc(long long (*func)(hwndHolder *, unsigned int, unsigned long long, long long)){
-    WindowProc = func;
-}
-
-long long WndProc(HWND__ * p0, unsigned int p1, unsigned long long p2, long long p3){
-    return WindowProc(cvt(p0),p1,p2,p3);
-}
-
-int windowStep1() {
-    // 创建窗口
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-
-    // 设置 WNDCLASSEX 结构体
-    WNDCLASSEX wcex = {};
-    wcex.cbSize = sizeof(WNDCLASSEX);
-    wcex.lpfnWndProc = WndProc;  // 窗口过程
-    wcex.hInstance = hInstance;
-    wcex.lpszClassName = "SampleWindowClass";  // 窗口类名
-    wcex.hCursor = LoadCursor(NULL, IDC_ARROW);  // 默认光标
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);  // 背景色
-    wcex.hIcon = LoadIcon(NULL, IDI_APPLICATION);  // 默认图标
-    wcex.hIconSm = LoadIcon(NULL, IDI_APPLICATION);  // 小图标
-
-    int result = RegisterClassEx(&wcex);
-    if(result == 0) return 1;
-    return 0;
-}
-
-hwndHolder* windowStep2() {
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    // 创建窗口
-    HWND hwnd = CreateWindowEx(
-        WS_EX_TOOLWINDOW | WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_NOACTIVATE,  // 扩展样式
-        "SampleWindowClass",  // 使用已注册的窗口类
-        "Sample Window",  // 窗口标题
-        WS_OVERLAPPEDWINDOW,  // 窗口样式
-        CW_USEDEFAULT, CW_USEDEFAULT, 500, 500,  // 窗口尺寸
-        NULL, NULL, hInstance, NULL  // 父窗口、菜单、实例句柄、附加参数
-    );
-    RegisterTouchWindow(hwnd, TWF_WANTPALM | TWF_FINETOUCH);
-    return cvt(hwnd);
-}
-
-void windowStep3(hwndHolder* hwnd){
-    ShowWindow(cvt(hwnd), SW_SHOW);
-    UpdateWindow(cvt(hwnd));
-
-    // 主消息循环
-    MSG msg = { };
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
 }
 
 }

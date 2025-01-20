@@ -105,9 +105,9 @@ fun fontStyleError(cur:String,list:Set<String>):Nothing = errorBox(
     "unknown font style: $cur, available: $list"
 )
 
-fun fontCreateError():Nothing = errorBox(
-    "字体创建失败",
-    "font create error"
+fun fontCreateError(fontFamilyName:String):Nothing = errorBox(
+    "字体创建失败：可能是因为名为 $fontFamilyName 的字体不存在",
+    "font create error: didn't found font family named $fontFamilyName"
 )
 
 fun brushCreateError():Nothing = errorBox(
@@ -127,6 +127,7 @@ fun argumentUsageInfo() = infoBox(
             "参数：\n" +
             "\t-s <延迟启动时间（毫秒）>\n" +
             "\t-d <json内容>\n" +
+            "\t-u 关闭uiAccess\n" +
             "\t-h 显示帮助"
     ,
     "usage:\n" +
@@ -135,6 +136,7 @@ fun argumentUsageInfo() = infoBox(
             "options:\n" +
             "\t-s <delay time(ms)>\n" +
             "\t-d <json content>\n" +
+            "\t-u close uiAccess\n" +
             "\t-h show help window"
 )
 

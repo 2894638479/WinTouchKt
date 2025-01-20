@@ -8,8 +8,7 @@ import touch.TouchReceiver
 @ExperimentalForeignApi
 open class NormalGroup(
     buttons: List<Button>,
-    offset: Point,
-) : Group(buttons,offset) {
+) : Group(buttons) {
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}
     override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean {
         firstOrNull(event.x, event.y)?.run{

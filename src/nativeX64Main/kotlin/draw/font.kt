@@ -12,9 +12,9 @@ data class Font(
     val style:FONT_STYLE,
     val weight:UShort
 ){
-    constructor(family: String?,size: Float?,style: String?,weight: Int?):this(
+    constructor(family: String?,size: Float?,style: String?,weight: Int?,scale:Float):this(
         family,
-        size ?: 24f,
+        (size ?: 24f)*scale,
         style?.let {
             styles[it] ?: fontStyleError(it, styles.keys)
         } ?: FONT_STYLE.FONT_STYLE_NORMAL,

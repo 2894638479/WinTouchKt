@@ -15,8 +15,9 @@ data class ButtonStyleJson(
     val fontStyle:String? = null,
     val fontWeight:Int? = null,
 ){
-    fun toButtonStyle(pressed:Boolean) = ButtonStyle(
+    fun toButtonStyle(pressed:Boolean,scale:Float) = ButtonStyle(
         pressed,
+        scale,
         color,
         textColor,
         outlineColor,

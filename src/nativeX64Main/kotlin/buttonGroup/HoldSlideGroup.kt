@@ -10,9 +10,8 @@ import touch.TouchReceiver
 @OptIn(ExperimentalForeignApi::class)
 class HoldSlideGroup(
     buttons: List<Button>,
-    offset: Point,
     private val holdIndex: Int
-) : NormalGroup(buttons,offset){
+) : NormalGroup(buttons){
     init {
         if(holdIndex !in buttons.indices) holdIndexError(holdIndex)
     }

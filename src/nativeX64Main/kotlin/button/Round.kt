@@ -29,12 +29,29 @@ class Round(
             ry = r
             this.target = target
             brush = config.brush
-        }.rescaleDpi(target).ptr)
+            rescaleDpi(target)
+        }.ptr)
         if(config.outlineWidth > 0f){
             d2dDrawRound(paramBuffer.round.apply {
                 brush = config.brushOutline
             }.ptr,config.outlineWidth)
         }
+    }
+
+    override fun rescaled(scale: Float): Shape {
+        return Round(
+            x*scale,
+            y*scale,
+            r*scale
+        )
+    }
+
+    override fun offset(offset: Point): Shape {
+        return Round(
+            x + offset.x,
+            y + offset.y,
+            r
+        )
     }
 
     override val innerRect: Rect get() {

@@ -9,7 +9,7 @@ import touch.TouchReceiver
 @OptIn(ExperimentalForeignApi::class)
 class Container(
     val groups:List<Group>,
-    val alpha:UByte = 128u,
+    val alpha:UByte
 ):TouchReceiver{
     init {
         if(groups.isEmpty()) emptyContainerError()

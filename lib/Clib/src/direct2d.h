@@ -103,11 +103,13 @@ typedef struct {
     float y;
 } Point;
 
+#include <stdbool.h>
+
+void d2dPushClip(d2dDrawRectPara* para,bool antialias);
+void d2dPopClip(d2dTargetHolder* target);
+void d2dSetAntialiasMode(d2dTargetHolder* target,bool enable);
+
+
 Point d2dGetDpi(d2dTargetHolder* target);
 
 void d2dClear(d2dTargetHolder* target);
-
-int windowStep1();
-hwndHolder* windowStep2();
-void windowStep3(hwndHolder* hwnd);
-void setWndProc(long long (*func)(hwndHolder *, unsigned int, unsigned long long, long long));

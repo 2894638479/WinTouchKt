@@ -1,12 +1,15 @@
 package button
 
 import draw.paramBuffer
+import draw.rescaleDpi
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.useContents
 import kotlinx.serialization.Serializable
 import libs.Clib.d2dDrawRoundedRect
 import libs.Clib.d2dFillRoundedRect
+import libs.Clib.d2dGetDpi
 import libs.Clib.d2dTargetHolder
 
 @Serializable
@@ -40,6 +43,7 @@ class RoundedRect(
 
     @OptIn(ExperimentalForeignApi::class)
     override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
+        val R = rescaledR(target)
         d2dFillRoundedRect(paramBuffer.rect.apply {
             l = left
             t = top
@@ -47,7 +51,8 @@ class RoundedRect(
             b = bottom
             this.target = target
             brush = config.brush
-        }.ptr,r,r)
+            rescaleDpi(target)
+        }.ptr,R.first,R.second)
         if(config.outlineWidth > 0f){
             d2dDrawRoundedRect(paramBuffer.rect.apply {
                 brush = config.brushOutline
@@ -55,6 +60,25 @@ class RoundedRect(
         }
     }
 
+    override fun rescaled(scale: Float): Shape {
+        return RoundedRect(
+            left*scale,
+            top*scale,
+            right*scale,
+            bottom*scale,
+            r*scale
+        )
+    }
+
+    override fun offset(offset: Point): Shape {
+        return RoundedRect(
+            left + offset.x,
+            top + offset.y,
+            right + offset.x,
+            bottom + offset.y,
+            r
+        )
+    }
     override val innerRect: Rect get() {
         val r1 = r * 0.29289323f
         return Rect(
@@ -66,5 +90,13 @@ class RoundedRect(
     }
     override val outerRect: Rect
         get() = Rect(left, top, right, bottom)
+    @OptIn(ExperimentalForeignApi::class)
+    fun rescaledR(target: CPointer<d2dTargetHolder>?):Pair<Float,Float>{
+        d2dGetDpi(target).useContents {
+            val scaleX = 96f/x
+            val scaleY = 96f/y
+            return r*scaleX to r*scaleY
+        }
+    }
 
 }
