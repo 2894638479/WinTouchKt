@@ -1,31 +1,18 @@
 package json
 
-import button.ButtonStyle
-import draw.Color
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ButtonStyleJson(
-    val color: Color? = null,
-    val textColor: Color? = null,
-    val outlineColor: Color? = null,
+    val color: ColorJson? = null,
+    val textColor: ColorJson? = null,
+    val outlineColor: ColorJson? = null,
     val fontFamily:String? = null,
     val fontSize:Float? = null,
     val fontStyle:String? = null,
     val fontWeight:Int? = null,
 ){
-    fun toButtonStyle(pressed:Boolean,scale:Float) = ButtonStyle(
-        pressed,
-        scale,
-        color,
-        textColor,
-        outlineColor,
-        fontFamily,
-        fontSize,
-        fontStyle,
-        fontWeight
-    )
-    fun setDefault(default:ButtonStyleJson) = ButtonStyleJson(
+    fun setDefault(default: ButtonStyleJson) = ButtonStyleJson(
         color ?: default.color,
         textColor ?: default.textColor,
         outlineColor ?: default.outlineColor,

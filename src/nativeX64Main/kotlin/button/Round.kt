@@ -13,7 +13,7 @@ class Round(
     val x:Float,
     val y:Float,
     val r:Float,
-    override val outlineWidth: Float = 0f
+    override val outlineWidth: Float
 ):Shape{
     override fun containPoint(x: Float, y: Float): Boolean {
         val dx = (x - this.x)

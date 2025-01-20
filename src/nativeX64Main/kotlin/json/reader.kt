@@ -1,7 +1,6 @@
 package json
 
 import container.Container
-import error.infoBox
 import error.jsonDecodeError
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cstr
@@ -19,7 +18,7 @@ fun readFile(filePath: String):String? {
 }
 
 fun String.toContainer():Container{
-    val cj:ContainerJson
+    val cj: ContainerJson
     try {
         cj = Json.decodeFromString<ContainerJson>(this)
     } catch (e:Exception) {

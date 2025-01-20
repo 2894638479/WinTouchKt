@@ -31,13 +31,12 @@ class MutableRect(
     fun toRect():Rect = Rect(left, top, right, bottom,0f)
 }
 
-@Serializable
 class Rect(
     val left:Float,
     val top:Float,
     val right:Float,
     val bottom:Float,
-    override val outlineWidth: Float = 0f
+    override val outlineWidth: Float
 ):Shape{
     fun toMutableRect():MutableRect = MutableRect(left, top, right, bottom)
     override fun containPoint(x: Float, y: Float): Boolean {

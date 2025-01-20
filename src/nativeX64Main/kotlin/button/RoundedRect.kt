@@ -19,7 +19,7 @@ class RoundedRect(
     val right:Float,
     val bottom:Float,
     val r:Float,
-    override val outlineWidth: Float = 0f
+    override val outlineWidth: Float
 ):Shape {
     override fun containPoint(x: Float, y: Float): Boolean {
         if(x > left && x < right && y > top && y < bottom) {
