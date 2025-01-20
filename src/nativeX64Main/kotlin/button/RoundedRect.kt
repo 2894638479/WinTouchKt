@@ -18,7 +18,8 @@ class RoundedRect(
     val top:Float,
     val right:Float,
     val bottom:Float,
-    val r:Float
+    val r:Float,
+    override val outlineWidth: Float = 0f
 ):Shape {
     override fun containPoint(x: Float, y: Float): Boolean {
         if(x > left && x < right && y > top && y < bottom) {
@@ -43,6 +44,20 @@ class RoundedRect(
 
     @OptIn(ExperimentalForeignApi::class)
     override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
+        if(outlineWidth <= 0f) return
+        val R = rescaledR(target)
+        d2dDrawRoundedRect(paramBuffer.rect.apply {
+            l = left
+            t = top
+            r = right
+            b = bottom
+            this.target = target
+            brush = config.brushOutline
+            rescaleDpi(target)
+        }.ptr,R.first,R.second,outlineWidth)
+    }
+    @OptIn(ExperimentalForeignApi::class)
+    override fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
         val R = rescaledR(target)
         d2dFillRoundedRect(paramBuffer.rect.apply {
             l = left
@@ -53,11 +68,6 @@ class RoundedRect(
             brush = config.brush
             rescaleDpi(target)
         }.ptr,R.first,R.second)
-        if(config.outlineWidth > 0f){
-            d2dDrawRoundedRect(paramBuffer.rect.apply {
-                brush = config.brushOutline
-            }.ptr,r,r,config.outlineWidth)
-        }
     }
 
     override fun rescaled(scale: Float): Shape {
@@ -66,7 +76,8 @@ class RoundedRect(
             top*scale,
             right*scale,
             bottom*scale,
-            r*scale
+            r*scale,
+            outlineWidth
         )
     }
 
@@ -76,20 +87,22 @@ class RoundedRect(
             top + offset.y,
             right + offset.x,
             bottom + offset.y,
-            r
+            r,
+            outlineWidth
         )
     }
     override val innerRect: Rect get() {
-        val r1 = r * 0.29289323f
+        val r1 = r * 0.29289323f + outlineWidth * 0.5f
         return Rect(
-            left + r1
-            , top + r1
-            , right - r1
-            , bottom - r1
+            left + r1,
+            top + r1,
+            right - r1,
+            bottom - r1,
+            0f
         )
     }
     override val outerRect: Rect
-        get() = Rect(left, top, right, bottom)
+        get() = Rect(left, top, right, bottom,0f)
     @OptIn(ExperimentalForeignApi::class)
     fun rescaledR(target: CPointer<d2dTargetHolder>?):Pair<Float,Float>{
         d2dGetDpi(target).useContents {
@@ -98,5 +111,4 @@ class RoundedRect(
             return r*scaleX to r*scaleY
         }
     }
-
 }

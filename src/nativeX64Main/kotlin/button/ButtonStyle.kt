@@ -12,7 +12,6 @@ class ButtonStyle(
     color: Color?,
     textColor: Color?,
     outlineColor: Color?,
-    outlineWidth: Float?,
     fontFamily:String?,
     fontSize:Float?,
     fontStyle:String?,
@@ -22,5 +21,4 @@ class ButtonStyle(
     val brushText = Store.brush(textColor ?: RED)
     val brush = Store.brush(color ?: if(pressed) GREY_BRIGHT else GREY_DARK)
     val brushOutline = Store.brush(outlineColor ?: WHITE)
-    val outlineWidth = outlineWidth?.let { if(it>0) it else 0f } ?: 0f
 }

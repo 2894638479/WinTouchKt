@@ -10,7 +10,7 @@ class Button(
     val key:List<UByte>,
     val shape:Shape,
     val style: ButtonStyle,
-    val stylePressed: ButtonStyle
+    val stylePressed: ButtonStyle,
 ){
     inline val currentStyle get() = if(pressed) stylePressed else style
     var count = 0u

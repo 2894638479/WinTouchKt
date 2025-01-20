@@ -13,6 +13,7 @@ class Round(
     val x:Float,
     val y:Float,
     val r:Float,
+    override val outlineWidth: Float = 0f
 ):Shape{
     override fun containPoint(x: Float, y: Float): Boolean {
         val dx = (x - this.x)
@@ -22,6 +23,19 @@ class Round(
 
     @OptIn(ExperimentalForeignApi::class)
     override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
+        if(outlineWidth <= 0) return
+        d2dDrawRound(paramBuffer.round.apply {
+            x = this@Round.x
+            y = this@Round.y
+            rx = r
+            ry = r
+            this.target = target
+            brush = config.brushOutline
+            rescaleDpi(target)
+        }.ptr,outlineWidth)
+    }
+    @OptIn(ExperimentalForeignApi::class)
+    override fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
         d2dFillRound(paramBuffer.round.apply {
             x = this@Round.x
             y = this@Round.y
@@ -31,18 +45,14 @@ class Round(
             brush = config.brush
             rescaleDpi(target)
         }.ptr)
-        if(config.outlineWidth > 0f){
-            d2dDrawRound(paramBuffer.round.apply {
-                brush = config.brushOutline
-            }.ptr,config.outlineWidth)
-        }
     }
 
     override fun rescaled(scale: Float): Shape {
         return Round(
             x*scale,
             y*scale,
-            r*scale
+            r*scale,
+            outlineWidth
         )
     }
 
@@ -50,17 +60,21 @@ class Round(
         return Round(
             x + offset.x,
             y + offset.y,
-            r
+            r,
+            outlineWidth
         )
     }
 
     override val innerRect: Rect get() {
-        val r = r * 0.70710677f
+        val r = (r * 0.70710677f - outlineWidth * 0.5f).let{
+            if(it > 0f) it else 0f
+        }
         return Rect(
             left = x - r,
             top = y - r,
             right = x + r,
-            bottom = y + r
+            bottom = y + r,
+            0f
         )
     }
 
@@ -69,7 +83,8 @@ class Round(
             left = x - r,
             top = y - r,
             right = x + r,
-            bottom = y + r
+            bottom = y + r,
+            0f
         )
     }
 }

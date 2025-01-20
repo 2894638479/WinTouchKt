@@ -109,8 +109,6 @@ void d2dEndDraw(d2dTargetHolder* target){
     cvt(target)->EndDraw();
 }
 
-
-
 void d2dDrawRect(d2dDrawRectPara* para,float outlineWidth){
     cvt(para->target)->DrawRectangle(D2D1::RectF(para->l,para->t,para->r,para->b),cvt(para->brush),outlineWidth);
 }

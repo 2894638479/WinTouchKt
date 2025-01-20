@@ -12,9 +12,12 @@ import libs.Clib.d2dTargetHolder
 
 
 interface Shape {
+    val outlineWidth:Float
     fun containPoint(x: Float, y: Float):Boolean
     @OptIn(ExperimentalForeignApi::class)
     fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle)
+    @OptIn(ExperimentalForeignApi::class)
+    fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle)
     @OptIn(ExperimentalForeignApi::class)
     fun d2dDrawText(target: CPointer<d2dTargetHolder>?, config: ButtonStyle, string: String){
         val par = paramBuffer.rect.apply {

@@ -14,7 +14,8 @@ data class ButtonJson(
     val roundedRect:RoundedRect? = null,
     val key:List<UByte>,
     val style: ButtonStyleJson? = null,
-    val stylePressed:ButtonStyleJson? = null
+    val stylePressed:ButtonStyleJson? = null,
+    val outlineWidth:Float = 0f
 ){
     fun toButton(style: ButtonStyleJson, stylePressed: ButtonStyleJson,offset:Point, scale:Float):Button{
         var shapeCount = 0

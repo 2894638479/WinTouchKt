@@ -5,7 +5,6 @@ import draw.rescaleDpi
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.useContents
 import kotlinx.serialization.Serializable
 import libs.Clib.*
 import kotlin.math.max
@@ -29,7 +28,7 @@ class MutableRect(
         right += point.x
         bottom += point.y
     }
-    fun toRect():Rect = Rect(left, top, right, bottom)
+    fun toRect():Rect = Rect(left, top, right, bottom,0f)
 }
 
 @Serializable
@@ -37,7 +36,8 @@ class Rect(
     val left:Float,
     val top:Float,
     val right:Float,
-    val bottom:Float
+    val bottom:Float,
+    override val outlineWidth: Float = 0f
 ):Shape{
     fun toMutableRect():MutableRect = MutableRect(left, top, right, bottom)
     override fun containPoint(x: Float, y: Float): Boolean {
@@ -48,6 +48,19 @@ class Rect(
     }
     @OptIn(ExperimentalForeignApi::class)
     override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
+        if(outlineWidth <= 0f) return
+        d2dDrawRect(paramBuffer.rect.apply {
+            l = left
+            t = top
+            r = right
+            b = bottom
+            this.target = target
+            brush = config.brushOutline
+            rescaleDpi(target)
+        }.ptr,outlineWidth)
+    }
+    @OptIn(ExperimentalForeignApi::class)
+    override fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
         d2dFillRect(paramBuffer.rect.apply {
             l = left
             t = top
@@ -57,11 +70,6 @@ class Rect(
             brush = config.brush
             rescaleDpi(target)
         }.ptr)
-        if(config.outlineWidth > 0f){
-            d2dDrawRect(paramBuffer.rect.apply {
-                brush = config.brushOutline
-            }.ptr,config.outlineWidth)
-        }
     }
 
     override fun rescaled(scale: Float): Shape {
@@ -69,7 +77,8 @@ class Rect(
             left*scale,
             top*scale,
             right*scale,
-            bottom*scale
+            bottom*scale,
+            outlineWidth
         )
     }
 
@@ -78,10 +87,21 @@ class Rect(
             left + offset.x,
             top + offset.y,
             right + offset.x,
-            bottom + offset.y
+            bottom + offset.y,
+            outlineWidth
         )
     }
 
-    override val innerRect: Rect get() = this
+    override val innerRect: Rect get() {
+        if(outlineWidth == 0f) return this
+        val width = outlineWidth * 0.5f
+        return Rect(
+            left + width,
+            top + width,
+            right - width,
+            bottom - width,
+            0f
+        )
+    }
     override val outerRect: Rect get() = this
 }

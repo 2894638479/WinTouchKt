@@ -84,9 +84,12 @@ class DrawScope(
 
     private fun drawButton(button:Button){
         button.apply {
-            shape.d2dDraw(target.value,currentStyle)
+            val target = target.value
+            val style = currentStyle
+            shape.d2dFill(target, style)
             if(name.isNotEmpty())
-                shape.d2dDrawText(target.value,currentStyle,name)
+                shape.d2dDrawText(target,style,name)
+            shape.d2dDraw(target, style)
         }
     }
 
