@@ -1,11 +1,9 @@
 package button
 
 import draw.paramBuffer
-import draw.rescaleDpi
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ptr
-import kotlinx.serialization.Serializable
 import libs.Clib.*
 import kotlin.math.max
 import kotlin.math.min
@@ -55,7 +53,6 @@ class Rect(
             b = bottom
             this.target = target
             brush = config.brushOutline
-            rescaleDpi(target)
         }.ptr,outlineWidth)
     }
     @OptIn(ExperimentalForeignApi::class)
@@ -67,7 +64,6 @@ class Rect(
             b = bottom
             this.target = target
             brush = config.brush
-            rescaleDpi(target)
         }.ptr)
     }
 

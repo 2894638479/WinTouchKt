@@ -1,7 +1,6 @@
 package button
 
 import draw.paramBuffer
-import draw.rescaleDpi
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ptr
@@ -53,7 +52,6 @@ class RoundedRect(
             b = bottom
             this.target = target
             brush = config.brushOutline
-            rescaleDpi(target)
         }.ptr,R.first,R.second,outlineWidth)
     }
     @OptIn(ExperimentalForeignApi::class)
@@ -66,7 +64,6 @@ class RoundedRect(
             b = bottom
             this.target = target
             brush = config.brush
-            rescaleDpi(target)
         }.ptr,R.first,R.second)
     }
 

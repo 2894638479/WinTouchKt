@@ -15,14 +15,11 @@ object Store {
     fun font(key:Font) = fonts[key] ?: memScoped {
         val font = nativeHeap.alloc<CPointerVar<d2dTextFormatHolder>>()
         val family = key.family ?: ""
-        val dpiScale = d2dGetDpi(target).useContents {
-            192f / (x + y)
-        }
         d2dCreateTextFormat(
             writeFactory ?: nullPtrError(),
             font.ptr,
             family.wcstr,
-            key.size * dpiScale,
+            key.size,
             key.weight,
             key.style,
             FONT_STRETCH_MEDIUM

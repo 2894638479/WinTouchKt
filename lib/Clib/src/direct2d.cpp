@@ -42,6 +42,7 @@ HRESULT d2dCreateTarget(d2dFactoryHolder* factory, d2dTargetHolder** target, hwn
         cvt(target)
     );
     if(FAILED(hr)) return hr;
+    cvt(*target)->SetDpi(96,96);
     d2dResizeRenderTarget(*target, hwnd);
     return S_OK;
 }

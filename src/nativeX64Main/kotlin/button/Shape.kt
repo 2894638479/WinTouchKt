@@ -1,7 +1,6 @@
 package button
 
 import draw.paramBuffer
-import draw.rescaleDpi
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ptr
@@ -29,7 +28,6 @@ interface Shape {
             r = rect.right
             b = rect.bottom
             brush = config.brushText
-            rescaleDpi(target)
         }.ptr
         d2dPushClip(par,true)
         libs.Clib.d2dDrawText(par,config.font,string.wcstr)

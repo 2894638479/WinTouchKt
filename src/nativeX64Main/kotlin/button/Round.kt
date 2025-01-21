@@ -1,12 +1,13 @@
 package button
 
 import draw.paramBuffer
-import draw.rescaleDpi
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ptr
 import kotlinx.serialization.Serializable
-import libs.Clib.*
+import libs.Clib.d2dDrawRound
+import libs.Clib.d2dFillRound
+import libs.Clib.d2dTargetHolder
 
 @Serializable
 class Round(
@@ -31,7 +32,6 @@ class Round(
             ry = r
             this.target = target
             brush = config.brushOutline
-            rescaleDpi(target)
         }.ptr,outlineWidth)
     }
     @OptIn(ExperimentalForeignApi::class)
@@ -43,7 +43,6 @@ class Round(
             ry = r
             this.target = target
             brush = config.brush
-            rescaleDpi(target)
         }.ptr)
     }
 
