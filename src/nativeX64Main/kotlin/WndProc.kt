@@ -28,17 +28,17 @@ fun wndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
         WM_POINTERDOWN -> pointerInput(wParam) { mainContainer.down(it.toEvent()) }
         WM_POINTERUPDATE -> pointerInput(wParam) { mainContainer.move(it.toEvent()) }
         WM_POINTERUP -> pointerInput(wParam) { mainContainer.up(it.toEvent()) }
-        WM_LBUTTONDOWN -> {
-            SetCapture(hWnd)
-            mouseInput(lParam) { mainContainer.down(it.toEvent()) }
-        }
-        WM_MOUSEMOVE -> mouseInput(lParam) {
-            mainContainer.move(it.toEvent())
-        }
-        WM_LBUTTONUP -> {
-            ReleaseCapture()
-            mouseInput(lParam) { mainContainer.up(it.toEvent()) }
-        }
+//        WM_LBUTTONDOWN -> {
+//            SetCapture(hWnd)
+//            mouseInput(lParam) { mainContainer.down(it.toEvent()) }
+//        }
+//        WM_MOUSEMOVE -> mouseInput(lParam) {
+//            mainContainer.move(it.toEvent())
+//        }
+//        WM_LBUTTONUP -> {
+//            ReleaseCapture()
+//            mouseInput(lParam) { mainContainer.up(it.toEvent()) }
+//        }
         else -> {
             return default()
         }
