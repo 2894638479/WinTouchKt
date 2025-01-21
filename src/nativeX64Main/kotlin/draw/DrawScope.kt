@@ -71,7 +71,7 @@ class DrawScope(
         iterateButtons { invalidate(it) }
     }
 
-    private val invalidButtons = mutableListOf<Button>()
+    private val invalidButtons = mutableSetOf<Button>()
     fun invalidate(button: Button) {
         invalidButtons += button
         InvalidateRect(hwnd?.reinterpret(),null,1)

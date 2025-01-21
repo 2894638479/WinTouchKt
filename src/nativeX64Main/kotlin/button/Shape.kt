@@ -20,6 +20,7 @@ interface Shape {
     fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle)
     @OptIn(ExperimentalForeignApi::class)
     fun d2dDrawText(target: CPointer<d2dTargetHolder>?, config: ButtonStyle, string: String){
+        if(string.isBlank()) return
         val par = paramBuffer.rect.apply {
             this.target = target
             val rect = innerRect
