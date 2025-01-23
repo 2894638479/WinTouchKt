@@ -24,7 +24,6 @@ fun window(onInitialized:( CPointer<hwndHolder>?)->Unit):Unit = memScoped {
         lpszClassName = className.wcstr.ptr
         hIconSm = LoadIcon!!(null, IDI_APPLICATION)
     }
-    SetCursor(null)
     RegisterClassExW(wcex.ptr)
     val hwnd = CreateWindowExW(
         (WS_EX_TOOLWINDOW or WS_EX_LAYERED or WS_EX_NOACTIVATE or WS_EX_TOPMOST).toUInt(),

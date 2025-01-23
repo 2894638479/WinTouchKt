@@ -26,7 +26,10 @@ fun wndProc(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT {
         }
         WM_ERASEBKGND -> {  }
         WM_POINTERDOWN -> pointerInput(wParam) { mainContainer.down(it.toEvent()) }
-        WM_POINTERUPDATE -> pointerInput(wParam) { mainContainer.move(it.toEvent()) }
+        WM_POINTERUPDATE -> pointerInput(wParam) {
+            mainContainer.move(it.toEvent())
+            SetCursor(null)
+        }
         WM_POINTERUP -> pointerInput(wParam) { mainContainer.up(it.toEvent()) }
 //        WM_LBUTTONDOWN -> {
 //            SetCapture(hWnd)
