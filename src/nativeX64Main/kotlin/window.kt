@@ -18,12 +18,13 @@ fun window(onInitialized:( CPointer<hwndHolder>?)->Unit):Unit = memScoped {
         cbWndExtra = 0
         this.hInstance = hInstance
         hIcon = LoadIcon!!(null, IDI_APPLICATION)
-        hCursor = LoadCursor!!(null, IDC_ARROW)
+        hCursor = null
         hbrBackground = CreateSolidBrush(TRANSPARENT.toUInt())
         lpszMenuName = null
         lpszClassName = className.wcstr.ptr
         hIconSm = LoadIcon!!(null, IDI_APPLICATION)
     }
+    SetCursor(null)
     RegisterClassExW(wcex.ptr)
     val hwnd = CreateWindowExW(
         (WS_EX_TOOLWINDOW or WS_EX_LAYERED or WS_EX_NOACTIVATE or WS_EX_TOPMOST).toUInt(),
