@@ -16,6 +16,7 @@ open class MovePointGroup(
 ) : NormalGroup(buttons) {
     private var lastTouchPoint:Point? = null
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {
+        if(pointers[event.id] == null) return
         onMovePoint(sensitivity,lastTouchPoint ?: nullPtrError() , event)
         lastTouchPoint = Point(event.x, event.y)
     }

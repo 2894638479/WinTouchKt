@@ -104,6 +104,7 @@ fun GroupJson.toGroup(
         2 -> HoldSlideGroup(btns,holdIndex)
         3 -> HoldGroup(btns)
         4 -> HoldGroupDoubleClk(btns,ms)
+        7 -> TouchPadGroup(btns,sensitivity,ms)
         8 -> MouseGroup(btns,sensitivity)
         9 -> ScrollGroup(btns,sensitivity)
         else -> groupTypeError(type)

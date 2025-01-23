@@ -1,7 +1,6 @@
 package buttonGroup
 
 import button.Button
-import button.Point
 import error.nullPtrError
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.windows.GetTickCount64
@@ -12,7 +11,7 @@ class HoldGroupDoubleClk(
     buttons: List<Button>,
     private val ms: ULong
 ) : Group(buttons) {
-    private val lastClkTime = buttons.map { 0uL }.toULongArray()
+    private val lastUpTime = buttons.map { 0uL }.toULongArray()
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}
     override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean {
         firstOrNull(event.x, event.y)?.run{
@@ -27,10 +26,10 @@ class HoldGroupDoubleClk(
         val btn = pointers[event.id]?.get(0) ?: nullPtrError()
         pointers.remove(event.id)
         val index = buttons.indexOf(btn)
-        if(time - lastClkTime[index] > ms){
+        if(time - lastUpTime[index] > ms){
             if(btn.pressed) btn.up(invalidate)
             else btn.down(invalidate)
         }
-        lastClkTime[index] = time
+        lastUpTime[index] = time
     }
 }

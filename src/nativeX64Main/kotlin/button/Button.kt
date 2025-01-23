@@ -26,6 +26,14 @@ class Button(
         count--
         invalidate(this)
     }
+    fun downNoKey(invalidate:(Button)->Unit){
+        count++
+        invalidate(this)
+    }
+    fun upNoKey(invalidate: (Button) -> Unit){
+        count--
+        invalidate(this)
+    }
     fun slideDown(invalidate:(Button)->Unit,filter:(UByte)->Boolean){
         sendAllKeyEventFilter(KEYEVENT_DOWN,filter)
         count++
