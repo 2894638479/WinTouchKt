@@ -17,7 +17,7 @@ fun moveCursor(sensitivity:Float,before:Point,moved:TouchReceiver.TouchEvent) = 
     if(xMove == 0 && yMove == 0) return@memScoped
     sendInput {
         type = INPUT_MOUSE.toUInt()
-        mi.dwFlags = (MOUSEEVENTF_MOVE_NOCOALESCE or MOUSEEVENTF_MOVE).toUInt()
+        mi.dwFlags = (MOUSEEVENTF_MOVE).toUInt()
         mi.dx = xMove
         mi.dy = yMove
     }
