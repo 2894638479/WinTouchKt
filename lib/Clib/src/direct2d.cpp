@@ -123,9 +123,7 @@ void d2dFillRect(d2dDrawRectPara* para){
 }
 
 void d2dFillRoundedRect(d2dDrawRectPara* para,float rx,float ry){
-    cvt(para->target)->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
     cvt(para->target)->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(para->l,para->t,para->r,para->b), rx, ry),cvt(para->brush));
-    cvt(para->target)->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
 }
 void d2dDrawRoundedRect(d2dDrawRectPara* para,float rx,float ry,float outlineWidth){
     cvt(para->target)->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(para->l,para->t,para->r,para->b), rx, ry),cvt(para->brush),outlineWidth);
