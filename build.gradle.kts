@@ -10,13 +10,12 @@ repositories {
 
 kotlin {
     sourceSets{
-        commonMain{
+        nativeMain{
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
             }
         }
-        nativeMain
     }
     mingwX64("nativeX64"){
         compilations.getByName("main"){
@@ -30,7 +29,7 @@ kotlin {
         }
         binaries{
             executable(listOf(RELEASE)){
-                linkerOpts += "-mwindows"
+//                linkerOpts += "-mwindows"
             }
         }
         tasks.named("linkReleaseExecutableNativeX64"){

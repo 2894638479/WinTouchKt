@@ -63,7 +63,6 @@ Windows的最高置顶权限，保证能够位于绝大多数窗口之上（包�
 - **alpha**：全局不透明度，**0~255**（默认为128）
 - **scale**：全局缩放系数（默认为1）
 - 按钮的外观设置，可以作用于每一层
-- **outlineWidth**：边线宽度（默认为0）
   - **style**：未按下时的样式
   - **stylePressed**：按下后的样式
     - color：颜色
@@ -73,6 +72,7 @@ Windows的最高置顶权限，保证能够位于绝大多数窗口之上（包�
     - fontSize：字体大小（默认为24）
     - fontStyle：字体样式（normal,italic,oblique)，后两种都是斜体，默认为第一个。
     - fontWeight：字体粗细，必须在1~999之间整数，默认为500
+    - outlineWidth：边线宽度（默认为0）
 
 示例：
 ```json

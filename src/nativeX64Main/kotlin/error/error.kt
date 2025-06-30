@@ -4,7 +4,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.wcstr
+import platform.posix.exit
 import platform.windows.*
+import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalForeignApi::class)
 fun infoBox(infoCn:String,infoEn:String) = memScoped {
@@ -21,6 +23,7 @@ fun errorBox(error: String, e:Exception? = null,beforeExit:()->Unit = {}):Nothin
     if(e != null) str += ("\n\n" + e.message)
     MessageBox!!(null, str.wcstr.ptr, "WinTouchKt: error".wcstr.ptr, (MB_OK or MB_ICONERROR).toUInt())
     beforeExit()
+    exit(1)
     error(error)
 }
 

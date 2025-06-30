@@ -11,7 +11,6 @@ import libs.Clib.d2dTargetHolder
 
 
 interface Shape {
-    val outlineWidth:Float
     fun containPoint(x: Float, y: Float):Boolean
     @OptIn(ExperimentalForeignApi::class)
     fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle)
@@ -22,7 +21,7 @@ interface Shape {
         if(string.isBlank()) return
         val par = paramBuffer.rect.apply {
             this.target = target
-            val rect = innerRect
+            val rect = innerRect.padding(config.outlineWidth?.div(2) ?: 0f)
             l = rect.left
             t = rect.top
             r = rect.right

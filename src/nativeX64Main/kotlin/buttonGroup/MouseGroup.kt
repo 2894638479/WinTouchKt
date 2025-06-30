@@ -11,7 +11,7 @@ import touch.TouchReceiver
 @OptIn(ExperimentalForeignApi::class)
 open class MovePointGroup(
     buttons: List<Button>,
-    protected val sensitivity: Float,
+    val sensitivity: Float,
     private val onMovePoint:(Float,Point,TouchReceiver.TouchEvent) -> Unit
 ) : NormalGroup(buttons) {
     private var lastTouchPoint:Point? = null

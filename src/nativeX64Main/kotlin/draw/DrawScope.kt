@@ -1,8 +1,12 @@
 package draw
 
 import button.Button
+import button.ButtonStyle
+import button.ButtonStyle.Companion.default
+import button.ButtonStyle.Companion.defaultPressed
 import error.direct2dInitializeError
 import error.infoBox
+import error.nullPtrError
 import kotlinx.cinterop.*
 import libs.Clib.*
 import platform.windows.InvalidateRect
@@ -88,9 +92,9 @@ class DrawScope(
     }
 
     private fun drawButton(button:Button){
+        val target = target.value
         button.apply {
-            val target = target.value
-            val style = currentStyle
+            val style = findCorrectStyle()
             shape.d2dFill(target, style)
             if(name.isNotEmpty())
                 shape.d2dDrawText(target,style,name)

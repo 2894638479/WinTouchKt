@@ -10,7 +10,7 @@ import touch.TouchReceiver
 @OptIn(ExperimentalForeignApi::class)
 class HoldSlideGroup(
     buttons: List<Button>,
-    private val holdIndex: Int
+    val holdIndex: Int
 ) : NormalGroup(buttons){
     init {
         if(holdIndex !in buttons.indices) holdIndexError(holdIndex)

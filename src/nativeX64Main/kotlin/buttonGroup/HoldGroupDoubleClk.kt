@@ -9,7 +9,7 @@ import touch.TouchReceiver
 @OptIn(ExperimentalForeignApi::class)
 class HoldGroupDoubleClk(
     buttons: List<Button>,
-    private val ms: ULong
+    val ms: ULong
 ) : Group(buttons) {
     private val lastUpTime = buttons.map { 0uL }.toULongArray()
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}

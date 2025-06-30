@@ -17,12 +17,17 @@ fun readFile(filePath: String):String? {
     return str
 }
 
+private val json = Json {
+    prettyPrint = true
+    explicitNulls = false
+}
+
 fun String.toContainer():Container{
-    val cj: ContainerJson
+    val c: Container
     try {
-        cj = Json.decodeFromString<ContainerJson>(this)
+        c = json.decodeFromString<Container>(this)
     } catch (e:Exception) {
         jsonDecodeError(e)
     }
-    return cj.toContainer()
+    return c
 }

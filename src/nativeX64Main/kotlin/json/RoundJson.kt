@@ -1,12 +1,13 @@
 package json
 
+import button.Round
 import kotlinx.serialization.Serializable
 
 @Serializable
-class RoundedRectJson(
+class RoundJson(
     val x:Float,
     val y:Float,
-    val w:Float,
-    val h:Float,
     val r:Float
-)
+){
+    fun toRound() = Round(x, y, r)
+}

@@ -17,8 +17,8 @@ import touch.TouchReceiver
 @OptIn(ExperimentalForeignApi::class)
 class TouchPadGroup(
     buttons:List<Button>,
-    private val sensitivity:Float,
-    private val ms:ULong
+    val sensitivity:Float,
+    val ms:ULong
 ):Group(buttons) {
     private var lastTouchPoint : Point? = null
     private val lastDownTime = buttons.map { 0uL }.toULongArray()

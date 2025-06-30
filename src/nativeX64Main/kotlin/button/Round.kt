@@ -13,8 +13,7 @@ import libs.Clib.d2dTargetHolder
 class Round(
     val x:Float,
     val y:Float,
-    val r:Float,
-    override val outlineWidth: Float
+    val r:Float
 ):Shape{
     override fun containPoint(x: Float, y: Float): Boolean {
         val dx = (x - this.x)
@@ -24,7 +23,8 @@ class Round(
 
     @OptIn(ExperimentalForeignApi::class)
     override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
-        if(outlineWidth <= 0) return
+        val width = config.outlineWidth ?: return
+        if(width<= 0f) return
         d2dDrawRound(paramBuffer.round.apply {
             x = this@Round.x
             y = this@Round.y
@@ -32,7 +32,7 @@ class Round(
             ry = r
             this.target = target
             brush = config.brushOutline
-        }.ptr,outlineWidth)
+        }.ptr,width)
     }
     @OptIn(ExperimentalForeignApi::class)
     override fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
@@ -50,8 +50,7 @@ class Round(
         return Round(
             x*scale,
             y*scale,
-            r*scale,
-            outlineWidth
+            r*scale
         )
     }
 
@@ -59,21 +58,19 @@ class Round(
         return Round(
             x + offset.x,
             y + offset.y,
-            r,
-            outlineWidth
+            r
         )
     }
 
     override val innerRect: Rect get() {
-        val r = (r * 0.70710677f - outlineWidth * 0.5f).let{
+        val r = (r * 0.70710677f).let{
             if(it > 0f) it else 0f
         }
         return Rect(
             left = x - r,
             top = y - r,
             right = x + r,
-            bottom = y + r,
-            0f
+            bottom = y + r
         )
     }
 
@@ -82,8 +79,7 @@ class Round(
             left = x - r,
             top = y - r,
             right = x + r,
-            bottom = y + r,
-            0f
+            bottom = y + r
         )
     }
 }

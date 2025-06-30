@@ -10,7 +10,7 @@ import touch.TouchReceiver
 @OptIn(ExperimentalForeignApi::class)
 class SlideGroup(
     buttons: List<Button>,
-    private val slideCount: UInt
+    val slideCount: UInt
 ) : NormalGroup(buttons) {
     init {
         if (slideCount < 1u) slideCountError(slideCount)

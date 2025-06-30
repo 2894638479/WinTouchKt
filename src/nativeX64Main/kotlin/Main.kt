@@ -33,7 +33,7 @@ fun main(){
 
 @OptIn(ExperimentalForeignApi::class)
 fun Main(args: Array<String>) = processArgs(args).apply {
-    if(uiAccess) PrepareForUIAccess()
+//    if(uiAccess) PrepareForUIAccess()
     if(sleepTime > 0u) Sleep(sleepTime)
     window { hwnd ->
         drawScopeRaw = DrawScope(hwnd)

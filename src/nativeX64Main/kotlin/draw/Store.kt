@@ -8,27 +8,28 @@ import libs.Clib.*
 
 @OptIn(ExperimentalForeignApi::class)
 object Store {
-    private val brushes = mutableMapOf<Color, CPointer<d2dSolidColorBrushHolder>>()
-    private val fonts = mutableMapOf<Font, CPointer<d2dTextFormatHolder>>()
+    private val brushes = HashMap<Color, CPointer<d2dSolidColorBrushHolder>>(100)
+    private val fonts = HashMap<Font, CPointer<d2dTextFormatHolder>>(100)
     var writeFactory: CValuesRef<d2dWriteFactoryHolder>? = null
     var target: CValuesRef<d2dTargetHolder>? = null
-    fun font(key:Font) = fonts[key] ?: memScoped {
-        val font = nativeHeap.alloc<CPointerVar<d2dTextFormatHolder>>()
-        val family = key.family ?: ""
+    fun CPointer<d2dTextFormatHolder>.free() = d2dFreeTextFormat(this)
+    fun CPointer<d2dSolidColorBrushHolder>.free() = d2dFreeSolidColorBrush(this)
+    fun font(key:Font) = fonts[key] ?: createFont(key).apply { fonts[key] = this }
+    private fun createFont(font:Font) = memScoped {
+        val fontHolder = nativeHeap.alloc<CPointerVar<d2dTextFormatHolder>>()
         d2dCreateTextFormat(
             writeFactory ?: nullPtrError(),
-            font.ptr,
-            family.wcstr,
-            key.size,
-            key.weight,
-            key.style,
+            fontHolder.ptr,
+            font.family.wcstr,
+            font.size,
+            font.weight,
+            font.style,
             FONT_STRETCH_MEDIUM
-        ).let { if(it != 0) fontCreateError(family) }
-        val fontPtr = font.value ?: fontCreateError(family)
-        fonts[key] = fontPtr
-        fontPtr
+        ).let { if(it != 0) fontCreateError(font.family) }
+        fontHolder.value ?: fontCreateError(font.family)
     }
-    fun brush(key:Color) = brushes[key] ?: memScoped {
+    fun brush(key:Color) = brushes[key] ?: createBrush(key).apply { brushes[key] = this }
+    private fun createBrush(key:Color) = memScoped {
         val brush = nativeHeap.alloc<CPointerVar<d2dSolidColorBrushHolder>>()
         d2dCreateSolidColorBrush(
             target ?: nullPtrError(),
@@ -38,8 +39,6 @@ object Store {
             key.b.toFloat() / 255f,
             1f
         )
-        val brushPtr = brush.value ?: brushCreateError()
-        brushes[key] = brushPtr
-        brushPtr
+        brush.value ?: brushCreateError()
     }
 }

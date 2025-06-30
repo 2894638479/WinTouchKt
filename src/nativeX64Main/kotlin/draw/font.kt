@@ -7,14 +7,14 @@ import libs.Clib.FONT_STYLE
 
 @OptIn(ExperimentalForeignApi::class)
 data class Font(
-    val family:String?,
+    val family:String,
     val size:Float,
     val style:FONT_STYLE,
     val weight:UShort
 ){
-    constructor(family: String?,size: Float?,style: String?,weight: Int?,scale:Float):this(
-        family,
-        (size ?: 24f)*scale,
+    constructor(family: String?,size: Float?,style: String?,weight: Int?,scale:Float?):this(
+        family ?: "",
+        (size ?: 24f)*(scale ?: 1f),
         style?.let {
             styles[it] ?: fontStyleError(it, styles.keys)
         } ?: FONT_STYLE.FONT_STYLE_NORMAL,
