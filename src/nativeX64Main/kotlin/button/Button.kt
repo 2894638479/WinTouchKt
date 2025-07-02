@@ -1,13 +1,10 @@
 package button
 
-import button.ButtonStyle.Companion.default
-import button.ButtonStyle.Companion.defaultPressed
-import error.infoBox
+import container.Node
 import error.nullPtrError
 import json.RectJson
 import json.RoundJson
 import json.RoundedRectJson
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.SetSerializer
@@ -15,7 +12,6 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
-import mainContainer
 import sendInput.KEYEVENT_DOWN
 import sendInput.KEYEVENT_UP
 import sendInput.sendAllKeyEvent
@@ -23,33 +19,17 @@ import sendInput.sendAllKeyEventFilter
 
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
-    val name:String,
-    val key:Set<UByte>,
-    val shapeOrig:Shape,
-){
-    private var shapeActual:Shape? = null
-    fun setShapeActual(offset:Point?,scale:Float){
-        shapeActual = shapeOrig.run { if(offset == null) this else offset(offset) }.rescaled(scale)
-    }
-    val shape get() = shapeActual ?: nullPtrError()
-    var style: ButtonStyle? = null
-    var stylePressed: ButtonStyle? = null
+    var key:Set<UByte>,
+    shapeOrig:Shape,
+):Node(){
+    var shapeOrig = shapeOrig
+        set(value) { field = value.apply { cache.invalidate() } }
+    val shape get() = cache.shape ?: nullPtrError()
+    override fun calOuterRect() = shape.outerRect
+    override fun calCurrentShape() = cache.applyShape(shapeOrig)
     var count = 0u
         private set
     inline val pressed get() = count != 0u
-    fun findContainer() = mainContainer
-    @ExperimentalForeignApi
-    fun findGroup() = mainContainer.groups.find { it.buttons.contains(this) } ?: error("button not found group")
-    @OptIn(ExperimentalForeignApi::class)
-    fun findCorrectStyle():ButtonStyle{
-        val group = findGroup()
-        val container = findContainer()
-        val styleList:List<ButtonStyle?> = if(pressed) listOf(stylePressed,group.stylePressed,container.stylePressed, defaultPressed)
-        else listOf(style,group.style,container.style, default)
-        return styleList.filterNotNull().let {
-            it.firstOrNull()?.apply { parents = it.drop(1) } ?: nullPtrError()
-        }
-    }
     fun down(invalidate:(Button)->Unit){
         sendAllKeyEvent(KEYEVENT_DOWN)
         count++
@@ -124,18 +104,20 @@ class Button(
                 ?: roundJson?.toRound()
                 ?: nullPtrError()
             println("button2")
-            return Button(
-                name ?: error("button has no name"),key ?: error("button has no key"),shape
-            ).also { it.style = style;it.stylePressed = stylePressed;println("button3") }
+            return Button(key ?: error("button has no key"),shape).also {
+                it.style = style
+                it.stylePressed = stylePressed
+                it.name = name ?: error("button has no name")
+            }
         }
         override fun serialize(encoder: Encoder, value: Button) = value.run {
             encoder.encodeStructure(descriptor){
-                encodeStringElement(descriptor, 0,name)
+                name?.let { encodeStringElement(descriptor, 0, it) }
                 encodeSerializableElement(descriptor,1, SetSerializer(UByte.serializer()),key)
-                if(shapeOrig is Rect) encodeSerializableElement(descriptor,2,RectJson.serializer(),shapeOrig.run { RectJson(x,y,w,h) })
-                else if(shapeOrig is RoundedRect) encodeSerializableElement(descriptor,3,
-                    RoundedRectJson.serializer(),shapeOrig.run { RoundedRectJson(x,y,w,h,r) })
-                else if(shapeOrig is Round) encodeSerializableElement(descriptor,4,RoundJson.serializer(),shapeOrig.run { RoundJson(x,y,r) })
+                val s = shapeOrig
+                if(s is Rect) encodeSerializableElement(descriptor,2,RectJson.serializer(),s.run { RectJson(x,y,w,h) })
+                else if(s is RoundedRect) encodeSerializableElement(descriptor,3, RoundedRectJson.serializer(),s.run { RoundedRectJson(x,y,w,h,r) })
+                else if(s is Round) encodeSerializableElement(descriptor,4,RoundJson.serializer(),s.run { RoundJson(x,y,r) })
                 else error("shape type logic error")
                 style?.let { encodeSerializableElement(descriptor,5,ButtonStyle.serializer(),it) }
                 stylePressed?.let { encodeSerializableElement(descriptor,6,ButtonStyle.serializer(),it) }

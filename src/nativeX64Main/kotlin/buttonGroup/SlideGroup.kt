@@ -7,11 +7,10 @@ import error.slideCountError
 import kotlinx.cinterop.ExperimentalForeignApi
 import touch.TouchReceiver
 
-@OptIn(ExperimentalForeignApi::class)
 class SlideGroup(
-    buttons: List<Button>,
+    group: Group,
     val slideCount: UInt
-) : NormalGroup(buttons) {
+) : NormalGroup(group) {
     init {
         if (slideCount < 1u) slideCountError(slideCount)
     }

@@ -1,39 +1,17 @@
 package button
 
-import draw.paramBuffer
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.wcstr
-import libs.Clib.d2dPopClip
-import libs.Clib.d2dPushClip
-import libs.Clib.d2dTargetHolder
+import wrapper.D2dBrush
+import wrapper.D2dTarget
 
 
 interface Shape {
     fun containPoint(x: Float, y: Float):Boolean
-    @OptIn(ExperimentalForeignApi::class)
-    fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle)
-    @OptIn(ExperimentalForeignApi::class)
-    fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle)
-    @OptIn(ExperimentalForeignApi::class)
-    fun d2dDrawText(target: CPointer<d2dTargetHolder>?, config: ButtonStyle, string: String){
-        if(string.isBlank()) return
-        val par = paramBuffer.rect.apply {
-            this.target = target
-            val rect = innerRect.padding(config.outlineWidth?.div(2) ?: 0f)
-            l = rect.left
-            t = rect.top
-            r = rect.right
-            b = rect.bottom
-            brush = config.brushText
-        }.ptr
-        d2dPushClip(par,true)
-        libs.Clib.d2dDrawText(par,config.font,string.wcstr)
-        d2dPopClip(target)
-    }
+    fun d2dDraw(target: D2dTarget,brush: D2dBrush,width:Float)
+    fun d2dFill(target: D2dTarget,brush: D2dBrush)
     fun rescaled(scale:Float):Shape
     fun offset(offset: Point):Shape
+    fun padding(width:Float):Shape?
     val innerRect:Rect
     val outerRect:Rect
+    val isValid:Boolean
 }

@@ -7,11 +7,10 @@ import error.nullPtrError
 import kotlinx.cinterop.ExperimentalForeignApi
 import touch.TouchReceiver
 
-@OptIn(ExperimentalForeignApi::class)
 class HoldSlideGroup(
-    buttons: List<Button>,
+    group: Group,
     val holdIndex: Int
-) : NormalGroup(buttons){
+) : NormalGroup(group){
     init {
         if(holdIndex !in buttons.indices) holdIndexError(holdIndex)
     }

@@ -5,6 +5,8 @@ import button.Button.ButtonSerializer
 import button.ButtonStyle
 import button.Point
 import button.Rect
+import container.Node
+import container.NodeWithChild
 import error.groupTypeError
 import error.nullPtrError
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -17,54 +19,14 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
 import touch.TouchReceiver
 
-@ExperimentalForeignApi
 @Serializable(with = Group.GroupSerializer::class)
-abstract class Group(
-    val buttons: List<Button>,
-){
-    var style: ButtonStyle? = null
+class Group(
+    val buttons: MutableList<Button>,
+    createDispatcher:(Group)-> GroupTouchDispatcher
+): NodeWithChild<Button>() {
+    var touchDispatcher = createDispatcher(this)
         private set
-    var stylePressed: ButtonStyle? = null
-        private set
-    var offset:Point? = null
-        private set
-    var rect:Rect? = null
-        private set
-    fun updateScale(scale:Float){
-        buttons.forEach {
-            it.setShapeActual(offset,scale)
-        }
-        rect = buttons.getOrNull(0)?.run {
-            shape.outerRect.toMutableRect().apply {
-                buttons.forEach { this += it.shape.outerRect }
-            }.toRect()
-        }
-    }
-    protected val pointers = mutableMapOf<UInt,MutableList<Button>>()
-    abstract fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate:(Button)->Unit)
-    abstract fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate:(Button)->Unit):Boolean
-    open fun dispatchUpEvent(event: TouchReceiver.TouchEvent, invalidate:(Button)->Unit){
-        pointers[event.id]?.forEach { it.up(invalidate) } ?: nullPtrError()
-        pointers.remove(event.id)
-    }
-
-    protected inline fun firstOrNull(x: Float, y: Float):Button? {
-        if (rect?.containPoint(x,y) != true) return null
-        return buttons.firstOrNull { it.inArea(x,y) }
-    }
-    protected inline fun alreadyDown(button: Button,id: UInt):Boolean {
-        return pointers[id]?.contains(button) ?: false
-    }
-
-    protected inline fun slide(toUp:Button, toDown:Button, pressedButtons:MutableList<Button>, noinline invalidate: (Button) -> Unit){
-        toUp.slideUp(invalidate) { !toDown.key.contains(it) }
-        toDown.slideDown(invalidate) { !toUp.key.contains(it) }
-        pressedButtons.remove(toUp)
-        pressedButtons.add(toDown)
-    }
-    init {
-        println("cons 2")
-    }
+    override val children get() = buttons
 
     object GroupSerializer : KSerializer<Group> {
         override val descriptor = buildClassSerialDescriptor("Group"){
@@ -88,7 +50,6 @@ abstract class Group(
             var holdIndex:Int = 0
             var style: ButtonStyle? = null
             var stylePressed: ButtonStyle? = null
-            println("group1")
             decoder.decodeStructure(descriptor) {
                 while (true) {
                     when (val index = decodeElementIndex(descriptor)) {
@@ -106,20 +67,19 @@ abstract class Group(
                     }
                 }
             }
-            println("group1.5  $type ${buttons.size}")
-            val group: Group = when(type.toInt()){
-                0 -> NormalGroup(buttons)
-                1 -> SlideGroup(buttons, slideCount)
-                2 -> HoldSlideGroup(buttons, holdIndex)
-                3 -> HoldGroup(buttons)
-                4 -> HoldGroupDoubleClk(buttons, ms)
-                7 -> TouchPadGroup(buttons, sensitivity, ms)
-                8 -> MouseGroup(buttons, sensitivity)
-                9 -> ScrollGroup(buttons, sensitivity)
-                else -> groupTypeError(type)
-            }
-            println("group2")
-            return group.also {
+            return Group(buttons.toMutableList()){
+                when(type.toInt()){
+                    0 -> NormalGroup(it)
+                    1 -> SlideGroup(it, slideCount)
+                    2 -> HoldSlideGroup(it, holdIndex)
+                    3 -> HoldGroup(it)
+                    4 -> HoldGroupDoubleClk(it, ms)
+                    7 -> TouchPadGroup(it, sensitivity, ms)
+                    8 -> MouseGroup(it, sensitivity)
+                    9 -> ScrollGroup(it, sensitivity)
+                    else -> groupTypeError(type)
+                }
+            }.also {
                 it.offset = offset
                 it.style = style
                 it.stylePressed = stylePressed
@@ -131,31 +91,32 @@ abstract class Group(
                 encodeSerializableElement(descriptor,2, ListSerializer(Button.serializer()),buttons)
                 style?.let { encodeSerializableElement(ButtonSerializer.descriptor,7,ButtonStyle.serializer(),it) }
                 stylePressed?.let { encodeSerializableElement(ButtonSerializer.descriptor,8,ButtonStyle.serializer(),it) }
-                val type = when(this@run){
+                val td = touchDispatcher
+                val type = when(td){
                     is SlideGroup -> {
-                        encodeSerializableElement(descriptor, 4, UInt.serializer(), slideCount)
+                        encodeSerializableElement(descriptor, 4, UInt.serializer(), td.slideCount)
                         1
                     }
                     is HoldSlideGroup -> {
-                        encodeIntElement(descriptor, 6, holdIndex)
+                        encodeIntElement(descriptor, 6, td.holdIndex)
                         2
                     }
                     is HoldGroup -> 3
                     is HoldGroupDoubleClk -> {
-                        encodeSerializableElement(descriptor,5,ULong.serializer(),ms)
+                        encodeSerializableElement(descriptor,5,ULong.serializer(),td.ms)
                         4
                     }
                     is TouchPadGroup -> {
-                        encodeFloatElement(descriptor,3,sensitivity)
-                        encodeSerializableElement(descriptor,5,ULong.serializer(),ms)
+                        encodeFloatElement(descriptor,3,td.sensitivity)
+                        encodeSerializableElement(descriptor,5,ULong.serializer(),td.ms)
                         7
                     }
                     is MouseGroup -> {
-                        encodeFloatElement(descriptor,3,sensitivity)
+                        encodeFloatElement(descriptor,3,td.sensitivity)
                         8
                     }
                     is ScrollGroup -> {
-                        encodeFloatElement(descriptor,3,sensitivity)
+                        encodeFloatElement(descriptor,3,td.sensitivity)
                         9
                     }
                     is NormalGroup -> 0

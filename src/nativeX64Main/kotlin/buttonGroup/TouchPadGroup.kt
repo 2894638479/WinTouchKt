@@ -14,12 +14,11 @@ import platform.windows.GetTickCount64
 import sendInput.moveCursor
 import touch.TouchReceiver
 
-@OptIn(ExperimentalForeignApi::class)
 class TouchPadGroup(
-    buttons:List<Button>,
+    group: Group,
     val sensitivity:Float,
     val ms:ULong
-):Group(buttons) {
+):GroupTouchDispatcher(group) {
     private var lastTouchPoint : Point? = null
     private val lastDownTime = buttons.map { 0uL }.toULongArray()
     private val keyDownCount = buttons.map { 0u }.toUIntArray()

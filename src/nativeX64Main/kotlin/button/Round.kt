@@ -1,13 +1,12 @@
 package button
 
-import draw.paramBuffer
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.ptr
 import kotlinx.serialization.Serializable
-import libs.Clib.d2dDrawRound
-import libs.Clib.d2dFillRound
-import libs.Clib.d2dTargetHolder
+import wrapper.D2dBrush
+import wrapper.D2dTarget
+import wrapper.d2dDrawRound
+import wrapper.d2dFillRound
+import kotlin.math.pow
+import kotlin.math.withSign
 
 @Serializable
 class Round(
@@ -15,71 +14,16 @@ class Round(
     val y:Float,
     val r:Float
 ):Shape{
-    override fun containPoint(x: Float, y: Float): Boolean {
-        val dx = (x - this.x)
-        val dy = (y - this.y)
-        return dx*dx + dy*dy < r*r
-    }
-
-    @OptIn(ExperimentalForeignApi::class)
-    override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
-        val width = config.outlineWidth ?: return
-        if(width<= 0f) return
-        d2dDrawRound(paramBuffer.round.apply {
-            x = this@Round.x
-            y = this@Round.y
-            rx = r
-            ry = r
-            this.target = target
-            brush = config.brushOutline
-        }.ptr,width)
-    }
-    @OptIn(ExperimentalForeignApi::class)
-    override fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
-        d2dFillRound(paramBuffer.round.apply {
-            x = this@Round.x
-            y = this@Round.y
-            rx = r
-            ry = r
-            this.target = target
-            brush = config.brush
-        }.ptr)
-    }
-
-    override fun rescaled(scale: Float): Shape {
-        return Round(
-            x*scale,
-            y*scale,
-            r*scale
-        )
-    }
-
-    override fun offset(offset: Point): Shape {
-        return Round(
-            x + offset.x,
-            y + offset.y,
-            r
-        )
-    }
-
+    override fun containPoint(x: Float, y: Float) = (x - this.x).pow(2) + (y - this.y).pow(2) < r.pow(2).withSign(r)
+    override fun d2dDraw(target: D2dTarget, brush: D2dBrush, width: Float) = target.d2dDrawRound(brush,x,y,r,r,width)
+    override fun d2dFill(target: D2dTarget, brush: D2dBrush) = target.d2dFillRound(brush,x,y,r,r)
+    override fun rescaled(scale: Float) = Round(x*scale, y*scale, r*scale)
+    override fun offset(offset: Point) = Round(x + offset.x, y + offset.y, r)
     override val innerRect: Rect get() {
-        val r = (r * 0.70710677f).let{
-            if(it > 0f) it else 0f
-        }
-        return Rect(
-            left = x - r,
-            top = y - r,
-            right = x + r,
-            bottom = y + r
-        )
+        val r = r * 0.70710677f
+        return Rect(x - r,y - r,x + r,y + r)
     }
-
-    override val outerRect: Rect get() {
-        return Rect(
-            left = x - r,
-            top = y - r,
-            right = x + r,
-            bottom = y + r
-        )
-    }
+    override val outerRect: Rect get() = Rect( x - r,y - r, x + r,y + r)
+    override fun padding(width: Float) = Round(x, y, r - width)
+    override val isValid get() = r > 0
 }

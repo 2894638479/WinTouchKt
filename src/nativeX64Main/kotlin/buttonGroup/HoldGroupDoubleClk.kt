@@ -6,11 +6,10 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.windows.GetTickCount64
 import touch.TouchReceiver
 
-@OptIn(ExperimentalForeignApi::class)
 class HoldGroupDoubleClk(
-    buttons: List<Button>,
+    group:Group,
     val ms: ULong
-) : Group(buttons) {
+) : GroupTouchDispatcher(group) {
     private val lastUpTime = buttons.map { 0uL }.toULongArray()
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}
     override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean {

@@ -5,10 +5,9 @@ import button.Point
 import kotlinx.cinterop.ExperimentalForeignApi
 import touch.TouchReceiver
 
-@ExperimentalForeignApi
 open class NormalGroup(
-    buttons: List<Button>,
-) : Group(buttons) {
+    group: Group
+) : GroupTouchDispatcher(group) {
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}
     override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean {
         firstOrNull(event.x, event.y)?.run{

@@ -1,16 +1,9 @@
 package button
 
-import draw.paramBuffer
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.ptr
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.*
-import libs.Clib.*
+import wrapper.D2dBrush
+import wrapper.D2dTarget
+import wrapper.d2dDrawRect
+import wrapper.d2dFillRect
 import kotlin.math.max
 import kotlin.math.min
 
@@ -52,50 +45,23 @@ class Rect(
                 && x < right
                 && y < bottom
     }
-    @OptIn(ExperimentalForeignApi::class)
-    override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
-        val width = config.outlineWidth ?: return
-        if(width<= 0f) return
-        d2dDrawRect(paramBuffer.rect.apply {
-            l = left
-            t = top
-            r = right
-            b = bottom
-            this.target = target
-            brush = config.brushOutline
-        }.ptr,width)
-    }
-    @OptIn(ExperimentalForeignApi::class)
-    override fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
-        d2dFillRect(paramBuffer.rect.apply {
-            l = left
-            t = top
-            r = right
-            b = bottom
-            this.target = target
-            brush = config.brush
-        }.ptr)
-    }
+    override fun d2dDraw(target: D2dTarget, brush:D2dBrush,width:Float) = target.d2dDrawRect(brush,left,top,right,bottom,width)
+    override fun d2dFill(target: D2dTarget, brush: D2dBrush) = target.d2dFillRect(brush,left,top,right,bottom)
+    override fun rescaled(scale: Float) = Rect(
+        left*scale,
+        top*scale,
+        right*scale,
+        bottom*scale
+    )
 
-    override fun rescaled(scale: Float): Shape {
-        return Rect(
-            left*scale,
-            top*scale,
-            right*scale,
-            bottom*scale
-        )
-    }
-
-    override fun offset(offset: Point): Shape {
-        return Rect(
-            left + offset.x,
-            top + offset.y,
-            right + offset.x,
-            bottom + offset.y
-        )
-    }
-    fun padding(value:Float) = Rect(left + value, top + value, right - value, bottom - value)
-
+    override fun offset(offset: Point) = Rect(
+        left + offset.x,
+        top + offset.y,
+        right + offset.x,
+        bottom + offset.y
+    )
+    override fun padding(width:Float) = Rect(left + width, top + width, right - width, bottom - width)
     override val innerRect: Rect get() = this
     override val outerRect: Rect get() = this
+    override val isValid get() = left < right && top < bottom
 }

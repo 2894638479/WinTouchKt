@@ -7,6 +7,6 @@ class Point (
     val x:Float,
     val y:Float
 ){
-    fun isZero() = x==0f&&y==0f
-    fun scale(scale:Float) = Point(x*scale,y*scale)
+    operator fun plus(other:Point) = Point(x + other.x,y + other.y)
+    operator fun times(scale: Float) = Point(x*scale,y*scale)
 }

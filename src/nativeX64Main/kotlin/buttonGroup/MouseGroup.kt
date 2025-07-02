@@ -8,12 +8,11 @@ import sendInput.moveCursor
 import sendInput.scroll
 import touch.TouchReceiver
 
-@OptIn(ExperimentalForeignApi::class)
 open class MovePointGroup(
-    buttons: List<Button>,
+    group:Group,
     val sensitivity: Float,
     private val onMovePoint:(Float,Point,TouchReceiver.TouchEvent) -> Unit
-) : NormalGroup(buttons) {
+) : NormalGroup(group) {
     private var lastTouchPoint:Point? = null
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {
         if(pointers[event.id] == null) return
@@ -28,11 +27,11 @@ open class MovePointGroup(
 }
 
 class MouseGroup(
-    buttons: List<Button>,
+    group:Group,
     sensitivity: Float
-):MovePointGroup(buttons,sensitivity,::moveCursor)
+):MovePointGroup(group,sensitivity,::moveCursor)
 
 class ScrollGroup(
-    buttons: List<Button>,
+    group: Group,
     sensitivity: Float
-):MovePointGroup(buttons,sensitivity,::scroll)
+):MovePointGroup(group,sensitivity,::scroll)

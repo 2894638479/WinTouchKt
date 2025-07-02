@@ -4,11 +4,11 @@ import button.Button
 import button.Point
 import kotlinx.cinterop.ExperimentalForeignApi
 import touch.TouchReceiver
+import kotlin.native.ref.WeakReference
 
-@OptIn(ExperimentalForeignApi::class)
 class HoldGroup(
-    buttons: List<Button>,
-) : Group(buttons) {
+    group: Group
+) : GroupTouchDispatcher(group) {
     override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {}
     override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean {
         firstOrNull(event.x, event.y)?.run{

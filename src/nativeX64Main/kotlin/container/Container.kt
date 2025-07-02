@@ -5,7 +5,6 @@ import button.Button.ButtonSerializer
 import button.ButtonStyle
 import buttonGroup.Group
 import error.emptyContainerError
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -16,30 +15,11 @@ import kotlinx.serialization.encoding.*
 import touch.TouchReceiver
 
 @Serializable(with = Container.ContainerSerializer::class)
-@OptIn(ExperimentalForeignApi::class)
 class Container(
-    groups:List<Group>,
-    alpha:UByte,
-    scale:Float
-):TouchReceiver{
-    val groups = groups.toMutableList()
-    val alpha = alpha
-    var scale = scale
-        set(value) {
-            field = value
-            updateButtonShape()
-        }
-    var style: ButtonStyle? = null
-    var stylePressed: ButtonStyle? = null
-    fun updateButtonShape(){
-        groups.forEach {
-            it.updateScale(scale)
-        }
-    }
-    init {
-        if(groups.isEmpty()) emptyContainerError()
-        updateButtonShape()
-    }
+    val groups:MutableList<Group>,
+):TouchReceiver,NodeWithChild<Group>(){
+    var alpha:UByte? = null
+    override val children get() = groups
     override fun down(info: TouchReceiver.TouchEvent):Boolean {
         groups.firstOrNull{
             it.dispatchDownEvent(info,invalidate)
@@ -101,15 +81,17 @@ class Container(
                     }
                 }
             }
-            return Container(groups, alpha,scale).also {
+            return Container(groups.toMutableList()).also {
+                it.scale = scale
+                it.alpha = alpha
                 it.style = style
                 it.stylePressed = stylePressed
             }
         }
         override fun serialize(encoder: Encoder, value: Container) = value.run {
             encoder.encodeStructure(descriptor){
-                encodeSerializableElement(descriptor, 0,UByte.serializer(),alpha)
-                encodeFloatElement(descriptor,1,scale)
+                alpha?.let{ encodeSerializableElement(descriptor, 0,UByte.serializer(),it) }
+                scale?.let { encodeFloatElement(descriptor,1, it) }
                 encodeSerializableElement(descriptor,2, ListSerializer(Group.serializer()),groups)
                 style?.let { encodeSerializableElement(ButtonSerializer.descriptor,3,ButtonStyle.serializer(),it) }
                 stylePressed?.let { encodeSerializableElement(ButtonSerializer.descriptor,4,ButtonStyle.serializer(),it) }

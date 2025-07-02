@@ -1,14 +1,10 @@
 package button
 
-import draw.paramBuffer
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.useContents
-import libs.Clib.d2dDrawRoundedRect
-import libs.Clib.d2dFillRoundedRect
-import libs.Clib.d2dGetDpi
-import libs.Clib.d2dTargetHolder
+import wrapper.D2dBrush
+import wrapper.D2dTarget
+import wrapper.d2dDrawRoundedRect
+import wrapper.d2dFillRoundedRect
+import kotlin.math.max
 
 class RoundedRect(
     val left:Float,
@@ -41,70 +37,15 @@ class RoundedRect(
         }
         return false
     }
-
-    @OptIn(ExperimentalForeignApi::class)
-    override fun d2dDraw(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
-        val width = config.outlineWidth ?: return
-        if(width<= 0f) return
-        val R = rescaledR(target)
-        d2dDrawRoundedRect(paramBuffer.rect.apply {
-            l = left
-            t = top
-            r = right
-            b = bottom
-            this.target = target
-            brush = config.brushOutline
-        }.ptr,R.first,R.second,width)
-    }
-    @OptIn(ExperimentalForeignApi::class)
-    override fun d2dFill(target: CPointer<d2dTargetHolder>?, config: ButtonStyle) {
-        val R = rescaledR(target)
-        d2dFillRoundedRect(paramBuffer.rect.apply {
-            l = left
-            t = top
-            r = right
-            b = bottom
-            this.target = target
-            brush = config.brush
-        }.ptr,R.first,R.second)
-    }
-
-    override fun rescaled(scale: Float): Shape {
-        return RoundedRect(
-            left*scale,
-            top*scale,
-            right*scale,
-            bottom*scale,
-            r*scale
-        )
-    }
-
-    override fun offset(offset: Point): Shape {
-        return RoundedRect(
-            left + offset.x,
-            top + offset.y,
-            right + offset.x,
-            bottom + offset.y,
-            r
-        )
-    }
+    override fun d2dDraw(target: D2dTarget, brush: D2dBrush, width: Float) = target.d2dDrawRoundedRect(brush,left,top,right,bottom,r,r,width)
+    override fun d2dFill(target: D2dTarget, brush: D2dBrush) = target.d2dFillRoundedRect(brush,left,top,right,bottom,r,r)
+    override fun rescaled(scale: Float) = RoundedRect(left*scale, top*scale, right*scale, bottom*scale, r*scale)
+    override fun offset(offset: Point) = RoundedRect(left + offset.x, top + offset.y, right + offset.x, bottom + offset.y,r)
+    override fun padding(width: Float) = RoundedRect(left + width, top + width, right - width, bottom - width, max(r - width,0f))
     override val innerRect: Rect get() {
         val r1 = r * 0.29289323f
-        return Rect(
-            left + r1,
-            top + r1,
-            right - r1,
-            bottom - r1
-        )
+        return Rect(left + r1, top + r1, right - r1, bottom - r1)
     }
-    override val outerRect: Rect
-        get() = Rect(left, top, right, bottom)
-    @OptIn(ExperimentalForeignApi::class)
-    fun rescaledR(target: CPointer<d2dTargetHolder>?):Pair<Float,Float>{
-        d2dGetDpi(target).useContents {
-            val scaleX = 96f/x
-            val scaleY = 96f/y
-            return r*scaleX to r*scaleY
-        }
-    }
+    override val outerRect: Rect get() = Rect(left, top, right, bottom)
+    override val isValid get() = left < right && top < bottom
 }
