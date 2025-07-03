@@ -10,6 +10,6 @@ object Store {
     private val fonts = HashMap<Font, D2dFont>(100)
     var writeFactory: D2dWriteFactory? = null
     var target: D2dTarget? = null
-    fun font(key:Font) = fonts[key] ?: writeFactory?.createFont(key)?.apply { fonts[key] = this } ?: nullPtrError()
-    fun brush(key:Color) = brushes[key] ?: target?.createBrush(key)?.apply { brushes[key] = this } ?: nullPtrError()
+    fun font(key:Font) = fonts[key] ?: (writeFactory ?: nullPtrError()).let { D2dFont.create(it,key) }.apply { fonts[key] = this }
+    fun brush(key:Color) = brushes[key] ?: (target ?: nullPtrError()).let { D2dBrush.create(it,key) }.apply { brushes[key] = this }
 }

@@ -23,4 +23,9 @@ abstract class NodeWithChild<C:Node>: Node() {
         }
         return res?.toRect()
     }
+
+    final override fun iterateChildren(block: (Node) -> Unit) {
+        super.iterateChildren(block)
+        children.forEach { it.iterateChildren(block) }
+    }
 }

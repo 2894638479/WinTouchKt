@@ -22,7 +22,7 @@ class Container(
     override val children get() = groups
     override fun down(info: TouchReceiver.TouchEvent):Boolean {
         groups.firstOrNull{
-            it.dispatchDownEvent(info,invalidate)
+            it.touchDispatcher.dispatchDownEvent(info,invalidate)
         }?.let {
             activePointers[info.id] = it
             return true
@@ -32,14 +32,14 @@ class Container(
 
     override fun up(info: TouchReceiver.TouchEvent):Boolean {
         activePointers[info.id]?.let{
-            it.dispatchUpEvent(info,invalidate)
+            it.touchDispatcher.dispatchUpEvent(info,invalidate)
             activePointers.remove(info.id)
         } ?: return false
         return true
     }
 
     override fun move(info: TouchReceiver.TouchEvent):Boolean {
-        activePointers[info.id]?.dispatchMoveEvent(info,invalidate) ?: return false
+        activePointers[info.id]?.touchDispatcher?.dispatchMoveEvent(info,invalidate) ?: return false
         return true
     }
 

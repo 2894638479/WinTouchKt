@@ -8,10 +8,14 @@ import platform.windows.InvalidateRect
 import platform.windows.LWA_ALPHA
 import platform.windows.LWA_COLORKEY
 import platform.windows.SetLayeredWindowAttributes
+import wrapper.D2dFactory
+import wrapper.D2dTarget
+import wrapper.D2dWriteFactory
+import wrapper.Hwnd
 
 @OptIn(ExperimentalForeignApi::class)
 class DrawScope(
-    private val hwnd:  CPointer<hwndHolder>?,
+    private val hwnd: Hwnd,
 ) {
     var iterateButtons: ((Button) -> Unit) -> Unit = {}
         set(value)  {
@@ -21,28 +25,17 @@ class DrawScope(
     var alpha: UByte = 128u
         set(value) {
             field = value
-            SetLayeredWindowAttributes(hwnd?.reinterpret(),0u,value, LWA_ALPHA.toUInt() or LWA_COLORKEY.toUInt())
+            SetLayeredWindowAttributes(hwnd.HWND,0u,value, LWA_ALPHA.toUInt() or LWA_COLORKEY.toUInt())
         }
     init{ alpha = 128u }
     var showStatus = true
         private set
-    private val factory : CPointerVar<d2dFactoryHolder> = nativeHeap
-        .alloc<CPointerVar<d2dFactoryHolder>> {
-            if(d2dCreateFactory(ptr) != 0) direct2dInitializeError()
-        }
-    private val target :CPointerVar<d2dTargetHolder> = nativeHeap
-        .alloc<CPointerVar<d2dTargetHolder>> {
-            if(d2dCreateTarget(factory.value,ptr,hwnd?.reinterpret()) != 0) direct2dInitializeError()
-            //关闭抗锯齿，避免边缘带线
-            d2dSetAntialiasMode(value,false)
-        }
-    private val writeFactory:CPointerVar<d2dWriteFactoryHolder> = nativeHeap
-        .alloc<CPointerVar<d2dWriteFactoryHolder>> {
-            if(d2dCreateWriteFactory(ptr) != 0) direct2dInitializeError()
-        }
+    private val factory = D2dFactory.create()
+    private val target = D2dTarget.create(hwnd,factory)
+    private val writeFactory = D2dWriteFactory.create()
     fun initStore(){
-        Store.target = target.value
-        Store.writeFactory = writeFactory.value
+        Store.target = target
+        Store.writeFactory = writeFactory
     }
     private inline fun d2dDraw(block:()->Unit){
         d2dBeginDraw(target.value)
@@ -66,14 +59,14 @@ class DrawScope(
     }
 
     fun resize() {
-        d2dResizeRenderTarget(target.value,hwnd)
+        d2dResizeRenderTarget(target.value,hwnd.value)
         iterateButtons { invalidate(it) }
     }
 
     private val invalidButtons = mutableSetOf<Button>()
     fun invalidate(button: Button) {
         invalidButtons += button
-        InvalidateRect(hwnd?.reinterpret(),null,1)
+        InvalidateRect(hwnd.HWND,null,1)
     }
 
     fun hideButtons(controller: Button) {
@@ -98,9 +91,9 @@ class DrawScope(
     }
 
     fun destruct() {
-        d2dFreeFactory(factory.value)
-        d2dFreeTarget(target.value)
-        d2dFreeWriteFactory(writeFactory.value)
+        factory.free()
+        target.free()
+        writeFactory.free()
         iterateButtons = {}
     }
 }

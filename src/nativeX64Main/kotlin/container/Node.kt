@@ -11,9 +11,9 @@ abstract class Node {
     var parent by WeakRefDel<NodeWithChild<*>>()
         internal set
     var scale:Float? = null
-        set(value) {field = value.apply { cache.invalidateAll() }}
+        set(value) {field = value.apply { iterateChildren{ it.cache.invalidateAll() } }}
     var offset:Point? = null
-        set(value) {field = value.apply { cache.invalidate() }}
+        set(value) {field = value.apply { iterateChildren{ it.cache.invalidate() } }}
     protected var style:ButtonStyle? = null
     protected var stylePressed:ButtonStyle? = null
     class StyleModifier(
@@ -25,19 +25,20 @@ abstract class Node {
             it.block()
             style = it.style
             stylePressed = it.stylePressed
-            cache.invalidateStyle()
+            iterateChildren{ it.cache.invalidateStyle() }
         }
     }
     var name:String? = null
     abstract fun calOuterRect():Rect?
     open fun calCurrentShape():Shape? = null
-    private inline fun iterateNodes(block:(Node)->Unit){
+    private inline fun iterateParents(block:(Node)->Unit){
         var p:Node? = this
         while (p != null){
             block(p)
             p = p.parent
         }
     }
+    open fun iterateChildren(block:(Node)->Unit) = block(this)
     val cache = Cache(this)
     class Cache(node:Node){
         private val node by WeakRefNonNull(node)
@@ -45,7 +46,7 @@ abstract class Node {
         val unPressed = StyleCache(node){style}
         val scale:Float get() {
             var scale = 1f
-            node.iterateNodes {
+            node.iterateParents {
                 it.scale?.let { scale *= it }
             }
             return scale
@@ -60,7 +61,7 @@ abstract class Node {
         private var _offset:Point? = null
         val offset:Point get() = _offset ?: run {
             var offset = Point(0f,0f)
-            node.iterateNodes {
+            node.iterateParents {
                 it.scale?.let { offset *= it }
                 it.offset?.let { offset += it }
             }
@@ -69,7 +70,7 @@ abstract class Node {
 
         fun applyShape(orig:Shape):Shape{
             var final = orig
-            node.iterateNodes {
+            node.iterateParents {
                 it.scale?.let { final = final.rescaled(it) }
                 it.offset?.let { final = final.offset(it) }
             }
@@ -91,7 +92,7 @@ abstract class Node {
         class StyleCache(node:Node,private val getStyle:Node.()->ButtonStyle?){
             private val node by WeakRefNonNull(node)
             private inline fun <T:Any> find(get:ButtonStyle.()->T?):T?{
-                node.iterateNodes {
+                node.iterateParents {
                     it.getStyle()?.get()?.let { return it }
                 }
                 return null
