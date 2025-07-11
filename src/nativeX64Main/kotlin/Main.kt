@@ -1,89 +1,30 @@
 import container.Container
-import draw.DrawScope
-import error.*
-import json.readFile
-import json.toContainer
+import error.catchInKotlin
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
 import libs.Clib.GBKToUTF8
 import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
-import platform.posix.exit
-import platform.windows.Sleep
+import window.WindowManager
 
-private var drawScopeRaw: DrawScope? = null
-private var mainContainerRaw: Container? = null
-val drawScope:DrawScope get() = drawScopeRaw!!
-val drawScopeNullable:DrawScope? get() = drawScopeRaw
-val mainContainer get() = mainContainerRaw!!
 
 @OptIn(ExperimentalForeignApi::class)
-fun main(){
+fun main() = catchInKotlin {
+    PrepareForUIAccess()
     val argc = platform.posix.__argc
     val argv = platform.posix.__argv
     Main(Array(argc - 1){ i ->
-        val gbk = argv?.get(i + 1) ?: entryParaError()
-        val utf8 = GBKToUTF8(gbk) ?: entryParaError()
+        val gbk = argv?.get(i + 1) ?: error("argv is null")
+        val utf8 = GBKToUTF8(gbk) ?: error("utf8 convert error")
         val str =  utf8.toKString()
         freeStr(utf8)
         str
-    })
+    }).run { Unit }
 }
 
-@OptIn(ExperimentalForeignApi::class)
 fun Main(args: Array<String>) = processArgs(args).apply {
-//    if(uiAccess) PrepareForUIAccess()
-    if(sleepTime > 0u) Sleep(sleepTime)
-    window { hwnd ->
-        drawScopeRaw = DrawScope(hwnd)
-        drawScope.initStore()
-        mainContainerRaw = jsonStr.toContainer()
-        drawScope.iterateButtons = mainContainer::forEachButton
-        mainContainer.invalidate = drawScope::invalidate
-        drawScope.alpha = mainContainer.alpha
-    }
-}
-
-class ArgParseResult(
-    val jsonStr:String,
-    val sleepTime:UInt,
-    val uiAccess:Boolean
-)
-
-fun processArgs(args:Array<String>):ArgParseResult{
-    var jsonCont:String? = null
-    var argTask:((String)->Unit)? = null
-    var sleepTime = 0u
-    var uiAccess = true
-    args.forEachIndexed { index, arg ->
-        argTask?.let {
-            it(arg)
-            argTask = null
-            return@forEachIndexed
-        }
-        if(arg.startsWith('-')){
-            when(arg){
-                "-s" -> argTask = {
-                    sleepTime = it.toUIntOrNull() ?: unknownOptError("-s",it)
-                }
-                "-h" -> {
-                    argumentUsageInfo()
-                    exit(0)
-                }
-                "-d" -> argTask = {
-                    jsonCont = it
-                }
-                "-u" -> uiAccess = false
-                else -> unknownArgError(arg)
-            }
-        } else {
-            if(index == 0) {
-                jsonCont = readFile(arg) ?: fileOpenError(arg)
-            } else {
-                unknownArgError(arg)
-            }
-        }
-    }
-    return ArgParseResult(jsonCont ?: noProfileError(),sleepTime,uiAccess)
+    WindowManager.registerLayered()
+    val container = json.json.decodeFromString<Container>(jsonStr)
+    WindowManager.loopWindowMessage(container.drawScope.hwnd)
 }

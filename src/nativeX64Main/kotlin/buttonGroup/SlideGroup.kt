@@ -1,10 +1,5 @@
 package buttonGroup
 
-import button.Button
-import button.Point
-import error.nullPtrError
-import error.slideCountError
-import kotlinx.cinterop.ExperimentalForeignApi
 import touch.TouchReceiver
 
 class SlideGroup(
@@ -12,20 +7,21 @@ class SlideGroup(
     val slideCount: UInt
 ) : NormalGroup(group) {
     init {
-        if (slideCount < 1u) slideCountError(slideCount)
+        if (slideCount < 1u) error("slide count < 1")
     }
-    override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {
+    override fun move(event: TouchReceiver.TouchEvent): Boolean {
         firstOrNull(event.x, event.y)?.run{
-            if(alreadyDown(this, event.id)) return
-            val pressedButtons = pointers[event.id] ?: nullPtrError()
+            if(alreadyDown(this, event.id)) return true
+            val pressedButtons = pointers[event.id] ?: error("pointer id not down")
             if (pressedButtons.size.toUInt() < slideCount){
-                pointers[event.id]?.add(this) ?: nullPtrError()
-                this.down(invalidate)
+                pressedButtons.add(this)
+                this.down()
             } else {
                 val toUp = pressedButtons[0]
                 val toDown = this
-                slide(toUp,toDown,pressedButtons, invalidate)
+                slide(toUp,toDown,pressedButtons)
             }
         }
+        return true
     }
 }

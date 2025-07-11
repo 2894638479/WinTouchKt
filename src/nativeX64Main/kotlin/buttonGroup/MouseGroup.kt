@@ -1,9 +1,6 @@
 package buttonGroup
 
-import button.Button
 import button.Point
-import error.nullPtrError
-import kotlinx.cinterop.ExperimentalForeignApi
 import sendInput.moveCursor
 import sendInput.scroll
 import touch.TouchReceiver
@@ -14,13 +11,14 @@ open class MovePointGroup(
     private val onMovePoint:(Float,Point,TouchReceiver.TouchEvent) -> Unit
 ) : NormalGroup(group) {
     private var lastTouchPoint:Point? = null
-    override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {
-        if(pointers[event.id] == null) return
-        onMovePoint(sensitivity,lastTouchPoint ?: nullPtrError() , event)
+    override fun move(event: TouchReceiver.TouchEvent): Boolean {
+        if(pointers[event.id] == null) return true
+        onMovePoint(sensitivity,lastTouchPoint ?: error("lastTouchPoint is null") , event)
         lastTouchPoint = Point(event.x, event.y)
+        return true
     }
-    override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean {
-        return super.dispatchDownEvent(event, invalidate).apply {
+    override fun down(event: TouchReceiver.TouchEvent): Boolean {
+        return super.down(event).apply {
             if(this) lastTouchPoint = Point(event.x, event.y)
         }
     }

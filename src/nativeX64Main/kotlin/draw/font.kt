@@ -1,7 +1,5 @@
 package draw
 
-import error.fontStyleError
-import error.fontWeightError
 import kotlinx.cinterop.ExperimentalForeignApi
 import libs.Clib.FONT_STYLE
 
@@ -16,11 +14,11 @@ data class Font(
         family ?: "",
         (size ?: 24f)*(scale ?: 1f),
         style?.let {
-            styles[it] ?: fontStyleError(it, styles.keys)
+            styles[it] ?: error("font style error, should be ${styles.keys}")
         } ?: FONT_STYLE.FONT_STYLE_NORMAL,
         weight?.let {
             if(it < 1 || it > 999) {
-                fontWeightError(1u, 999u, it)
+                error("font weight error, should in 1 to 999")
             } else it.toUShort()
         } ?: 500u
     )

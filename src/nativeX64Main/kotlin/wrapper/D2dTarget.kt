@@ -1,6 +1,5 @@
 package wrapper
 
-import error.direct2dInitializeError
 import kotlinx.cinterop.*
 import libs.Clib.*
 
@@ -11,10 +10,11 @@ value class D2dTarget(val value:CPointer<d2dTargetHolder>){
     companion object {
         fun create(hwnd:Hwnd,factory:D2dFactory):D2dTarget = memScoped {
             alloc<CPointerVar<d2dTargetHolder>>().apply {
-                if(d2dCreateTarget(factory.value,ptr,hwnd.value.reinterpret()) != 0) direct2dInitializeError()
+                val result = d2dCreateTarget(factory.value,ptr,hwnd.value.reinterpret())
+                if(result != 0) error("d2dTarget create failed $result")
                 //关闭抗锯齿，避免边缘带线
                 d2dSetAntialiasMode(value,false)
-            }.value?.let { D2dTarget(it) } ?: direct2dInitializeError()
+            }.value?.let { D2dTarget(it) } ?: error("d2dTarget is null")
         }
     }
 }

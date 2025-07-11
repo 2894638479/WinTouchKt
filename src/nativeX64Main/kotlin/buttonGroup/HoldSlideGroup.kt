@@ -1,10 +1,5 @@
 package buttonGroup
 
-import button.Button
-import button.Point
-import error.holdIndexError
-import error.nullPtrError
-import kotlinx.cinterop.ExperimentalForeignApi
 import touch.TouchReceiver
 
 class HoldSlideGroup(
@@ -12,31 +7,32 @@ class HoldSlideGroup(
     val holdIndex: Int
 ) : NormalGroup(group){
     init {
-        if(holdIndex !in buttons.indices) holdIndexError(holdIndex)
+        if(holdIndex !in buttons.indices) error("hold index not in button indices")
     }
     private inline val holdButton get() = buttons[holdIndex]
-    override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) {
-        val btns = pointers[event.id] ?: nullPtrError()
+    override fun move(event: TouchReceiver.TouchEvent): Boolean {
+        val btns = pointers[event.id] ?: error("pointer id not down")
         firstOrNull(event.x, event.y)?.apply {
             if(btns[0] == holdButton){
                 if(this != holdButton) {
                     if (btns.size == 1) {
-                        down(invalidate)
+                        down()
                         btns.add(this)
                     } else {
-                        slide(btns[1], this, btns, invalidate)
+                        slide(btns[1], this, btns)
                     }
                 } else {
                     if(btns.size == 2){
-                        btns[1].up(invalidate)
+                        btns[1].up()
                         btns.removeAt(1)
                     }
                 }
             } else {
                 if(this != holdButton) {
-                    slide(btns[0], this, btns, invalidate)
+                    slide(btns[0], this, btns)
                 }
             }
         }
+        return true
     }
 }

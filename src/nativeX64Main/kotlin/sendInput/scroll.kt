@@ -9,7 +9,6 @@ import platform.windows.mouse_event
 import touch.TouchReceiver
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalForeignApi::class)
 fun scroll(sensitivity:Float, before: Point, moved: TouchReceiver.TouchEvent){
     fun getMoveDistance(before:Float,after:Float):Int{
         return ((after - before) * sensitivity).roundToInt()

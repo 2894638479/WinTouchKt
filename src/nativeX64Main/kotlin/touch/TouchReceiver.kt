@@ -10,11 +10,11 @@ interface TouchReceiver {
         val y:Float,
         val id:UInt
     ){
-        constructor(info:TouchInfo):this(info.pointX.toFloat(),info.pointY.toFloat(),info.id)
+        constructor(event:TouchInfo):this(event.pointX.toFloat(),event.pointY.toFloat(),event.id)
     }
-    fun down(info: TouchEvent):Boolean
-    fun up(info: TouchEvent):Boolean
-    fun move(info: TouchEvent):Boolean
+    fun down(event: TouchEvent):Boolean
+    fun up(event: TouchEvent):Boolean
+    fun move(event: TouchEvent):Boolean
 }
 
 @OptIn(ExperimentalForeignApi::class)

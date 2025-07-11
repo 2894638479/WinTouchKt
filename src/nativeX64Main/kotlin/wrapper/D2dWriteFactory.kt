@@ -1,6 +1,5 @@
 package wrapper
 
-import error.direct2dInitializeError
 import kotlinx.cinterop.*
 import libs.Clib.d2dCreateWriteFactory
 import libs.Clib.d2dFreeWriteFactory
@@ -12,8 +11,9 @@ value class D2dWriteFactory(val value: CPointer<d2dWriteFactoryHolder>){
     companion object {
         fun create():D2dWriteFactory = memScoped {
             alloc<CPointerVar<d2dWriteFactoryHolder>>().apply {
-                if(d2dCreateWriteFactory(ptr) != 0) direct2dInitializeError()
-            }.value?.let { D2dWriteFactory(it) } ?: direct2dInitializeError()
+                val result = d2dCreateWriteFactory(ptr)
+                if(result != 0) error("d2dWriteFactory create failed $result")
+            }.value?.let { D2dWriteFactory(it) } ?: error("d2dWriteFactory is null")
         }
     }
 }

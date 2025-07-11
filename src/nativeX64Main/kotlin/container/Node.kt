@@ -8,8 +8,7 @@ import draw.*
 import wrapper.*
 
 abstract class Node {
-    var parent by WeakRefDel<NodeWithChild<*>>()
-        internal set
+    abstract val parent:NodeWithChild<*>?
     var scale:Float? = null
         set(value) {field = value.apply { iterateChildren{ it.cache.invalidateAll() } }}
     var offset:Point? = null
@@ -31,6 +30,7 @@ abstract class Node {
     var name:String? = null
     abstract fun calOuterRect():Rect?
     open fun calCurrentShape():Shape? = null
+    protected open fun findDrawScopeCache():DrawScope.Cache = parent?.findDrawScopeCache() ?: error("find drawscope cache failed")
     private inline fun iterateParents(block:(Node)->Unit){
         var p:Node? = this
         while (p != null){
@@ -42,8 +42,8 @@ abstract class Node {
     val cache = Cache(this)
     class Cache(node:Node){
         private val node by WeakRefNonNull(node)
-        val pressed = StyleCache(node){stylePressed}
-        val unPressed = StyleCache(node){style}
+        val pressed = StyleCache(node, GREY_BRIGHT){stylePressed}
+        val unPressed = StyleCache(node, GREY_DARK){style}
         val scale:Float get() {
             var scale = 1f
             node.iterateParents {
@@ -80,6 +80,7 @@ abstract class Node {
         fun invalidate(){
             _outerRect = null
             _offset = null
+            _shape = null
         }
         fun invalidateStyle(){
             unPressed.invalidate()
@@ -89,8 +90,9 @@ abstract class Node {
             invalidate()
             invalidateStyle()
         }
-        class StyleCache(node:Node,private val getStyle:Node.()->ButtonStyle?){
+        class StyleCache(node:Node,private val defaultColor: Color,private val getStyle:Node.()->ButtonStyle?){
             private val node by WeakRefNonNull(node)
+            private val outerCache get() = node.findDrawScopeCache()
             private inline fun <T:Any> find(get:ButtonStyle.()->T?):T?{
                 node.iterateParents {
                     it.getStyle()?.get()?.let { return it }
@@ -98,7 +100,7 @@ abstract class Node {
                 return null
             }
             private inline fun <T:Any> find(default:T,get:ButtonStyle.()->T?) = find(get) ?: default
-            private val color get() = find(BLACK){color}
+            private val color get() = find(defaultColor){color}
             private val outlineColor get() = find(WHITE){outlineColor}
             val outlineWidth get() = find(1f){outlineWidth}
             private val textColor get() = find(RED){textColor}
@@ -108,16 +110,16 @@ abstract class Node {
             private val fontWeight get() = find{fontWeight}
 
             private var _font: D2dFont? = null
-            val font get() = _font ?: Store.font(Font(fontFamily,fontSize,fontStyle,fontWeight,node.cache.scale))
+            val font get() = _font ?: outerCache.font(Font(fontFamily,fontSize,fontStyle,fontWeight,node.cache.scale))
 
-            var _brush: D2dBrush? = null
-            val brush get() = _brush ?: Store.brush(color).also { _brush = it }
+            private var _brush: D2dBrush? = null
+            val brush get() = _brush ?: outerCache.brush(color).also { _brush = it }
 
-            var _brushText: D2dBrush? = null
-            val brushText get() = _brushText ?: Store.brush(textColor).also { _brushText = it }
+            private var _brushText: D2dBrush? = null
+            val brushText get() = _brushText ?: outerCache.brush(textColor).also { _brushText = it }
 
-            var _brushOutline: D2dBrush? = null
-            val brushOutline get() = _brushOutline ?: Store.brush(outlineColor).also { _brushOutline = it }
+            private var _brushOutline: D2dBrush? = null
+            val brushOutline get() = _brushOutline ?: outerCache.brush(outlineColor).also { _brushOutline = it }
 
             fun invalidate(){
                 _font = null

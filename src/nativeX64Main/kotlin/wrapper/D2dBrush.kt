@@ -1,9 +1,7 @@
 package wrapper
 
 import draw.Color
-import error.brushCreateError
 import kotlinx.cinterop.*
-import kotlinx.cinterop.nativeHeap.alloc
 import libs.Clib.d2dCreateSolidColorBrush
 import libs.Clib.d2dFreeSolidColorBrush
 import libs.Clib.d2dSolidColorBrushHolder
@@ -15,7 +13,7 @@ value class D2dBrush(val value: CPointer<d2dSolidColorBrushHolder>){
         @OptIn(ExperimentalForeignApi::class)
         fun create(target: D2dTarget, key: Color) = memScoped {
             val brush = nativeHeap.alloc<CPointerVar<d2dSolidColorBrushHolder>>()
-            d2dCreateSolidColorBrush(
+            val result =d2dCreateSolidColorBrush(
                 target.value,
                 brush.ptr,
                 key.r.toFloat() / 255f,
@@ -23,7 +21,7 @@ value class D2dBrush(val value: CPointer<d2dSolidColorBrushHolder>){
                 key.b.toFloat() / 255f,
                 1f
             )
-            D2dBrush(brush.value ?: brushCreateError())
+            D2dBrush(brush.value ?: error("d2dBrush create failed $result"))
         }
     }
 }

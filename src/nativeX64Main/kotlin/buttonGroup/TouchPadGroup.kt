@@ -1,18 +1,10 @@
 package buttonGroup
 
-import button.Button
 import button.Point
-import error.nullPtrError
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import platform.windows.GetTickCount64
 import sendInput.moveCursor
 import touch.TouchReceiver
+import window.dispatch
 
 class TouchPadGroup(
     group: Group,
@@ -22,54 +14,49 @@ class TouchPadGroup(
     private var lastTouchPoint : Point? = null
     private val lastDownTime = buttons.map { 0uL }.toULongArray()
     private val keyDownCount = buttons.map { 0u }.toUIntArray()
-    private val mutex = Mutex()
-    private inline fun <T> withMutex(crossinline block:()->T) = runBlocking {
-        mutex.withLock { block() }
-    }
 
-    override fun dispatchMoveEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) = withMutex {
-        if(pointers[event.id] == null) return@withMutex
-        moveCursor(sensitivity,lastTouchPoint ?: nullPtrError() , event)
+    override fun move(event: TouchReceiver.TouchEvent): Boolean {
+        if(pointers[event.id] == null) return true
+        moveCursor(sensitivity,lastTouchPoint ?: error("lastTouchPoint is null") , event)
         lastTouchPoint = Point(event.x, event.y)
+        return true
     }
 
-    override fun dispatchDownEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit): Boolean = withMutex {
-        firstOrNull(event.x,event.y)?.let{
+    override fun down(event: TouchReceiver.TouchEvent): Boolean {
+        return firstOrNull(event.x,event.y)?.let{
             pointers[event.id] = mutableListOf(it)
             lastTouchPoint = Point(event.x,event.y)
             val index = buttons.indexOf(it)
             val time = GetTickCount64()
             if(time - lastDownTime[index] < ms){
-                it.down(invalidate)
+                it.down()
                 keyDownCount[index]++
             } else {
-                it.downNoKey(invalidate)
+                it.down { false }
             }
             lastDownTime[index] = time
         } != null
     }
 
-    override fun dispatchUpEvent(event: TouchReceiver.TouchEvent, invalidate: (Button) -> Unit) = withMutex {
+    override fun up(event: TouchReceiver.TouchEvent): Boolean {
         pointers[event.id]?.get(0)?.let {
             val index = buttons.indexOf(it)
             val time = GetTickCount64()
             if(keyDownCount[index] > 0u){
-                it.up(invalidate)
+                it.up()
                 keyDownCount[index]--
                 return@let
             }
-            it.upNoKey(invalidate)
+            it.up { false }
             if(time - lastDownTime[index] < ms){
-                GlobalScope.launch {
-                    delay(ms.toLong())
-                    withMutex {
-                        if(keyDownCount[index] == 0u) {
-                            it.down { }
-                            it.up { }
-                        }
+                dispatch(ms.toUInt()) {
+                    if(keyDownCount[index] == 0u) {
+                        it.down(false)
+                        it.up(false)
                     }
                 }
             }
-        } ?: nullPtrError()
+        } ?: error("pointer id not down")
+        return true
     }
 }

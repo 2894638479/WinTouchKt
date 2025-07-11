@@ -1,7 +1,7 @@
 package button
 
+import buttonGroup.Group
 import container.Node
-import error.nullPtrError
 import json.RectJson
 import json.RoundJson
 import json.RoundedRectJson
@@ -12,10 +12,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
-import sendInput.KEYEVENT_DOWN
-import sendInput.KEYEVENT_UP
-import sendInput.sendAllKeyEvent
-import sendInput.sendAllKeyEventFilter
+import wrapper.WeakRefDel
 
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
@@ -24,39 +21,28 @@ class Button(
 ):Node(){
     var shapeOrig = shapeOrig
         set(value) { field = value.apply { cache.invalidate() } }
-    val shape get() = cache.shape ?: nullPtrError()
+    val shape get() = cache.shape ?: error("button get shape error")
+    override var parent by WeakRefDel<Group>()
     override fun calOuterRect() = shape.outerRect
     override fun calCurrentShape() = cache.applyShape(shapeOrig)
+    inline val currentStyle get() = if(pressed) cache.pressed else cache.unPressed
     var count = 0u
         private set
+    fun counterIncrease() = count++
+    fun counterDecrease() = count--
     inline val pressed get() = count != 0u
-    fun down(invalidate:(Button)->Unit){
-        sendAllKeyEvent(KEYEVENT_DOWN)
-        count++
-        invalidate(this)
+    inline val container get() = parent?.parent ?: error("button find container failed")
+    inline val scope get() = container.touchScope
+
+    inline fun down(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = scope.run {
+        keyHandler.downAll(key.filter(filter))
+        counterIncrease()
+        if(drawUi) toDraw(this@Button)
     }
-    fun up(invalidate:(Button)->Unit){
-        sendAllKeyEvent(KEYEVENT_UP)
-        count--
-        invalidate(this)
-    }
-    fun downNoKey(invalidate:(Button)->Unit){
-        count++
-        invalidate(this)
-    }
-    fun upNoKey(invalidate: (Button) -> Unit){
-        count--
-        invalidate(this)
-    }
-    fun slideDown(invalidate:(Button)->Unit,filter:(UByte)->Boolean){
-        sendAllKeyEventFilter(KEYEVENT_DOWN,filter)
-        count++
-        invalidate(this)
-    }
-    fun slideUp(invalidate:(Button)->Unit,filter:(UByte)->Boolean){
-        sendAllKeyEventFilter(KEYEVENT_UP,filter)
-        count--
-        invalidate(this)
+    inline fun up(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = scope.run {
+        keyHandler.upAll(key.filter(filter))
+        counterDecrease()
+        if(drawUi) toDraw(this@Button)
     }
     fun inArea(x:Float,y:Float) = shape.containPoint(x,y)
 
@@ -78,7 +64,6 @@ class Button(
             var roundJson:RoundJson? = null
             var style:ButtonStyle? = null
             var stylePressed:ButtonStyle? = null
-            println("button1")
             decoder.decodeStructure(descriptor) {
                 while (true) {
                     when (val index = decodeElementIndex(descriptor)) {
@@ -98,12 +83,11 @@ class Button(
             rectJson?.let { shapeCount++ }
             roundJson?.let { shapeCount++ }
             roundedRectJson?.let { shapeCount++ }
-            if(shapeCount != 1) error("每个按钮需要选择 rect round roundedRect 三种形状中的一种")
+            if(shapeCount != 1) error("choose one shape from rect round roundedRect")
             val shape = rectJson?.toRect()
                 ?: roundedRectJson?.toRoundedRect()
                 ?: roundJson?.toRound()
-                ?: nullPtrError()
-            println("button2")
+                ?: error("shape is null")
             return Button(key ?: error("button has no key"),shape).also {
                 it.style = style
                 it.stylePressed = stylePressed

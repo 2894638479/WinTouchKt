@@ -4,7 +4,8 @@ import button.Button
 import button.Button.ButtonSerializer
 import button.ButtonStyle
 import buttonGroup.Group
-import error.emptyContainerError
+import draw.DrawScope
+import error.wrapExceptionName
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -12,47 +13,101 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
+import platform.posix.exit
+import sendInput.KeyHandler
 import touch.TouchReceiver
+import window.WindowManager
+import wrapper.Hwnd
 
 @Serializable(with = Container.ContainerSerializer::class)
 class Container(
-    val groups:MutableList<Group>,
 ):TouchReceiver,NodeWithChild<Group>(){
-    var alpha:UByte? = null
+    override val parent get() = null
+    val groups:MutableList<Group> = mutableListOf()
     override val children get() = groups
-    override fun down(info: TouchReceiver.TouchEvent):Boolean {
-        groups.firstOrNull{
-            it.touchDispatcher.dispatchDownEvent(info,invalidate)
+    private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
+    fun addGroup(group:Group){
+        group.parent = this
+        children += group
+    }
+    fun removeGroup(group: Group){
+        if(!children.remove(group)) error("remove group failed")
+        group.parent = null
+    }
+    var isEditMode = false
+        set(value) {
+            field = value
+            if(value) {
+
+            } else {
+
+            }
+        }
+
+    val drawScope = DrawScope(buttonSequence,WindowManager.buttonsLayeredWindow("container_window"))
+        .also { setHwndContainer(it.hwnd,this) }
+    val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { println("exit");exit(0) }
+    val touchScope = ButtonTouchScope(keyHandler,drawScope)
+    class ButtonTouchScope(
+        val keyHandler: KeyHandler,
+        private val drawScope: DrawScope
+    ) {
+        fun toDraw(button:Button){ drawScope.toDraw(button) }
+        fun toErase(button:Button){ drawScope.toErase(button) }
+        fun toDrawAll(){ drawScope.toDrawAll() }
+    }
+    var alpha:UByte? = null
+        set(value) {
+            field = value
+            drawScope.alpha = value ?: 128u
+        }
+    override fun findDrawScopeCache() = drawScope.cache
+    override fun down(event: TouchReceiver.TouchEvent):Boolean {
+        groups.firstOrNull {
+            wrapExceptionName("dispatcher down error"){
+                it.touchDispatcher.down(event)
+            }
         }?.let {
-            activePointers[info.id] = it
+            activePointers[event.id] = it
             return true
         }
         return false
     }
 
-    override fun up(info: TouchReceiver.TouchEvent):Boolean {
-        activePointers[info.id]?.let{
-            it.touchDispatcher.dispatchUpEvent(info,invalidate)
-            activePointers.remove(info.id)
+    override fun up(event: TouchReceiver.TouchEvent):Boolean {
+        activePointers[event.id]?.let{
+            wrapExceptionName("dispatcher up error") {
+                it.touchDispatcher.up(event)
+            }
+            activePointers.remove(event.id)
         } ?: return false
         return true
     }
 
-    override fun move(info: TouchReceiver.TouchEvent):Boolean {
-        activePointers[info.id]?.touchDispatcher?.dispatchMoveEvent(info,invalidate) ?: return false
+    override fun move(event: TouchReceiver.TouchEvent):Boolean {
+        wrapExceptionName("dispatcher move error") {
+            activePointers[event.id]?.touchDispatcher?.move(event) ?: return false
+        }
         return true
     }
 
+
     private val activePointers = mutableMapOf<UInt, Group>()
-    inline fun forEachButton(block:(Button)->Unit){
-        for(group in groups){
-            for(button in group.buttons){
-                block(button)
-            }
+    fun destroy(){
+        removeContainer(this)
+        drawScope.destroy()
+    }
+    companion object {
+        private val hwndContainer = HashMap<Hwnd,Container>(10)
+        fun setHwndContainer(hwnd: Hwnd, container: Container){
+            hwndContainer[hwnd] = container
+        }
+        fun hwndContainer(hwnd: Hwnd) = hwndContainer[hwnd]
+        fun removeContainer(container: Container) {
+            val key = hwndContainer.firstNotNullOf { (k,v) -> k.takeIf { v == container } }
+            hwndContainer.remove(key)
         }
     }
-
-    var invalidate: (Button) -> Unit = {  }
 
     object ContainerSerializer : KSerializer<Container> {
         override val descriptor = buildClassSerialDescriptor("Container"){
@@ -81,11 +136,12 @@ class Container(
                     }
                 }
             }
-            return Container(groups.toMutableList()).also {
+            return Container().also {
                 it.scale = scale
                 it.alpha = alpha
                 it.style = style
                 it.stylePressed = stylePressed
+                groups.forEach(it::addGroup)
             }
         }
         override fun serialize(encoder: Encoder, value: Container) = value.run {

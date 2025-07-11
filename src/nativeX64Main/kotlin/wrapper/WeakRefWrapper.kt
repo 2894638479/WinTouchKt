@@ -1,6 +1,5 @@
 package wrapper
 
-import error.errorBox
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.ref.WeakReference
 import kotlin.properties.ReadWriteProperty
@@ -17,7 +16,7 @@ value class WeakRef <T : Any> private constructor (private val ref:WeakReference
 @OptIn(ExperimentalNativeApi::class)
 value class WeakRefNonNull <T : Any> private constructor (private val ref:WeakReference<T>){
     constructor(referred:T):this(WeakReference(referred))
-    fun get() = ref.get() ?: errorBox("weak ref already inactive")
+    fun get() = ref.get() ?: error("weak ref already inactive")
     val value get() = get()
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = get()
 }

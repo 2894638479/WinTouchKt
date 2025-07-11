@@ -1,9 +1,7 @@
 package wrapper
 
 import draw.Font
-import error.fontCreateError
 import kotlinx.cinterop.*
-import kotlinx.cinterop.nativeHeap.alloc
 import libs.Clib.FONT_STRETCH_MEDIUM
 import libs.Clib.d2dCreateTextFormat
 import libs.Clib.d2dFreeTextFormat
@@ -24,8 +22,8 @@ value class D2dFont(val value: CPointer<d2dTextFormatHolder>){
                 font.weight,
                 font.style,
                 FONT_STRETCH_MEDIUM
-            ).let { if (it != 0) fontCreateError(font.family) }
-            D2dFont(fontHolder.value ?: fontCreateError(font.family))
+            ).let { if (it != 0) error("d2dFont create failed $it ${font.family}") }
+            D2dFont(fontHolder.value ?: error("d2dFont is null ${font.family}"))
         }
     }
 }

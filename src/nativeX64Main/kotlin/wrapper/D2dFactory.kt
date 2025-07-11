@@ -1,6 +1,5 @@
 package wrapper
 
-import error.direct2dInitializeError
 import kotlinx.cinterop.*
 import libs.Clib.d2dCreateFactory
 import libs.Clib.d2dFactoryHolder
@@ -12,8 +11,9 @@ value class D2dFactory(val value: CPointer<d2dFactoryHolder>){
     companion object {
         fun create(): D2dFactory = memScoped {
             alloc<CPointerVar<d2dFactoryHolder>>().apply {
-                if (d2dCreateFactory(ptr) != 0) direct2dInitializeError()
-            }.value?.let { D2dFactory(it) } ?: direct2dInitializeError()
+                val result = d2dCreateFactory(ptr)
+                if (result != 0) error("d2d factory initialize failed $result")
+            }.value?.let { D2dFactory(it) } ?: error("d2dFactory is null")
         }
     }
 }
