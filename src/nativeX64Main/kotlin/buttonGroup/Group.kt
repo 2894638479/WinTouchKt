@@ -50,10 +50,12 @@ class Group(
     fun addButton(button: Button){
         button.parent = this
         buttons += button
+        touchDispatcher.notifyButtonsChanged()
     }
     fun removeButton(button: Button){
         if(!buttons.remove(button)) error("remove button error")
         button.parent = null
+        touchDispatcher.notifyButtonsChanged()
     }
 
     object GroupSerializer : KSerializer<Group> {

@@ -2,6 +2,7 @@ package buttonGroup
 
 import button.Button
 import button.Rect
+import logger.warningBox
 import touch.TouchReceiver
 import wrapper.WeakRefNonNull
 
@@ -11,11 +12,11 @@ abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
     val rect: Rect? get() = group.cache.outerRect
     protected val pointers = mutableMapOf<UInt,MutableList<Button>>()
     override fun up(event: TouchReceiver.TouchEvent): Boolean {
-        pointers[event.id]?.forEach { it.up() } ?: error("pointer id not down")
+        pointers[event.id]?.forEach { it.up() } ?: warningBox("pointer id not down")
         pointers.remove(event.id)
         return true
     }
-    open fun clearState() = pointers.clear()
+    open fun notifyButtonsChanged(){}
 
     protected inline fun firstOrNull(x: Float, y: Float):Button? {
         if (rect?.containPoint(x,y) != true) return null

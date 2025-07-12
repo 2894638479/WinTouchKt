@@ -18,7 +18,7 @@ const val WM_POINTERUPDATE = 0x0245
 
 @OptIn(ExperimentalForeignApi::class)
 fun wndProcLayered(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT = catchInKotlin {
-    val container = Container.hwndContainer(Hwnd(hWnd?.reinterpret() ?: error("hwnd is null")))
+    val container = Container.hwndContainer(Hwnd(hWnd))
     val drawScope = container?.drawScope
     fun default() = DefWindowProcW(hWnd, uMsg, wParam, lParam)
     ValidateRect(hWnd,null)
@@ -61,5 +61,5 @@ fun wndProcLayered(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRE
             return default()
         }
     }
-    return default()
+    return 0
 }

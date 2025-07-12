@@ -12,6 +12,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
+import logger.info
 import wrapper.WeakRefDel
 
 @Serializable(with = Button.ButtonSerializer::class)
@@ -35,11 +36,13 @@ class Button(
     inline val scope get() = container.touchScope
 
     inline fun down(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = scope.run {
+        info("button $name down")
         keyHandler.downAll(key.filter(filter))
         counterIncrease()
         if(drawUi) toDraw(this@Button)
     }
     inline fun up(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = scope.run {
+        info("button $name up")
         keyHandler.upAll(key.filter(filter))
         counterDecrease()
         if(drawUi) toDraw(this@Button)

@@ -6,7 +6,14 @@ import kotlinx.cinterop.toKString
 import libs.Clib.GBKToUTF8
 import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
-import window.WindowManager
+import logger.info
+import window.loopWindowMessage
+import window.registerGui
+import window.registerLayered
+import window.showWindow
+import wrapper.GuiWindow
+import wrapper.padding
+import wrapper.toOrigin
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -24,7 +31,18 @@ fun main() = catchInKotlin {
 }
 
 fun Main(args: Array<String>) = processArgs(args).apply {
-    WindowManager.registerLayered()
+    registerLayered()
+    registerGui()
     val container = json.json.decodeFromString<Container>(jsonStr)
-    WindowManager.loopWindowMessage(container.drawScope.hwnd)
+    val hwnd = container.drawScope.hwnd
+    showWindow(hwnd)
+    val a = object : GuiWindow("windo",800,600) {
+        val button1 = button("b1啊啊啊") {
+            info("clicked")
+        }
+        override fun onSize() {
+            button1.moveRect(relativeRect.apply { padding(100) })
+        }
+    }.apply { show() }
+    loopWindowMessage()
 }

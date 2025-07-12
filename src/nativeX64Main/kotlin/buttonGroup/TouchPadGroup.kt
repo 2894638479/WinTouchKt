@@ -1,6 +1,7 @@
 package buttonGroup
 
 import button.Point
+import logger.warningBox
 import platform.windows.GetTickCount64
 import sendInput.moveCursor
 import touch.TouchReceiver
@@ -12,8 +13,13 @@ class TouchPadGroup(
     val ms:ULong
 ):GroupTouchDispatcher(group) {
     private var lastTouchPoint : Point? = null
-    private val lastDownTime = buttons.map { 0uL }.toULongArray()
-    private val keyDownCount = buttons.map { 0u }.toUIntArray()
+    private var lastDownTime = buttons.map { 0uL }.toULongArray()
+    private var keyDownCount = buttons.map { 0u }.toUIntArray()
+
+    override fun notifyButtonsChanged() {
+        lastDownTime = buttons.map { 0uL }.toULongArray()
+        keyDownCount = buttons.map { 0u }.toUIntArray()
+    }
 
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         if(pointers[event.id] == null) return true
@@ -56,7 +62,7 @@ class TouchPadGroup(
                     }
                 }
             }
-        } ?: error("pointer id not down")
+        } ?: warningBox("pointer id not down in touchpad")
         return true
     }
 }

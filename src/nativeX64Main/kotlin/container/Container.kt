@@ -16,12 +16,11 @@ import kotlinx.serialization.encoding.*
 import platform.posix.exit
 import sendInput.KeyHandler
 import touch.TouchReceiver
-import window.WindowManager
+import window.buttonsLayeredWindow
 import wrapper.Hwnd
 
 @Serializable(with = Container.ContainerSerializer::class)
-class Container(
-):TouchReceiver,NodeWithChild<Group>(){
+class Container :TouchReceiver,NodeWithChild<Group>(){
     override val parent get() = null
     val groups:MutableList<Group> = mutableListOf()
     override val children get() = groups
@@ -44,7 +43,7 @@ class Container(
             }
         }
 
-    val drawScope = DrawScope(buttonSequence,WindowManager.buttonsLayeredWindow("container_window"))
+    val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
     val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { println("exit");exit(0) }
     val touchScope = ButtonTouchScope(keyHandler,drawScope)

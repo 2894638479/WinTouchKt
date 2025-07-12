@@ -4,10 +4,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.wcstr
-import platform.windows.MB_ICONERROR
-import platform.windows.MB_ICONINFORMATION
-import platform.windows.MB_OK
-import platform.windows.MessageBox
+import platform.windows.*
 
 var printInfo = true
 var printWarning = true
@@ -38,4 +35,10 @@ fun errorBox(content:String){
 fun infoBox(info:String) = memScoped {
     val res = MessageBox!!(null, info.wcstr.ptr, "WinTouchKt: info".wcstr.ptr, (MB_OK or MB_ICONINFORMATION).toUInt())
     info("shown info box(return value $res): $info")
+}
+
+@OptIn(ExperimentalForeignApi::class)
+fun warningBox(warning:String) = memScoped {
+    val res = MessageBox!!(null, warning.wcstr.ptr, "WinTouchKt: info".wcstr.ptr, (MB_OK or MB_ICONWARNING).toUInt())
+    info("shown warning box(return value $res): $warning")
 }

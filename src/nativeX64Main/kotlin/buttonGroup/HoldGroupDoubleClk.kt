@@ -7,7 +7,10 @@ class HoldGroupDoubleClk(
     group:Group,
     val ms: ULong
 ) : GroupTouchDispatcher(group) {
-    private val lastUpTime = buttons.map { 0uL }.toULongArray()
+    private var lastUpTime = buttons.map { 0uL }.toULongArray()
+    override fun notifyButtonsChanged() {
+        lastUpTime = buttons.map { 0uL }.toULongArray()
+    }
     override fun move(event: TouchReceiver.TouchEvent) = true
     override fun down(event: TouchReceiver.TouchEvent): Boolean {
         firstOrNull(event.x, event.y)?.run{
