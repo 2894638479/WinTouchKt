@@ -4,20 +4,39 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.invoke
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.wcstr
+import logger.AnsiColor.RED
+import logger.AnsiColor.WHITE
+import logger.AnsiColor.YELLOW
+import logger.AnsiColor.color
 import platform.windows.*
 
 var printInfo = true
 var printWarning = true
 var printError = true
 
+
+object AnsiColor {
+    const val RESET = "\u001B[0m"
+    const val BLACK = "\u001B[30m"
+    const val RED = "\u001B[31m"
+    const val GREEN = "\u001B[32m"
+    const val YELLOW = "\u001B[33m"
+    const val BLUE = "\u001B[34m"
+    const val PURPLE = "\u001B[35m"
+    const val CYAN = "\u001B[36m"
+    const val WHITE = "\u001B[37m"
+
+    fun String.color(value:String) = value + this + RESET
+}
+
 fun info(content:String){
-    if (printInfo) println("[info] $content")
+    if (printInfo) println("[info] $content".color(WHITE))
 }
 fun warning(content:String){
-    if (printWarning) println("[warning] $content")
+    if (printWarning) println("[warning] $content".color(YELLOW))
 }
 fun printError(content:String){
-    if (printError) println("[error] $content")
+    if (printError) println("[error] $content".color(RED))
 }
 
 

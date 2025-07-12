@@ -14,7 +14,7 @@ private const val classNameLayered = "WinTouchKt_Layered"
 private fun registerWindowClass(className:String,block:WNDCLASSEXW.()->Unit) = memScoped {
     alloc<WNDCLASSEXW>().apply {
         cbSize = sizeOf<WNDCLASSEXW>().toUInt()
-        style = 0u
+        style = (CS_HREDRAW or CS_VREDRAW).toUInt()
         lpfnWndProc = null
         cbClsExtra = 0
         cbWndExtra = 0

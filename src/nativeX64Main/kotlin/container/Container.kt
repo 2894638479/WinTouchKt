@@ -13,6 +13,7 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
+import logger.info
 import platform.posix.exit
 import sendInput.KeyHandler
 import touch.TouchReceiver
@@ -45,7 +46,7 @@ class Container :TouchReceiver,NodeWithChild<Group>(){
 
     val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
-    val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { println("exit");exit(0) }
+    val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
     val touchScope = ButtonTouchScope(keyHandler,drawScope)
     class ButtonTouchScope(
         val keyHandler: KeyHandler,

@@ -10,19 +10,20 @@ import window.showWindow
 
 @OptIn(ExperimentalForeignApi::class)
 fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT = catchInKotlin {
-    val guiWindow = dataMap[Hwnd(hWnd)] ?: creatingGuiWindow ?: error("gui window not found")
+    val guiWindow = guiWindowMap[Hwnd(hWnd)] ?: creatingGuiWindow ?: error("gui window not found")
+    info("wndProcGui ${guiWindow.windowName} umsg $uMsg")
     when(uMsg.toInt()){
-        WM_CREATE -> {
-        }
         WM_SIZE -> {
-            info("gui window size changed to ${Hwnd(hWnd).size.str()}")
+            info("gui window size changing to ${Hwnd(hWnd).size.str()}")
             guiWindow.onSize()
         }
         WM_GETMINMAXINFO -> {
             val ptr = lParam.toCPointer<MINMAXINFO>()
             ptr?.pointed?.apply {
-                ptMinTrackSize.x = guiWindow.minW
-                ptMinTrackSize.y = guiWindow.minH
+                guiWindow.let {
+                    ptMinTrackSize.x = it.minW
+                    ptMinTrackSize.y = it.minH
+                }
             } ?: warning("gui window min size set failed")
         }
         WM_COMMAND -> {
@@ -37,32 +38,33 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
     return 0
 }
 
-
-private val dataMap = mutableMapOf<Hwnd,GuiWindow>()
+private val guiWindowMap = mutableMapOf<Hwnd,GuiWindow>()
+private var creatingGuiWindow :GuiWindow? = null
 const val guiWindowClass = "gui_window"
-private var creatingGuiWindow:GuiWindow? = null
+
+interface GuiItem {
+    val hwnd: Hwnd
+    @OptIn(ExperimentalForeignApi::class)
+    fun move(x:Int, y:Int, w:Int, h:Int){
+        info("changing gui item size to $x $y   $w $h")
+        MoveWindow(hwnd.HWND,x,y,w,h,TRUE).ifFalse { warning("gui item move false") }
+    }
+    fun moveRect(rect: tagRECT) = rect.run { move(left,top,right - left,bottom - top) }
+    val relativeRect get() = hwnd.size.apply { toOrigin() }
+}
+
 
 
 @OptIn(ExperimentalForeignApi::class)
 abstract class GuiWindow (
     val windowName:String,
-    val minW:Int, val minH:Int,
-){
-    val hwnd:Hwnd
-    init {
-        creatingGuiWindow = this
-        hwnd = CreateWindowExW(
-            (WS_EX_TOPMOST).toUInt(),
-            guiWindowClass, windowName, WS_OVERLAPPEDWINDOW.toUInt(),
-            CW_USEDEFAULT, CW_USEDEFAULT, minW,minH,null,null, GetModuleHandleW(null), null
-        ).also { if(it == null) error("gui window create failed") }.let { Hwnd(it) }
-        creatingGuiWindow = null
-        dataMap[hwnd] = this
-    }
-    val relativeRect get() = hwnd.size.apply { toOrigin() }
+    val minW:Int = 0, val minH:Int = 0,
+    val parent:GuiWindow? = null
+):GuiItem {
     fun show() = showWindow(hwnd)
-    abstract fun onSize()
-
+    var idIncrease = 100.toUShort()
+        get() = field++
+    val onClicks = mutableMapOf<UShort,()->Unit>()
     fun onWmCommand(id:UShort,nCode:Int){
         when(nCode){
             BN_CLICKED -> {
@@ -70,22 +72,11 @@ abstract class GuiWindow (
             }
         }
     }
-
-
-
-    private var idIncrease = 100.toUShort()
-        get() = field++
-    private val onClicks = mutableMapOf<UShort,()->Unit>()
-
-
-    abstract class GuiItem(val hwnd: Hwnd){
-        fun move(x:Int,y:Int,w:Int,h:Int){
-            info("changing gui item size to $x $y   $w $h")
-            MoveWindow(hwnd.HWND,x,y,w,h,TRUE).ifFalse { warning("gui item move false") }
-        }
-        fun moveRect(rect: tagRECT) = rect.run { move(left,top,right - left,bottom - top) }
-    }
-    class Button(hwnd:Hwnd,val id:UShort):GuiItem(hwnd)
+    //防止子类中访问未初始化的hwnd
+    var onSize:()->Unit = { warning("onSize invoked default implement") }
+        private set
+    protected abstract fun onSize()
+    class Button(override val hwnd:Hwnd,val id:UShort):GuiItem
 
     @OptIn(ExperimentalForeignApi::class)
     fun button(string:String = "Click Me!", onClick:()->Unit):Button {
@@ -101,7 +92,27 @@ abstract class GuiWindow (
             GetModuleHandleW(null),
             null
         ).let { Hwnd(it) }
-        onClicks[id] = onClick
+            onClicks[id] = onClick
         return Button(hwnd, id)
+    }
+    override val hwnd:Hwnd = run {
+        creatingGuiWindow = this
+        val wnd = if (parent == null) CreateWindowExW(
+            (WS_EX_TOPMOST).toUInt(),
+            guiWindowClass, windowName, WS_OVERLAPPEDWINDOW.toUInt(),
+            CW_USEDEFAULT, CW_USEDEFAULT, 50, 50,
+            null, null, GetModuleHandleW(null), null
+        ) else CreateWindowExW(
+            0u, guiWindowClass, windowName, (WS_CHILD or WS_VISIBLE).toUInt(),
+            0, 0, 50, 50, parent.hwnd.HWND, (parent.idIncrease).toLong().toCPointer(),
+            GetModuleHandleW(null), null
+        )
+        creatingGuiWindow = null
+        Hwnd(wnd ?: error("gui window create failed ${GetLastError()}")).also{
+            guiWindowMap[it] = this
+        }
+    }
+    init {
+        onSize = ::onSize
     }
 }

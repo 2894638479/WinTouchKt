@@ -12,8 +12,9 @@ import window.registerGui
 import window.registerLayered
 import window.showWindow
 import wrapper.GuiWindow
+import wrapper.cutBottom
+import wrapper.cutTop
 import wrapper.padding
-import wrapper.toOrigin
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -40,8 +41,17 @@ fun Main(args: Array<String>) = processArgs(args).apply {
         val button1 = button("b1啊啊啊") {
             info("clicked")
         }
+        val window1 = object :GuiWindow("subwindow",parent = this){
+            val button1 = button("fafdsfds"){
+                info("clicked1")
+            }
+            override fun onSize() {
+                button1.moveRect(relativeRect.apply { padding(20) })
+            }
+        }
         override fun onSize() {
-            button1.moveRect(relativeRect.apply { padding(100) })
+            button1.moveRect(relativeRect.apply { padding(100);cutTop(0.7f) })
+            window1.moveRect(relativeRect.apply { padding(100);cutBottom(0.3f) })
         }
     }.apply { show() }
     loopWindowMessage()
