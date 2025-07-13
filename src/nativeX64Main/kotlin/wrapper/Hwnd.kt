@@ -1,5 +1,6 @@
 package wrapper
 
+import draw.Color
 import kotlinx.cinterop.*
 import libs.Clib.hwndHolder
 import logger.info
@@ -26,12 +27,17 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         MoveWindow(HWND,x,y,w,h,TRUE).ifFalse { warning("hwnd move false") }
     }
     fun setRect(rect: tagRECT) = rect.run { setRect(left,top,right - left,bottom - top) }
-    fun getName():String{
-        val length = GetWindowTextLengthW(HWND)
-        memScoped {
-            val buffer = allocArray<UShortVar>(length + 1)
-            GetWindowTextW(HWND,buffer,length + 1)
-            return buffer.toKStringFromUtf16()
+    var name:String
+        get() {
+            val length = GetWindowTextLengthW(HWND)
+            memScoped {
+                val buffer = allocArray<UShortVar>(length + 1)
+                GetWindowTextW(HWND,buffer,length + 1)
+                return buffer.toKStringFromUtf16()
+            }
         }
-    }
+        set(value) {
+            SetWindowTextW(HWND, value)
+        }
+    val controlId get() = GetDlgCtrlID(HWND).toUShort()
 }

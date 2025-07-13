@@ -11,10 +11,6 @@ import logger.info
 import window.loopWindowMessage
 import window.registerGui
 import window.registerLayered
-import wrapper.GuiWindow
-import wrapper.cutBottom
-import wrapper.cutTop
-import wrapper.padding
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -43,6 +39,15 @@ fun Main(args: Array<String>) = processArgs(args).apply {
         Button(Modifier().width(50).height(50).padding(left = 50, top = 50),Alignment().bottom().right(),"tefs"){
             info("clickkkked!")
         }
+        Box(Modifier().width(400).height(400),Alignment()){
+            Button(Modifier().width(50).height(50),Alignment().left().middleY(),"s"){
+                info("fsdajk")
+            }
+            Edit(Modifier().width(300).height(100),Alignment().right().middleY(),"initial"){
+                info(it)
+            }
+        }
+        Text(Modifier().size(100,50),Alignment().middleX().bottom(),"aaaaaa")
     }
     loopWindowMessage()
 }

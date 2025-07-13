@@ -1,6 +1,8 @@
 package dsl
 
-import logger.info
+import platform.windows.SS_CENTER
+import platform.windows.SS_LEFT
+import platform.windows.SS_RIGHT
 import wrapper.*
 
 class Modifier internal constructor(
@@ -38,7 +40,7 @@ fun Modifier.padding(left:Int = 0,top:Int = 0,right:Int = 0,bottom:Int = 0) = ap
     paddingBottom = bottom
 }
 
-value class Alignment internal constructor(private val value:Int){
+value class Alignment internal constructor(internal val value:Int){
     constructor():this(0)
     internal val left get() = value and 0b1 != 0
     internal val top get() = value and 0b10 != 0
@@ -46,22 +48,23 @@ value class Alignment internal constructor(private val value:Int){
     internal val bottom get() = value and 0b1000 != 0
     internal val middleX get() = value and 0b10000 != 0
     internal val middleY get() = value and 0b100000 != 0
-    fun left() = Alignment(value or 0b1)
-    fun top() = Alignment(value or 0b10)
-    fun right() = Alignment(value or 0b100)
-    fun bottom() = Alignment(value or 0b1000)
-    fun middleX() = Alignment(value or 0b10000)
-    fun middleY() = Alignment(value or 0b100000)
+    val staticStyle get() = if (right) SS_RIGHT else if(middleX) SS_CENTER else SS_LEFT
 }
+fun Alignment.left() = Alignment(value or 0b1)
+fun Alignment.top() = Alignment(value or 0b10)
+fun Alignment.right() = Alignment(value or 0b100)
+fun Alignment.bottom() = Alignment(value or 0b1000)
+fun Alignment.middleX() = Alignment(value or 0b10000)
+fun Alignment.middleY() = Alignment(value or 0b100000)
 
 @DslMarker
 annotation class ComponentScope
 
-abstract class GuiComponent {
-    internal abstract val modifier:Modifier
-    internal abstract val alignment:Alignment
-    internal abstract val hwnd:Hwnd
+abstract class GuiComponent(val modifier:Modifier,val alignment:Alignment){
+    abstract val hwnd:Hwnd
 }
+
+class GuiHwnd(modifier: Modifier, alignment: Alignment, override val hwnd: Hwnd):GuiComponent(modifier, alignment)
 
 fun TopWindow(name: String,minW:Int,minH:Int,block: BoxScope.() -> Unit){
     BoxScope(Modifier().size(minW,minH),Alignment(),null,name).apply {
@@ -76,9 +79,9 @@ fun TopWindow(name: String,minW:Int,minH:Int,block: BoxScope.() -> Unit){
 @ComponentScope
 abstract class GuiScope(
     parent:GuiWindow?,name:String,
-    final override val modifier: Modifier,
-    final override val alignment: Alignment
-): GuiComponent() {
+    modifier: Modifier,
+    alignment: Alignment
+): GuiComponent(modifier, alignment) {
     private val window = object : GuiWindow(name,
         if(parent == null) modifier.width else 0,
         if(parent == null) modifier.height else 0,parent){
@@ -91,12 +94,16 @@ abstract class GuiScope(
         children += BoxScope(modifier,alignment,window).apply(block)
     }
     fun Button(modifier: Modifier,alignment: Alignment,text:String,onClick:()->Unit){
-        children += object :GuiComponent(){
-            val button = window.button(text,onClick)
-            override val alignment = alignment
-            override val modifier = modifier
-            override val hwnd get() = button.hwnd
-        }
+        children += GuiHwnd(modifier, alignment,window.button(text,onClick))
+    }
+    fun Edit(modifier:Modifier, alignment: Alignment, text: String, onEdit:(String)->Unit){
+        children += GuiHwnd(modifier, alignment,window.edit(text,onEdit))
+    }
+    fun Custom(modifier: Modifier,alignment: Alignment,block:()->GuiWindow){
+        children += GuiHwnd(modifier, alignment, block().hwnd)
+    }
+    fun Text(modifier:Modifier,alignment: Alignment,text: String){
+        children += GuiHwnd(modifier, alignment, window.text(text,alignment))
     }
 }
 

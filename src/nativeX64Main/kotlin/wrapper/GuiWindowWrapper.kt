@@ -1,5 +1,6 @@
 package wrapper
 
+import dsl.Alignment
 import error.catchInKotlin
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.pointed
@@ -16,6 +17,7 @@ import kotlin.collections.set
 fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT = catchInKotlin {
     val guiWindow = guiWindowMap[Hwnd(hWnd)] ?: creatingGuiWindow ?: error("gui window not found")
     info("wndProcGui ${guiWindow.windowName} umsg $uMsg")
+    fun default() = DefWindowProcW(hWnd, uMsg, wParam, lParam)
     when(uMsg.toInt()){
         WM_SIZE -> {
             info("gui window size changing to ${Hwnd(hWnd).rect.str()}")
@@ -37,9 +39,9 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
             val notificationCode = HIWORD(wParam.toInt())
             guiWindow.onWmCommand(id,notificationCode)
         }
-        WM_CLOSE -> guiWindow.onClose()
-        WM_DESTROY -> guiWindow.onDestroy()
-        else -> return DefWindowProcW(hWnd, uMsg, wParam, lParam)
+        WM_CLOSE -> if(!guiWindow.onClose()) return default()
+        WM_DESTROY -> if(!guiWindow.onDestroy()) return default()
+        else -> return default()
     }
     return 0
 }
@@ -70,38 +72,46 @@ abstract class GuiWindow (
 
     var idIncrease = 100.toUShort()
         get() = field++
-    val onClicks = mutableMapOf<UShort,()->Unit>()
+    val onCommand = mutableMapOf<UShort,()->Unit>()
     fun onWmCommand(id:UShort,nCode:Int){
         when(nCode){
             BN_CLICKED -> {
-                onClicks[id]?.invoke() ?: error("no onClick found for id")
+                onCommand[id]?.invoke() ?: error("no onClick found for id $id")
+            }
+            EN_CHANGE -> {
+                onCommand[id]?.invoke() ?: warning("no onEdit found for id $id")
             }
         }
     }
 
-    open fun onClose() {}
-    open fun onDestroy() {}
+    open fun onClose() = false
+    open fun onDestroy() = false
 
+    private fun createSubHwnd(style:Int,className:String,windowName:String) = CreateWindowExW(
+        0u,
+        className,
+        windowName,
+        (WS_VISIBLE or WS_CHILD or style).toUInt(),
+        100, 100, 100,100,
+        hwnd.HWND,
+        idIncrease.toLong().toCPointer(),
+        GetModuleHandleW(null),
+        null
+    ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()}")) }
 
-    class Button(override val hwnd:Hwnd,val id:UShort):GuiItem
-
-    @OptIn(ExperimentalForeignApi::class)
-    fun button(string:String = "Click Me!", onClick:()->Unit):Button {
-        val id = idIncrease
-        val hwnd = CreateWindowExW(
-            0u,
-            "BUTTON",
-            string,
-            (WS_TABSTOP or WS_VISIBLE or WS_CHILD or BS_DEFPUSHBUTTON).toUInt(),
-            100, 50, 0,0,
-            hwnd.HWND,
-            id.toLong().toCPointer(),
-            GetModuleHandleW(null),
-            null
-        ).let { Hwnd(it) }
-        onClicks[id] = onClick
-        return Button(hwnd, id)
+    fun button(string:String, onClick:()->Unit) = createSubHwnd( WS_TABSTOP or BS_DEFPUSHBUTTON, WC_BUTTONA,string).apply {
+        onCommand[controlId] = onClick
     }
+
+    fun edit(string:String, onEdit:(String)->Unit) = createSubHwnd(WS_TABSTOP or ES_LEFT or WS_BORDER, WC_EDITA,string).also {
+        onEdit(string)
+        onCommand[it.controlId] = {
+            onEdit(it.name)
+        }
+    }
+
+    fun text(text:String,alignment: Alignment) = createSubHwnd(alignment.staticStyle, WC_STATICA,text)
+
     override val hwnd:Hwnd = run {
         val styleEx = (WS_EX_TOPMOST).toUInt()
         val style = (WS_OVERLAPPEDWINDOW or WS_VISIBLE).toUInt()
