@@ -47,19 +47,12 @@ fun registerGui() = registerWindowClass(guiWindowClass){
 fun buttonsLayeredWindow(windowName:String): Hwnd {
     val hwnd = CreateWindowExW(
         (WS_EX_TOOLWINDOW or WS_EX_LAYERED or WS_EX_NOACTIVATE or WS_EX_TOPMOST).toUInt(),
-        classNameLayered, windowName, WS_OVERLAPPEDWINDOW.toUInt(),
+        classNameLayered, windowName, (WS_OVERLAPPED or WS_VISIBLE).toUInt(),
         CW_USEDEFAULT, CW_USEDEFAULT, 0,0,null,null, GetModuleHandleW(null), null
     )
     RegisterTouchWindow(hwnd, (TWF_WANTPALM or TWF_FINETOUCH).toUInt())
     if(hwnd == null) error("buttons layered window create failed")
     return Hwnd(hwnd)
-}
-
-
-@OptIn(ExperimentalForeignApi::class)
-fun showWindow(hwnd:Hwnd){
-    ShowWindow(hwnd.HWND, SW_SHOW)
-    UpdateWindow(hwnd.HWND)
 }
 
 

@@ -1,11 +1,15 @@
 package wrapper
 
 import error.catchInKotlin
-import kotlinx.cinterop.*
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.toCPointer
 import logger.info
 import logger.warning
 import platform.windows.*
-import window.showWindow
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -14,7 +18,7 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
     info("wndProcGui ${guiWindow.windowName} umsg $uMsg")
     when(uMsg.toInt()){
         WM_SIZE -> {
-            info("gui window size changing to ${Hwnd(hWnd).size.str()}")
+            info("gui window size changing to ${Hwnd(hWnd).rect.str()}")
             guiWindow.onSize()
         }
         WM_GETMINMAXINFO -> {
@@ -33,6 +37,8 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
             val notificationCode = HIWORD(wParam.toInt())
             guiWindow.onWmCommand(id,notificationCode)
         }
+        WM_CLOSE -> guiWindow.onClose()
+        WM_DESTROY -> guiWindow.onDestroy()
         else -> return DefWindowProcW(hWnd, uMsg, wParam, lParam)
     }
     return 0
@@ -44,13 +50,9 @@ const val guiWindowClass = "gui_window"
 
 interface GuiItem {
     val hwnd: Hwnd
-    @OptIn(ExperimentalForeignApi::class)
-    fun move(x:Int, y:Int, w:Int, h:Int){
-        info("changing gui item size to $x $y   $w $h")
-        MoveWindow(hwnd.HWND,x,y,w,h,TRUE).ifFalse { warning("gui item move false") }
-    }
-    fun moveRect(rect: tagRECT) = rect.run { move(left,top,right - left,bottom - top) }
-    val relativeRect get() = hwnd.size.apply { toOrigin() }
+    fun move(x:Int, y:Int, w:Int, h:Int) = hwnd.setRect(x, y, w, h)
+    fun moveRect(rect: tagRECT) = hwnd.setRect(rect)
+    val relativeRect get() = hwnd.rect.apply { toOrigin() }
 }
 
 
@@ -58,10 +60,14 @@ interface GuiItem {
 @OptIn(ExperimentalForeignApi::class)
 abstract class GuiWindow (
     val windowName:String,
-    val minW:Int = 0, val minH:Int = 0,
+    internal var minW:Int = 0, internal var minH:Int = 0,
     val parent:GuiWindow? = null
 ):GuiItem {
-    fun show() = showWindow(hwnd)
+    //防止子类中访问未初始化的hwnd
+    var onSize:()->Unit = { warning("onSize invoked default implement") }
+        private set
+    protected abstract fun onSize()
+
     var idIncrease = 100.toUShort()
         get() = field++
     val onClicks = mutableMapOf<UShort,()->Unit>()
@@ -72,10 +78,11 @@ abstract class GuiWindow (
             }
         }
     }
-    //防止子类中访问未初始化的hwnd
-    var onSize:()->Unit = { warning("onSize invoked default implement") }
-        private set
-    protected abstract fun onSize()
+
+    open fun onClose() {}
+    open fun onDestroy() {}
+
+
     class Button(override val hwnd:Hwnd,val id:UShort):GuiItem
 
     @OptIn(ExperimentalForeignApi::class)
@@ -86,20 +93,32 @@ abstract class GuiWindow (
             "BUTTON",
             string,
             (WS_TABSTOP or WS_VISIBLE or WS_CHILD or BS_DEFPUSHBUTTON).toUInt(),
-            100, 50, 100, 30,
+            100, 50, 0,0,
             hwnd.HWND,
             id.toLong().toCPointer(),
             GetModuleHandleW(null),
             null
         ).let { Hwnd(it) }
-            onClicks[id] = onClick
+        onClicks[id] = onClick
         return Button(hwnd, id)
     }
     override val hwnd:Hwnd = run {
+        val styleEx = (WS_EX_TOPMOST).toUInt()
+        val style = (WS_OVERLAPPEDWINDOW or WS_VISIBLE).toUInt()
+        if(parent == null){
+            allocRECT {
+                left = 0
+                top = 0
+                right = minW
+                bottom = minH
+                AdjustWindowRectEx(ptr,style,FALSE,styleEx)
+                minW = right - left
+                minH = bottom - top
+            }
+        }
         creatingGuiWindow = this
         val wnd = if (parent == null) CreateWindowExW(
-            (WS_EX_TOPMOST).toUInt(),
-            guiWindowClass, windowName, WS_OVERLAPPEDWINDOW.toUInt(),
+            styleEx,guiWindowClass, windowName, style,
             CW_USEDEFAULT, CW_USEDEFAULT, 50, 50,
             null, null, GetModuleHandleW(null), null
         ) else CreateWindowExW(

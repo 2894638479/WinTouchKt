@@ -1,4 +1,5 @@
 import container.Container
+import dsl.*
 import error.catchInKotlin
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
@@ -10,7 +11,6 @@ import logger.info
 import window.loopWindowMessage
 import window.registerGui
 import window.registerLayered
-import window.showWindow
 import wrapper.GuiWindow
 import wrapper.cutBottom
 import wrapper.cutTop
@@ -35,24 +35,14 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     registerLayered()
     registerGui()
     val container = json.json.decodeFromString<Container>(jsonStr)
-    val hwnd = container.drawScope.hwnd
-    showWindow(hwnd)
-    val a = object : GuiWindow("windo",800,600) {
-        val button1 = button("b1啊啊啊") {
-            info("clicked")
+    val hwndLayered = container.drawScope.hwnd
+    hwndLayered.showAndUpdate()
+
+
+    TopWindow("window",800,800){
+        Button(Modifier().width(50).height(50).padding(left = 50, top = 50),Alignment().bottom().right(),"tefs"){
+            info("clickkkked!")
         }
-        val window1 = object :GuiWindow("subwindow",parent = this){
-            val button1 = button("fafdsfds"){
-                info("clicked1")
-            }
-            override fun onSize() {
-                button1.moveRect(relativeRect.apply { padding(20) })
-            }
-        }
-        override fun onSize() {
-            button1.moveRect(relativeRect.apply { padding(100);cutTop(0.7f) })
-            window1.moveRect(relativeRect.apply { padding(100);cutBottom(0.3f) })
-        }
-    }.apply { show() }
+    }
     loopWindowMessage()
 }

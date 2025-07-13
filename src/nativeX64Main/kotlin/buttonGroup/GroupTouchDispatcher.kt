@@ -18,15 +18,15 @@ abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
     }
     open fun notifyButtonsChanged(){}
 
-    protected inline fun firstOrNull(x: Float, y: Float):Button? {
+    protected fun firstOrNull(x: Float, y: Float):Button? {
         if (rect?.containPoint(x,y) != true) return null
         return buttons.firstOrNull { it.inArea(x,y) }
     }
-    protected inline fun alreadyDown(button: Button,id: UInt):Boolean {
+    protected fun alreadyDown(button: Button,id: UInt):Boolean {
         return pointers[id]?.contains(button) ?: false
     }
 
-    protected inline fun slide(toUp:Button, toDown:Button, pressedButtons:MutableList<Button>){
+    protected fun slide(toUp:Button, toDown:Button, pressedButtons:MutableList<Button>){
         toUp.up { !toDown.key.contains(it) }
         toDown.down { !toUp.key.contains(it) }
         pressedButtons.remove(toUp)

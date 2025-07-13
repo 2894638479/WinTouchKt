@@ -1,6 +1,9 @@
 package wrapper
 
 import button.Rect
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
 import platform.windows.RECT
 import platform.windows.WINBOOL
 import kotlin.math.roundToInt
@@ -21,6 +24,20 @@ fun RECT.toOrigin(){
     left = 0
     top = 0
 }
+fun RECT.copyFrom(other:RECT){
+    left = other.left
+    top = other.top
+    right = other.right
+    bottom = other.bottom
+}
+
+val RECT.width get() = right - left
+val RECT.height get() = bottom - top
+val RECT.midX get() = (left + right) / 2
+val RECT.midY get() = (top + bottom) / 2
+
+@OptIn(ExperimentalForeignApi::class)
+fun allocRECT(block:RECT.()->Unit) = memScoped { alloc<RECT>().block() }
 
 fun RECT.cutTop(rate:Float) { top += ((bottom - top)*rate).roundToInt() }
 fun RECT.cutBottom(rate:Float) { bottom -= ((bottom - top)*rate).roundToInt() }
