@@ -36,18 +36,25 @@ fun Main(args: Array<String>) = processArgs(args).apply {
 
 
     TopWindow("window",800,800){
+        val state = MutableState(false)
+        val state2 = combine(state){!it}
         Button(Modifier().width(50).height(50).padding(left = 50, top = 50),Alignment().bottom().right(),"tefs"){
             info("clickkkked!")
+            state.value = !state.value
         }
         Box(Modifier().width(400).height(400),Alignment()){
-            Button(Modifier().width(50).height(50),Alignment().left().middleY(),"s"){
-                info("fsdajk")
-            }
-            Edit(Modifier().width(300).height(100),Alignment().right().middleY(),"initial"){
-                info(it)
+            VisibleIf(state) {
+                Button(Modifier().width(50).height(50), Alignment().left().middleY(), "s") {
+                    info("fsdajk")
+                }
+                Edit(Modifier().width(300).height(100), Alignment().right().middleY(), "initial") {
+                    info(it)
+                }
             }
         }
-        Text(Modifier().size(100,50),Alignment().middleX().bottom(),"aaaaaa")
+        VisibleIf(state2){
+            Text(Modifier().size(100, 50), Alignment().middleX().bottom(), "aaaaaa")
+        }
     }
     loopWindowMessage()
 }

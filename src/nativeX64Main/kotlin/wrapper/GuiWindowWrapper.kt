@@ -41,6 +41,11 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
         }
         WM_CLOSE -> if(!guiWindow.onClose()) return default()
         WM_DESTROY -> if(!guiWindow.onDestroy()) return default()
+        WM_NCDESTROY -> {
+            return default().apply {
+                guiWindowMap.remove(Hwnd(hWnd))
+            }
+        }
         else -> return default()
     }
     return 0
@@ -50,21 +55,12 @@ private val guiWindowMap = mutableMapOf<Hwnd,GuiWindow>()
 private var creatingGuiWindow :GuiWindow? = null
 const val guiWindowClass = "gui_window"
 
-interface GuiItem {
-    val hwnd: Hwnd
-    fun move(x:Int, y:Int, w:Int, h:Int) = hwnd.setRect(x, y, w, h)
-    fun moveRect(rect: tagRECT) = hwnd.setRect(rect)
-    val relativeRect get() = hwnd.rect.apply { toOrigin() }
-}
-
-
-
 @OptIn(ExperimentalForeignApi::class)
 abstract class GuiWindow (
     val windowName:String,
     internal var minW:Int = 0, internal var minH:Int = 0,
     val parent:GuiWindow? = null
-):GuiItem {
+) {
     //防止子类中访问未初始化的hwnd
     var onSize:()->Unit = { warning("onSize invoked default implement") }
         private set
@@ -112,7 +108,7 @@ abstract class GuiWindow (
 
     fun text(text:String,alignment: Alignment) = createSubHwnd(alignment.staticStyle, WC_STATICA,text)
 
-    override val hwnd:Hwnd = run {
+    val hwnd:Hwnd = run {
         val styleEx = (WS_EX_TOPMOST).toUInt()
         val style = (WS_OVERLAPPEDWINDOW or WS_VISIBLE).toUInt()
         if(parent == null){

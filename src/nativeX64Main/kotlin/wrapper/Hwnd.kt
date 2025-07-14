@@ -1,6 +1,5 @@
 package wrapper
 
-import draw.Color
 import kotlinx.cinterop.*
 import libs.Clib.hwndHolder
 import logger.info
@@ -19,7 +18,7 @@ value class Hwnd(val value:CPointer<hwndHolder>){
     }
     fun show() = ShowWindow(HWND, SW_SHOW)
     fun hide() = ShowWindow(HWND, SW_HIDE)
-    val visible get() = IsWindowVisible(HWND)
+    val visible get() = IsWindowVisible(HWND) != FALSE
     fun update() = UpdateWindow(HWND)
     fun showAndUpdate() { show();update() }
     fun setRect(x:Int, y:Int, w:Int, h:Int){

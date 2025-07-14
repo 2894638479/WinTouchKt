@@ -11,8 +11,14 @@ import logger.AnsiColor.color
 import platform.windows.*
 
 var printInfo = true
+    get() = field && !disablePrint
 var printWarning = true
+    get() = field && !disablePrint
 var printError = true
+    get() = field && !disablePrint
+
+
+var disablePrint = false
 
 
 object AnsiColor {
