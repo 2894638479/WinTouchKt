@@ -1,5 +1,6 @@
 package button
 
+import json.RoundedRectJson
 import wrapper.D2dBrush
 import wrapper.D2dTarget
 import wrapper.d2dDrawRoundedRect
@@ -48,4 +49,5 @@ class RoundedRect(
     }
     override val outerRect: Rect get() = Rect(left, top, right, bottom)
     override val isValid get() = left < right && top < bottom
+    fun toRoundedRectJson() = RoundedRectJson(x, y, w, h, r)
 }

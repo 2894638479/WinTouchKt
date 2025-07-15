@@ -12,6 +12,5 @@ class ButtonStyle(
     var fontFamily:String? = null,
     var fontSize:Float? = null,
     var fontStyle:String? = null,
-    var fontWeight:Int? = null,
-    val outlineWidth:Float? = null
+    var fontWeight:Int? = null
 )

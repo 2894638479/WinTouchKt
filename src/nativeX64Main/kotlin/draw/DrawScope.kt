@@ -33,9 +33,10 @@ class DrawScope(private val buttons:Sequence<Button>,val hwnd: Hwnd) {
         fun drawButton(button:Button){
             val style = button.currentStyle
             val shape = button.shape
+            val outlineWidth = button.cache.outlineWidth
             shape.d2dFill(target,style.brush)
-            shape.d2dDraw(target,style.brushOutline,style.outlineWidth)
-            val textBound = shape.padding(style.outlineWidth)?.innerRect ?: return
+            shape.d2dDraw(target,style.brushOutline,outlineWidth)
+            val textBound = shape.padding(outlineWidth)?.innerRect ?: return
             val text = button.name ?: return
             target.d2dDrawText(style.brushText,style.font,textBound,text)
         }
@@ -55,7 +56,7 @@ class DrawScope(private val buttons:Sequence<Button>,val hwnd: Hwnd) {
     private val toErase = mutableListOf<Pair<Shape,Float>>()
     private fun invalidate() = InvalidateRect(hwnd.HWND,null,1)
     fun toDraw(button: Button) { toDraw += button; invalidate() }
-    fun toErase(button:Button) { toErase += button.shape to button.currentStyle.outlineWidth; invalidate() }
+    fun toErase(button:Button) { toErase += button.shape to button.cache.outlineWidth; invalidate() }
     fun toDrawAll() { reDraw = true; invalidate() }
     var showStatus = true
         set(value) {

@@ -36,7 +36,7 @@ fun Main(args: Array<String>) = processArgs(args).apply {
 
 
     TopWindow("window",800,800){
-        val state = MutableState(false)
+        val state = State(false)
         val state2 = combine(state){!it}
         Button(Modifier().width(50).height(50).padding(left = 50, top = 50),Alignment().bottom().right(),"tefs"){
             info("clickkkked!")

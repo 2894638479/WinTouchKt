@@ -4,18 +4,22 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 
-class MutableState<T>(value:T):ReadWriteProperty<Any?,T>{
-    private val listeners = mutableListOf<(T)->Unit>()
+class State<T>(value:T,mutable:Boolean = true):ReadWriteProperty<Any?,T>{
+    private val listeners = if(mutable) mutableListOf<(T)->Unit>() else null
+    val mutable get() = listeners != null
     var value = value
         set(value) {
             if(field != value) {
                 field = value
-                listeners.forEach { it(value) }
+                listeners?.forEach { it(value) }
             }
         }
-    fun listen(listener:(T)->Unit) = listener.also { listeners += it }
-    fun unListen(listener: (T) -> Unit) {
-        if (!listeners.remove(listener)) error("listener already removed")
+    fun listen(listener:(T)->Unit) = listeners?.plusAssign(listener)?.let { listener }
+    fun unListen(listener: ((T) -> Unit)?) {
+        listener?.let {
+            if(listeners == null) error("state is immutable")
+            if (!listeners.remove(it)) error("listener already removed")
+        }
     }
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {
         return value
@@ -25,7 +29,7 @@ class MutableState<T>(value:T):ReadWriteProperty<Any?,T>{
     }
 }
 
-class MutableStateList<T> private constructor(private val delegate:MutableList<T>):MutableList<T> by delegate {
+class StateList<T> private constructor(private val delegate:MutableList<T>):MutableList<T> by delegate {
     constructor(vararg value:T):this(mutableListOf(*value))
     private val listeners = mutableListOf<Listener<T>>()
     fun interface Listener<T>{
@@ -38,7 +42,7 @@ class MutableStateList<T> private constructor(private val delegate:MutableList<T
     fun unListen(listener: Listener<T>) {
         if (!listeners.remove(listener)) error("listener already removed")
     }
-    fun <V> generateState(func:(List<T>)->V) = MutableState(func(delegate)).also {
+    fun <V> generateState(func:(List<T>)->V) = State(func(delegate)).also {
         listen { it.value = func(delegate) }
     }
     override fun add(element: T) = delegate.add(element).apply {

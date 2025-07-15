@@ -1,5 +1,6 @@
 package button
 
+import json.RectJson
 import wrapper.D2dBrush
 import wrapper.D2dTarget
 import wrapper.d2dDrawRect
@@ -39,6 +40,7 @@ class Rect(
     val w get() = (right - left) / 2
     val h get() = (bottom - top) / 2
     fun toMutableRect():MutableRect = MutableRect(left, top, right, bottom)
+    fun toRectJson() = RectJson(x,y,w,h)
     override fun containPoint(x: Float, y: Float): Boolean {
         return x > left
                 && y > top

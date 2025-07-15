@@ -58,6 +58,12 @@ abstract class Node {
         private var _shape:Shape? = null
         val shape get() = _shape ?: node.calCurrentShape().also { _shape = it }
 
+        private var _outlineWidth:Float? = null
+        val outlineWidth:Float get() {
+            node.iterateParents { it.cache._outlineWidth?.let { return it } }
+            return 0f
+        }
+
         private var _offset:Point? = null
         val offset:Point get() = _offset ?: run {
             var offset = Point(0f,0f)
@@ -102,7 +108,6 @@ abstract class Node {
             private inline fun <T:Any> find(default:T,get:ButtonStyle.()->T?) = find(get) ?: default
             private val color get() = find(defaultColor){color}
             private val outlineColor get() = find(WHITE){outlineColor}
-            val outlineWidth get() = find(1f){outlineWidth}
             private val textColor get() = find(RED){textColor}
             private val fontFamily get() = find{fontFamily}
             private val fontSize get() = find{fontSize}

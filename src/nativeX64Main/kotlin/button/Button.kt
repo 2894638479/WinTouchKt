@@ -3,16 +3,11 @@ package button
 import buttonGroup.Group
 import container.Node
 import json.RectJson
-import json.RoundJson
 import json.RoundedRectJson
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.SetSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.*
+import kotlinx.serialization.encoding.CompositeDecoder
 import logger.info
+import wrapper.SerializerWrapper
 import wrapper.WeakRefDel
 
 @Serializable(with = Button.ButtonSerializer::class)
@@ -49,65 +44,49 @@ class Button(
     }
     fun inArea(x:Float,y:Float) = shape.containPoint(x,y)
 
-    object ButtonSerializer : KSerializer<Button> {
-        override val descriptor = buildClassSerialDescriptor("Button"){
-            element<String>("name")
-            element<Set<UByte>>("key")
-            element<RectJson>("rect")
-            element<RoundedRectJson>("roundedRect")
-            element<RoundJson>("round")
-            element<ButtonStyle>("style")
-            element<ButtonStyle>("stylePressed")
+    object ButtonSerializer : SerializerWrapper<Button,ButtonSerializer.Descriptor>("Button",Descriptor){
+        object Descriptor: SerializerWrapper.Descriptor<Button>() {
+            val name = "name" from {name}
+            val key = "key" from {key}
+            val rect = "rect" from {(shape as? Rect)?.toRectJson()}
+            val roundedRect = "roundedRect" from {(shape as? RoundedRect)?.toRoundedRectJson()}
+            val round = "round" from {(shape as? Round)}
+            val style = "style" from {style}
+            val stylePressed = "stylePressed" from {stylePressed}
+            override val items = listOf(name, key, rect, round, roundedRect, style, stylePressed)
         }
-        override fun deserialize(decoder: Decoder): Button {
+        override fun deserializeScope(decoder: CompositeDecoder) = object :DeserializeScope<Button, Descriptor>(decoder,this) {
             var name:String? = null
             var key:Set<UByte>? = null
             var rectJson:RectJson? = null
             var roundedRectJson:RoundedRectJson? = null
-            var roundJson:RoundJson? = null
+            var round:Round? = null
             var style:ButtonStyle? = null
             var stylePressed:ButtonStyle? = null
-            decoder.decodeStructure(descriptor) {
-                while (true) {
-                    when (val index = decodeElementIndex(descriptor)) {
-                        0 -> name = decodeStringElement(descriptor,index)
-                        1 -> key = decodeSerializableElement(descriptor,index,SetSerializer(UByte.serializer()))
-                        2 -> rectJson = decodeSerializableElement(descriptor,index,RectJson.serializer())
-                        3 -> roundedRectJson = decodeSerializableElement(descriptor,index,RoundedRectJson.serializer())
-                        4 -> roundJson = decodeSerializableElement(descriptor,index,RoundJson.serializer())
-                        5 -> style = decodeSerializableElement(descriptor,index,ButtonStyle.serializer())
-                        6 -> stylePressed = decodeSerializableElement(descriptor,index,ButtonStyle.serializer())
-                        CompositeDecoder.DECODE_DONE -> break
-                        else -> error("Unexpected index: $index")
-                    }
+            init {
+                desc.name to {name = it}
+                desc.key to {key = it}
+                desc.rect to {rectJson = it}
+                desc.roundedRect to {roundedRectJson = it}
+                desc.round to {round = it}
+                desc.style to {style = it}
+                desc.stylePressed to {stylePressed = it}
+            }
+            override fun end(): Button {
+                var shapeCount = 0
+                rectJson?.let { shapeCount++ }
+                round?.let { shapeCount++ }
+                roundedRectJson?.let { shapeCount++ }
+                if(shapeCount != 1) error("choose one shape from rect round roundedRect")
+                val shape = rectJson?.toRect()
+                    ?: roundedRectJson?.toRoundedRect()
+                    ?: round
+                    ?: error("shape is null")
+                return Button(key ?: error("button has no key"),shape).also {
+                    it.style = style
+                    it.stylePressed = stylePressed
+                    it.name = name ?: error("button has no name")
                 }
-            }
-            var shapeCount = 0
-            rectJson?.let { shapeCount++ }
-            roundJson?.let { shapeCount++ }
-            roundedRectJson?.let { shapeCount++ }
-            if(shapeCount != 1) error("choose one shape from rect round roundedRect")
-            val shape = rectJson?.toRect()
-                ?: roundedRectJson?.toRoundedRect()
-                ?: roundJson?.toRound()
-                ?: error("shape is null")
-            return Button(key ?: error("button has no key"),shape).also {
-                it.style = style
-                it.stylePressed = stylePressed
-                it.name = name ?: error("button has no name")
-            }
-        }
-        override fun serialize(encoder: Encoder, value: Button) = value.run {
-            encoder.encodeStructure(descriptor){
-                name?.let { encodeStringElement(descriptor, 0, it) }
-                encodeSerializableElement(descriptor,1, SetSerializer(UByte.serializer()),key)
-                val s = shapeOrig
-                if(s is Rect) encodeSerializableElement(descriptor,2,RectJson.serializer(),s.run { RectJson(x,y,w,h) })
-                else if(s is RoundedRect) encodeSerializableElement(descriptor,3, RoundedRectJson.serializer(),s.run { RoundedRectJson(x,y,w,h,r) })
-                else if(s is Round) encodeSerializableElement(descriptor,4,RoundJson.serializer(),s.run { RoundJson(x,y,r) })
-                else error("shape type logic error")
-                style?.let { encodeSerializableElement(descriptor,5,ButtonStyle.serializer(),it) }
-                stylePressed?.let { encodeSerializableElement(descriptor,6,ButtonStyle.serializer(),it) }
             }
         }
     }
