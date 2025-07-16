@@ -2,10 +2,7 @@ package button
 
 import buttonGroup.Group
 import container.Node
-import json.RectJson
-import json.RoundedRectJson
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encoding.CompositeDecoder
 import logger.info
 import wrapper.SerializerWrapper
 import wrapper.WeakRefDel
@@ -53,40 +50,21 @@ class Button(
             val round = "round" from {(shape as? Round)}
             val style = "style" from {style}
             val stylePressed = "stylePressed" from {stylePressed}
-            override val items = listOf(name, key, rect, round, roundedRect, style, stylePressed)
         }
-        override fun deserializeScope(decoder: CompositeDecoder) = object :DeserializeScope<Button, Descriptor>(decoder,this) {
-            var name:String? = null
-            var key:Set<UByte>? = null
-            var rectJson:RectJson? = null
-            var roundedRectJson:RoundedRectJson? = null
-            var round:Round? = null
-            var style:ButtonStyle? = null
-            var stylePressed:ButtonStyle? = null
-            init {
-                desc.name to {name = it}
-                desc.key to {key = it}
-                desc.rect to {rectJson = it}
-                desc.roundedRect to {roundedRectJson = it}
-                desc.round to {round = it}
-                desc.style to {style = it}
-                desc.stylePressed to {stylePressed = it}
-            }
-            override fun end(): Button {
-                var shapeCount = 0
-                rectJson?.let { shapeCount++ }
-                round?.let { shapeCount++ }
-                roundedRectJson?.let { shapeCount++ }
-                if(shapeCount != 1) error("choose one shape from rect round roundedRect")
-                val shape = rectJson?.toRect()
-                    ?: roundedRectJson?.toRoundedRect()
-                    ?: round
-                    ?: error("shape is null")
-                return Button(key ?: error("button has no key"),shape).also {
-                    it.style = style
-                    it.stylePressed = stylePressed
-                    it.name = name ?: error("button has no name")
-                }
+        override fun Descriptor.generate(): Button {
+            var shapeCount = 0
+            rect.nullable?.let { shapeCount++ }
+            round.nullable?.let { shapeCount++ }
+            roundedRect.nullable?.let { shapeCount++ }
+            if(shapeCount != 1) error("choose one shape from rect round roundedRect")
+            val shape = rect.nullable?.toRect()
+                ?: roundedRect.nullable?.toRoundedRect()
+                ?: round.nullable
+                ?: error("shape is null")
+            return Button(key.nullable ?: error("button has no key"),shape).also {
+                it.style = style.nullable
+                it.stylePressed = stylePressed.nullable
+                it.name = name.nullable
             }
         }
     }

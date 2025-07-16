@@ -8,20 +8,26 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.*
 import kotlinx.serialization.serializer
 
-abstract class SerializerWrapper<T,D:SerializerWrapper.Descriptor<T>>(name:String,val desc:D):KSerializer<T> {
+abstract class SerializerWrapper<T : Any,D:SerializerWrapper.Descriptor<T>>(name:String, val desc:D):KSerializer<T> {
     final override val descriptor = buildClassSerialDescriptor(name){
         desc.items.forEach {
             it.run { buildElement() }
         }
     }
-    abstract class Descriptor<T>{
-        interface Item <T,E:Any>{
-            fun ClassSerialDescriptorBuilder.buildElement()
-            fun CompositeDecoder.deserialize(descriptor:SerialDescriptor,index:Int):E
-            fun CompositeEncoder.serialize(descriptor: SerialDescriptor,index:Int,value:T)
+    abstract class Descriptor<T:Any>{
+        abstract class Item <T:Any,E:Any>(val name: String){
+            abstract fun ClassSerialDescriptorBuilder.buildElement()
+            abstract fun CompositeDecoder.deserialize(descriptor:SerialDescriptor, index:Int):E
+            abstract fun CompositeEncoder.serialize(descriptor: SerialDescriptor, index:Int, value:T)
+
+            //this logic can only run on single thread
+            internal var _value:E? = null
+            val nonNull get() = _value ?: error("required field $name is null")
+            val nullable get() = _value
+            internal fun CompositeDecoder.setValueByDeserialize(descriptor:SerialDescriptor, index:Int) {_value = deserialize(descriptor, index)}
         }
         inline infix fun <reified E:Any> String.from(crossinline serializeValue:T.()->E?) = create(this,serializeValue)
-        inline fun <reified E:Any> create(name:String, crossinline serializeValue:T.()->E?) = object :Item <T,E>{
+        inline fun <reified E:Any> create(name:String, crossinline serializeValue:T.()->E?) = object : Item<T, E>(name) {
             override fun ClassSerialDescriptorBuilder.buildElement() {
                 element<E>(name)
             }
@@ -32,34 +38,25 @@ abstract class SerializerWrapper<T,D:SerializerWrapper.Descriptor<T>>(name:Strin
                     encodeSerializableElement(descriptor,index, serializer<E>(),it)
                 }
             }
-        }
-        abstract val items: List<Item<T,*>>
+        }.apply { items += this }
+        val items = mutableListOf<Item<T,*>>()
+        fun clearValue() = items.forEach { it._value = null }
     }
-
-    abstract class DeserializeScope<T,D:Descriptor<T>>(private val decoder: CompositeDecoder,private val wrapper: SerializerWrapper<T,D>){
-        internal val tasks = mutableMapOf<Descriptor.Item<T, *>,()->Unit>()
-        infix fun <E:Any> Descriptor.Item<T, E>.to(task:(E)->Unit){
-            tasks[this] = { task(deserialize()) }
-        }
-        abstract fun end():T
-        fun <E:Any> Descriptor.Item<T,E>.deserialize():E{
-            return decoder.deserialize(wrapper.descriptor,wrapper.desc.items.indexOf(this))
-        }
-    }
-    abstract fun deserializeScope(decoder: CompositeDecoder):DeserializeScope<T,D>
 
     final override fun deserialize(decoder: Decoder): T {
-        var scope:DeserializeScope<T,D>? = null
+        var t:T? = null
         decoder.decodeStructure(descriptor){
-            val scope = deserializeScope(this).apply { scope = this }
-            while (true){
+            desc.clearValue()
+            while(true) {
                 val index = decodeElementIndex(descriptor)
-                if(index == CompositeDecoder.DECODE_DONE) break
-                val item = desc.items.getOrNull(index) ?: error("unexpected index $index")
-                scope.tasks[item]?.invoke() ?: error("not found task")
+                if (index == CompositeDecoder.DECODE_DONE) break
+                val item = desc.items.getOrNull(index) ?: error("unexpected index:$index")
+                item.run { setValueByDeserialize(descriptor, index) }
             }
+            t = desc.generate()
+            desc.clearValue()
         }
-        return scope?.end() ?: error("deserialize scope is null")
+        return t ?: error("deserialize failed")
     }
 
     final override fun serialize(encoder: Encoder, value: T) {
@@ -69,4 +66,5 @@ abstract class SerializerWrapper<T,D:SerializerWrapper.Descriptor<T>>(name:Strin
             }
         }
     }
+    abstract fun D.generate():T
 }
