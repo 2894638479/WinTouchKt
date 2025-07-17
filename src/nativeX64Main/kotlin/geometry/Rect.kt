@@ -1,46 +1,44 @@
 package geometry
 
-import json.RectJson
-import wrapper.D2dBrush
-import wrapper.D2dTarget
-import wrapper.d2dDrawRect
-import wrapper.d2dFillRect
+import kotlinx.serialization.Serializable
+import wrapper.*
 import kotlin.math.max
 import kotlin.math.min
 
-class MutableRect(
-    var left:Float,
-    var top:Float,
-    var right:Float,
-    var bottom:Float,
-){
-    operator fun plusAssign(other: Rect){
-        left = min(left,other.left)
-        top = min(top,other.top)
-        right = max(right,other.right)
-        bottom = max(bottom,other.bottom)
-    }
-    operator fun plusAssign(point: Point){
-        left += point.x
-        top += point.y
-        right += point.x
-        bottom += point.y
-    }
-    fun toRect(): Rect = Rect(left, top, right, bottom)
-}
 
+@Serializable(with = Rect.Serializer::class)
 class Rect(
     val left:Float,
     val top:Float,
     val right:Float,
     val bottom:Float
 ): Shape {
+    class Mutable(
+        var left:Float,
+        var top:Float,
+        var right:Float,
+        var bottom:Float,
+    ){
+        operator fun plusAssign(other: Rect){
+            left = min(left,other.left)
+            top = min(top,other.top)
+            right = max(right,other.right)
+            bottom = max(bottom,other.bottom)
+        }
+        operator fun plusAssign(point: Point){
+            left += point.x
+            top += point.y
+            right += point.x
+            bottom += point.y
+        }
+        fun toRect(): Rect = Rect(left, top, right, bottom)
+    }
+
     val x get() = (left + right) / 2
     val y get() = (top + bottom) / 2
     val w get() = (right - left) / 2
     val h get() = (bottom - top) / 2
-    fun toMutableRect(): MutableRect = MutableRect(left, top, right, bottom)
-    fun toRectJson() = RectJson(x,y,w,h)
+    fun toMutable(): Mutable = Mutable(left, top, right, bottom)
     override fun containPoint(x: Float, y: Float): Boolean {
         return x > left
                 && y > top
@@ -66,4 +64,20 @@ class Rect(
     override val innerRect: Rect get() = this
     override val outerRect: Rect get() = this
     override val isValid get() = left < right && top < bottom
+
+    object Serializer : SerializerWrapper<Rect,Serializer.Descriptor>("Rect",Descriptor){
+        object Descriptor:SerializerWrapper.Descriptor<Rect>(){
+            val x = "x" from {x}
+            val y = "y" from {y}
+            val w = "w" from {w}
+            val h = "h" from {h}
+        }
+        override fun Descriptor.generate(): Rect {
+            val x = x.nonNull
+            val y = y.nonNull
+            val w2 = w.nonNull / 2
+            val h2 = h.nonNull / 2
+            return Rect(x - w2,y - h2,x + w2,y + h2)
+        }
+    }
 }

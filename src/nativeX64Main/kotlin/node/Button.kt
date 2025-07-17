@@ -6,6 +6,7 @@ import geometry.RoundedRect
 import geometry.Shape
 import kotlinx.serialization.Serializable
 import logger.info
+import node.Container.ContainerSerializer.Descriptor.from
 import wrapper.SerializerWrapper
 import wrapper.WeakRefDel
 
@@ -44,14 +45,11 @@ class Button(
     fun inArea(x:Float,y:Float) = shape.containPoint(x,y)
 
     object ButtonSerializer : SerializerWrapper<Button, ButtonSerializer.Descriptor>("Button", Descriptor){
-        object Descriptor: SerializerWrapper.Descriptor<Button>() {
-            val name = "name" from {name}
+        object Descriptor: Node.Descriptor<Button>() {
             val key = "key" from {key}
-            val rect = "rect" from {(shape as? Rect)?.toRectJson()}
-            val roundedRect = "roundedRect" from {(shape as? RoundedRect)?.toRoundedRectJson()}
+            val rect = "rect" from {(shape as? Rect)}
+            val roundedRect = "roundedRect" from {(shape as? RoundedRect)}
             val round = "round" from {(shape as? Round)}
-            val style = "style" from {style}
-            val stylePressed = "stylePressed" from {stylePressed}
         }
         override fun Descriptor.generate(): Button {
             var shapeCount = 0
@@ -59,15 +57,11 @@ class Button(
             round.nullable?.let { shapeCount++ }
             roundedRect.nullable?.let { shapeCount++ }
             if(shapeCount != 1) error("choose one shape from rect round roundedRect")
-            val shape = rect.nullable?.toRect()
-                ?: roundedRect.nullable?.toRoundedRect()
+            val shape = rect.nullable
+                ?: roundedRect.nullable
                 ?: round.nullable
                 ?: error("shape is null")
-            return Button(key.nullable ?: error("button has no key"),shape).also {
-                it.style = style.nullable
-                it.stylePressed = stylePressed.nullable
-                it.name = name.nullable
-            }
+            return Button(key.nonNull,shape).addNodeInfo()
         }
     }
 }

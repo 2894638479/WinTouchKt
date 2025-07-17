@@ -1,12 +1,11 @@
 package geometry
 
-import json.RoundedRectJson
-import wrapper.D2dBrush
-import wrapper.D2dTarget
-import wrapper.d2dDrawRoundedRect
-import wrapper.d2dFillRoundedRect
+import geometry.Rect.Serializer.Descriptor
+import kotlinx.serialization.Serializable
+import wrapper.*
 import kotlin.math.max
 
+@Serializable(with = RoundedRect.Serializer::class)
 class RoundedRect(
     val left:Float,
     val top:Float,
@@ -50,5 +49,21 @@ class RoundedRect(
     }
     override val outerRect: Rect get() = Rect(left, top, right, bottom)
     override val isValid get() = left < right && top < bottom
-    fun toRoundedRectJson() = RoundedRectJson(x, y, w, h, r)
+
+    object Serializer:SerializerWrapper<RoundedRect,Serializer.Descriptor>("RoundedRect",Descriptor){
+        object Descriptor:SerializerWrapper.Descriptor<RoundedRect>(){
+            val x = "x" from {x}
+            val y = "y" from {y}
+            val w = "w" from {w}
+            val h = "h" from {h}
+            val r = "r" from {r}
+        }
+        override fun Descriptor.generate(): RoundedRect {
+            val x = x.nonNull
+            val y = y.nonNull
+            val w2 = w.nonNull / 2
+            val h2 = h.nonNull / 2
+            return RoundedRect(x - w2,y - h2,x + w2,y + h2,r.nonNull)
+        }
+    }
 }

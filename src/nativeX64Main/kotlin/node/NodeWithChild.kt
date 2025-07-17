@@ -1,15 +1,14 @@
 package node
 
-import geometry.MutableRect
 import geometry.Rect
 
 abstract class NodeWithChild<C: Node>: Node() {
     protected abstract val children:List<C>
     final override fun calOuterRect(): Rect? {
-        var res: MutableRect? = null
+        var res: Rect.Mutable? = null
         children.forEach {
             it.cache.outerRect?.let {
-                res?.plusAssign(it) ?: run { res = it.toMutableRect() }
+                res?.plusAssign(it) ?: run { res = it.toMutable() }
             }
         }
         return res?.toRect()

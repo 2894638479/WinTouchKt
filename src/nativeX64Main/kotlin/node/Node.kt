@@ -1,6 +1,7 @@
 package node
 
 import geometry.*
+import node.Container.ContainerSerializer.Descriptor.from
 import wrapper.*
 
 abstract class Node {
@@ -23,6 +24,7 @@ abstract class Node {
             iterateChildren{ it.cache.invalidateStyle() }
         }
     }
+    var outlineWidth:Float? = null
     var name:String? = null
     abstract fun calOuterRect(): Rect?
     open fun calCurrentShape(): Shape? = null
@@ -54,9 +56,8 @@ abstract class Node {
         private var _shape: Shape? = null
         val shape get() = _shape ?: node.calCurrentShape().also { _shape = it }
 
-        private var _outlineWidth:Float? = null
         val outlineWidth:Float get() {
-            node.iterateParents { it.cache._outlineWidth?.let { return it } }
+            node.iterateParents { it.outlineWidth?.let { return it } }
             return 0f
         }
 
@@ -129,6 +130,23 @@ abstract class Node {
                 _brushText = null
                 _brushOutline = null
             }
+        }
+    }
+    open class Descriptor<T:Node> : SerializerWrapper.Descriptor<T>() {
+        val name = "name" from {name}
+        val offset = "offset" from {offset}
+        val scale = "scale" from {scale}
+        val outlineWidth = "outlineWidth" from {outlineWidth}
+        val style = "style" from {style}
+        val stylePressed = "stylePressed" from {stylePressed}
+        fun T.addNodeInfo() = apply {
+            val desc = this@Descriptor
+            name = desc.name.nullable
+            offset = desc.offset.nullable
+            scale = desc.scale.nullable
+            style = desc.style.nullable
+            stylePressed = desc.stylePressed.nullable
+            outlineWidth = desc.outlineWidth.nullable
         }
     }
 }

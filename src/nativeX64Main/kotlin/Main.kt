@@ -1,4 +1,3 @@
-import node.Container
 import dsl.*
 import error.catchInKotlin
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -8,6 +7,7 @@ import libs.Clib.GBKToUTF8
 import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
 import logger.info
+import node.Container
 import window.loopWindowMessage
 import window.registerGui
 import window.registerLayered
@@ -30,7 +30,7 @@ fun main() = catchInKotlin {
 fun Main(args: Array<String>) = processArgs(args).apply {
     registerLayered()
     registerGui()
-    val container = json.json.decodeFromString<Container>(jsonStr)
+    val container = json.decodeFromString<Container>(jsonStr)
     val hwndLayered = container.drawScope.hwnd
     hwndLayered.showAndUpdate()
 

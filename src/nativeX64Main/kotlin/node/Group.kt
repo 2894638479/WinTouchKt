@@ -3,6 +3,7 @@ package node
 import geometry.Point
 import group.*
 import kotlinx.serialization.Serializable
+import node.Container.ContainerSerializer.Descriptor.from
 import touch.TouchReceiver
 import wrapper.SerializerWrapper
 import wrapper.WeakRefDel
@@ -50,7 +51,7 @@ class Group(
     }
 
     object GroupSerializer : SerializerWrapper<Group, GroupSerializer.Descriptor>("Group", Descriptor) {
-        object Descriptor: SerializerWrapper.Descriptor<Group>() {
+        object Descriptor: Node.Descriptor<Group>() {
             val type = "type" from { when(touchDispatcher){
                 is SlideGroup ->  1
                 is HoldSlideGroup -> 2
@@ -62,7 +63,6 @@ class Group(
                 is NormalGroup -> 0
                 else -> error("unknown group type")
             }.toUByte() }
-            val offset = "offset" from { offset }
             val buttons = "buttons" from {buttons}
             val sensitivity = "sensitivity" from {
                 (touchDispatcher as? MovePointGroup)?.sensitivity ?:
@@ -74,8 +74,6 @@ class Group(
                 (touchDispatcher as? TouchPadGroup)?.ms
             }
             val holdIndex = "holdIndex" from {(touchDispatcher as? HoldSlideGroup)?.holdIndex}
-            val style = "style" from {style}
-            val stylePressed = "stylePressed" from {stylePressed}
         }
 
         override fun Descriptor.generate(): Group {
@@ -92,9 +90,7 @@ class Group(
                     else -> error("unknown group type $type")
                 }
             }.also {
-                it.offset = offset.nullable
-                it.style = style.nullable
-                it.stylePressed = stylePressed.nullable
+                it.addNodeInfo()
                 buttons.nonNull.forEach(it::addButton)
             }
         }

@@ -15,6 +15,7 @@ import sendInput.KeyHandler
 import touch.TouchReceiver
 import window.buttonsLayeredWindow
 import wrapper.Hwnd
+import wrapper.SerializerWrapper
 
 @Serializable(with = Container.ContainerSerializer::class)
 class Container :TouchReceiver, NodeWithChild<Group>(){
@@ -105,49 +106,15 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
         }
     }
 
-    object ContainerSerializer : KSerializer<Container> {
-        override val descriptor = buildClassSerialDescriptor("Container"){
-            element<UByte>("alpha")
-            element<Float>("scale")
-            element<List<Group>>("groups")
-            element<ButtonStyle>("style")
-            element<ButtonStyle>("stylePressed")
+    object ContainerSerializer : SerializerWrapper<Container,ContainerSerializer.Descriptor>("Container",Descriptor) {
+        object Descriptor : Node.Descriptor<Container>() {
+            val alpha = "alpha" from {alpha}
+            val groups = "groups" from {groups}
         }
-        override fun deserialize(decoder: Decoder): Container {
-            var alpha:UByte = 128u
-            var scale:Float = 1f
-            var groups:List<Group> = emptyList()
-            var style: ButtonStyle? = null
-            var stylePressed: ButtonStyle? = null
-            decoder.decodeStructure(descriptor) {
-                while (true) {
-                    when (val index = decodeElementIndex(descriptor)) {
-                        0 -> alpha = decodeSerializableElement(descriptor,index,UByte.serializer())
-                        1 -> scale = decodeFloatElement(descriptor, index)
-                        2 -> groups = decodeSerializableElement(descriptor,index, ListSerializer(Group.serializer()))
-                        3 -> style = decodeSerializableElement(descriptor,index, ButtonStyle.serializer())
-                        4 -> stylePressed = decodeSerializableElement(descriptor,index, ButtonStyle.serializer())
-                        CompositeDecoder.DECODE_DONE -> break
-                        else -> error("Unexpected index: $index")
-                    }
-                }
-            }
-            return Container().also {
-                it.scale = scale
-                it.alpha = alpha
-                it.style = style
-                it.stylePressed = stylePressed
-                groups.forEach(it::addGroup)
-            }
-        }
-        override fun serialize(encoder: Encoder, value: Container) = value.run {
-            encoder.encodeStructure(descriptor){
-                alpha?.let{ encodeSerializableElement(descriptor, 0,UByte.serializer(),it) }
-                scale?.let { encodeFloatElement(descriptor,1, it) }
-                encodeSerializableElement(descriptor,2, ListSerializer(Group.serializer()),groups)
-                style?.let { encodeSerializableElement(ButtonSerializer.descriptor,3, ButtonStyle.serializer(),it) }
-                stylePressed?.let { encodeSerializableElement(ButtonSerializer.descriptor,4, ButtonStyle.serializer(),it) }
-            }
+        override fun Descriptor.generate() = Container().also {
+            it.addNodeInfo()
+            it.alpha = alpha.nullable
+            groups.nonNull.forEach(it::addGroup)
         }
     }
 }
