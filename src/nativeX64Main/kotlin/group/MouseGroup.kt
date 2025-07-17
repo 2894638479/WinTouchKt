@@ -1,16 +1,17 @@
-package buttonGroup
+package group
 
-import button.Point
+import node.Group
+import geometry.Point
 import sendInput.moveCursor
 import sendInput.scroll
 import touch.TouchReceiver
 
 open class MovePointGroup(
-    group:Group,
+    group: Group,
     val sensitivity: Float,
-    private val onMovePoint:(Float,Point,TouchReceiver.TouchEvent) -> Unit
+    private val onMovePoint:(Float, Point, TouchReceiver.TouchEvent) -> Unit
 ) : NormalGroup(group) {
-    private var lastTouchPoint:Point? = null
+    private var lastTouchPoint: Point? = null
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         if(pointers[event.id] == null) return true
         onMovePoint(sensitivity,lastTouchPoint ?: error("lastTouchPoint is null") , event)
@@ -25,11 +26,11 @@ open class MovePointGroup(
 }
 
 class MouseGroup(
-    group:Group,
+    group: Group,
     sensitivity: Float
-):MovePointGroup(group,sensitivity,::moveCursor)
+): MovePointGroup(group,sensitivity,::moveCursor)
 
 class ScrollGroup(
     group: Group,
     sensitivity: Float
-):MovePointGroup(group,sensitivity,::scroll)
+): MovePointGroup(group,sensitivity,::scroll)

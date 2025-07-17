@@ -1,6 +1,6 @@
 package json
 
-import button.Rect
+import geometry.Rect
 import kotlinx.serialization.Serializable
 
 @Serializable

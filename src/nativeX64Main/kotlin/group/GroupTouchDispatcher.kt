@@ -1,7 +1,8 @@
-package buttonGroup
+package group
 
-import button.Button
-import button.Rect
+import node.Button
+import node.Group
+import geometry.Rect
 import logger.warningBox
 import touch.TouchReceiver
 import wrapper.WeakRefNonNull
@@ -18,15 +19,15 @@ abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
     }
     open fun notifyButtonsChanged(){}
 
-    protected fun firstOrNull(x: Float, y: Float):Button? {
+    protected fun firstOrNull(x: Float, y: Float): Button? {
         if (rect?.containPoint(x,y) != true) return null
         return buttons.firstOrNull { it.inArea(x,y) }
     }
-    protected fun alreadyDown(button: Button,id: UInt):Boolean {
+    protected fun alreadyDown(button: Button, id: UInt):Boolean {
         return pointers[id]?.contains(button) ?: false
     }
 
-    protected fun slide(toUp:Button, toDown:Button, pressedButtons:MutableList<Button>){
+    protected fun slide(toUp: Button, toDown: Button, pressedButtons:MutableList<Button>){
         toUp.up { !toDown.key.contains(it) }
         toDown.down { !toUp.key.contains(it) }
         pressedButtons.remove(toUp)

@@ -1,17 +1,8 @@
-package buttonGroup
+package node
 
-import button.Button
-import button.Button.ButtonSerializer
-import button.ButtonStyle
-import button.Point
-import container.Container
-import container.NodeWithChild
+import geometry.Point
+import group.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.*
 import touch.TouchReceiver
 import wrapper.SerializerWrapper
 import wrapper.WeakRefDel
@@ -23,7 +14,7 @@ class Group(
     val buttons: MutableList<Button> = mutableListOf()
     var touchDispatcher = createDispatcher(this)
         private set
-    val editModeTouchDispatcher = object :GroupTouchDispatcher(this) {
+    val editModeTouchDispatcher = object : GroupTouchDispatcher(this) {
         override fun down(event: TouchReceiver.TouchEvent):Boolean {
             return firstOrNull(event.x,event.y)?.let {
                 pointers[event.id] = mutableListOf(it)
@@ -58,7 +49,7 @@ class Group(
         touchDispatcher.notifyButtonsChanged()
     }
 
-    object GroupSerializer : SerializerWrapper<Group, GroupSerializer.Descriptor>("Group",Descriptor) {
+    object GroupSerializer : SerializerWrapper<Group, GroupSerializer.Descriptor>("Group", Descriptor) {
         object Descriptor: SerializerWrapper.Descriptor<Group>() {
             val type = "type" from { when(touchDispatcher){
                 is SlideGroup ->  1

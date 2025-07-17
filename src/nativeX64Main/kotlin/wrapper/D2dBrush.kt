@@ -1,6 +1,6 @@
 package wrapper
 
-import draw.Color
+import geometry.Color
 import kotlinx.cinterop.*
 import libs.Clib.d2dCreateSolidColorBrush
 import libs.Clib.d2dFreeSolidColorBrush

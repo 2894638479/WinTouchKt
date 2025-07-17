@@ -1,9 +1,9 @@
-package container
+package node
 
-import button.MutableRect
-import button.Rect
+import geometry.MutableRect
+import geometry.Rect
 
-abstract class NodeWithChild<C:Node>: Node() {
+abstract class NodeWithChild<C: Node>: Node() {
     protected abstract val children:List<C>
     final override fun calOuterRect(): Rect? {
         var res: MutableRect? = null

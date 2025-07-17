@@ -1,6 +1,6 @@
 package wrapper
 
-import draw.Font
+import geometry.Font
 import kotlinx.cinterop.*
 import libs.Clib.FONT_STRETCH_MEDIUM
 import libs.Clib.d2dCreateTextFormat

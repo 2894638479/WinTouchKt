@@ -1,25 +1,21 @@
-package container
+package node
 
-import button.ButtonStyle
-import button.Point
-import button.Rect
-import button.Shape
-import draw.*
+import geometry.*
 import wrapper.*
 
 abstract class Node {
-    abstract val parent:NodeWithChild<*>?
+    abstract val parent: NodeWithChild<*>?
     var scale:Float? = null
         set(value) {field = value.apply { iterateChildren{ it.cache.invalidateAll() } }}
-    var offset:Point? = null
+    var offset: Point? = null
         set(value) {field = value.apply { iterateChildren{ it.cache.invalidate() } }}
-    protected var style:ButtonStyle? = null
-    protected var stylePressed:ButtonStyle? = null
+    protected var style: ButtonStyle? = null
+    protected var stylePressed: ButtonStyle? = null
     class StyleModifier(
-        var style:ButtonStyle?,
-        var stylePressed:ButtonStyle?
+        var style: ButtonStyle?,
+        var stylePressed: ButtonStyle?
     )
-    fun modifyStyle(block:StyleModifier.()->Unit){
+    fun modifyStyle(block: StyleModifier.()->Unit){
         StyleModifier(style, stylePressed).let {
             it.block()
             style = it.style
@@ -28,11 +24,11 @@ abstract class Node {
         }
     }
     var name:String? = null
-    abstract fun calOuterRect():Rect?
-    open fun calCurrentShape():Shape? = null
-    protected open fun findDrawScopeCache():DrawScope.Cache = parent?.findDrawScopeCache() ?: error("find drawscope cache failed")
+    abstract fun calOuterRect(): Rect?
+    open fun calCurrentShape(): Shape? = null
+    protected open fun findDrawScopeCache(): DrawScope.Cache = parent?.findDrawScopeCache() ?: error("find drawscope cache failed")
     private inline fun iterateParents(block:(Node)->Unit){
-        var p:Node? = this
+        var p: Node? = this
         while (p != null){
             block(p)
             p = p.parent
@@ -40,7 +36,7 @@ abstract class Node {
     }
     open fun iterateChildren(block:(Node)->Unit) = block(this)
     val cache = Cache(this)
-    class Cache(node:Node){
+    class Cache(node: Node){
         private val node by WeakRefNonNull(node)
         val pressed = StyleCache(node, GREY_BRIGHT){stylePressed}
         val unPressed = StyleCache(node, GREY_DARK){style}
@@ -52,10 +48,10 @@ abstract class Node {
             return scale
         }
 
-        private var _outerRect:Rect? = null
+        private var _outerRect: Rect? = null
         val outerRect get() = _outerRect ?: node.calOuterRect().also { _outerRect = it }
 
-        private var _shape:Shape? = null
+        private var _shape: Shape? = null
         val shape get() = _shape ?: node.calCurrentShape().also { _shape = it }
 
         private var _outlineWidth:Float? = null
@@ -64,8 +60,9 @@ abstract class Node {
             return 0f
         }
 
-        private var _offset:Point? = null
-        val offset:Point get() = _offset ?: run {
+        private var _offset: Point? = null
+        val offset: Point
+            get() = _offset ?: run {
             var offset = Point(0f,0f)
             node.iterateParents {
                 it.scale?.let { offset *= it }
@@ -74,7 +71,7 @@ abstract class Node {
             offset.apply { _offset = this }
         }
 
-        fun applyShape(orig:Shape):Shape{
+        fun applyShape(orig: Shape): Shape {
             var final = orig
             node.iterateParents {
                 it.scale?.let { final = final.rescaled(it) }
@@ -96,16 +93,16 @@ abstract class Node {
             invalidate()
             invalidateStyle()
         }
-        class StyleCache(node:Node,private val defaultColor: Color,private val getStyle:Node.()->ButtonStyle?){
+        class StyleCache(node: Node, private val defaultColor: Color, private val getStyle: Node.()-> ButtonStyle?){
             private val node by WeakRefNonNull(node)
             private val outerCache get() = node.findDrawScopeCache()
-            private inline fun <T:Any> find(get:ButtonStyle.()->T?):T?{
+            private inline fun <T:Any> find(get: ButtonStyle.()->T?):T?{
                 node.iterateParents {
                     it.getStyle()?.get()?.let { return it }
                 }
                 return null
             }
-            private inline fun <T:Any> find(default:T,get:ButtonStyle.()->T?) = find(get) ?: default
+            private inline fun <T:Any> find(default:T,get: ButtonStyle.()->T?) = find(get) ?: default
             private val color get() = find(defaultColor){color}
             private val outlineColor get() = find(WHITE){outlineColor}
             private val textColor get() = find(RED){textColor}

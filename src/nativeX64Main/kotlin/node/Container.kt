@@ -1,10 +1,6 @@
-package container
+package node
 
-import button.Button
-import button.Button.ButtonSerializer
-import button.ButtonStyle
-import buttonGroup.Group
-import draw.DrawScope
+import node.Button.ButtonSerializer
 import error.wrapExceptionName
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -21,12 +17,12 @@ import window.buttonsLayeredWindow
 import wrapper.Hwnd
 
 @Serializable(with = Container.ContainerSerializer::class)
-class Container :TouchReceiver,NodeWithChild<Group>(){
+class Container :TouchReceiver, NodeWithChild<Group>(){
     override val parent get() = null
     val groups:MutableList<Group> = mutableListOf()
     override val children get() = groups
     private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
-    fun addGroup(group:Group){
+    fun addGroup(group: Group){
         group.parent = this
         children += group
     }
@@ -52,8 +48,8 @@ class Container :TouchReceiver,NodeWithChild<Group>(){
         val keyHandler: KeyHandler,
         private val drawScope: DrawScope
     ) {
-        fun toDraw(button:Button){ drawScope.toDraw(button) }
-        fun toErase(button:Button){ drawScope.toErase(button) }
+        fun toDraw(button: Button){ drawScope.toDraw(button) }
+        fun toErase(button: Button){ drawScope.toErase(button) }
         fun toDrawAll(){ drawScope.toDrawAll() }
     }
     var alpha:UByte? = null
@@ -98,7 +94,7 @@ class Container :TouchReceiver,NodeWithChild<Group>(){
         drawScope.destroy()
     }
     companion object {
-        private val hwndContainer = HashMap<Hwnd,Container>(10)
+        private val hwndContainer = HashMap<Hwnd, Container>(10)
         fun setHwndContainer(hwnd: Hwnd, container: Container){
             hwndContainer[hwnd] = container
         }
@@ -129,8 +125,8 @@ class Container :TouchReceiver,NodeWithChild<Group>(){
                         0 -> alpha = decodeSerializableElement(descriptor,index,UByte.serializer())
                         1 -> scale = decodeFloatElement(descriptor, index)
                         2 -> groups = decodeSerializableElement(descriptor,index, ListSerializer(Group.serializer()))
-                        3 -> style = decodeSerializableElement(descriptor,index,ButtonStyle.serializer())
-                        4 -> stylePressed = decodeSerializableElement(descriptor,index,ButtonStyle.serializer())
+                        3 -> style = decodeSerializableElement(descriptor,index, ButtonStyle.serializer())
+                        4 -> stylePressed = decodeSerializableElement(descriptor,index, ButtonStyle.serializer())
                         CompositeDecoder.DECODE_DONE -> break
                         else -> error("Unexpected index: $index")
                     }
@@ -149,8 +145,8 @@ class Container :TouchReceiver,NodeWithChild<Group>(){
                 alpha?.let{ encodeSerializableElement(descriptor, 0,UByte.serializer(),it) }
                 scale?.let { encodeFloatElement(descriptor,1, it) }
                 encodeSerializableElement(descriptor,2, ListSerializer(Group.serializer()),groups)
-                style?.let { encodeSerializableElement(ButtonSerializer.descriptor,3,ButtonStyle.serializer(),it) }
-                stylePressed?.let { encodeSerializableElement(ButtonSerializer.descriptor,4,ButtonStyle.serializer(),it) }
+                style?.let { encodeSerializableElement(ButtonSerializer.descriptor,3, ButtonStyle.serializer(),it) }
+                stylePressed?.let { encodeSerializableElement(ButtonSerializer.descriptor,4, ButtonStyle.serializer(),it) }
             }
         }
     }

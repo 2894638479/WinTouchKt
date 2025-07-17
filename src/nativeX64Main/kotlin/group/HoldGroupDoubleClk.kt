@@ -1,10 +1,11 @@
-package buttonGroup
+package group
 
+import node.Group
 import platform.windows.GetTickCount64
 import touch.TouchReceiver
 
 class HoldGroupDoubleClk(
-    group:Group,
+    group: Group,
     val ms: ULong
 ) : GroupTouchDispatcher(group) {
     private var lastUpTime = buttons.map { 0uL }.toULongArray()

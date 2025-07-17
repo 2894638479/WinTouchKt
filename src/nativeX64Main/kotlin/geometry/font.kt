@@ -1,4 +1,4 @@
-package draw
+package geometry
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import libs.Clib.FONT_STYLE

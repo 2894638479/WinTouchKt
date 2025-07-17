@@ -1,14 +1,13 @@
 package sendInput
 
-import button.Point
+import geometry.Point
 import kotlinx.cinterop.*
-import libs.Clib.TouchInfo
 import platform.windows.*
 import touch.TouchReceiver
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalForeignApi::class)
-fun moveCursor(sensitivity:Float,before:Point,moved:TouchReceiver.TouchEvent) = memScoped {
+fun moveCursor(sensitivity:Float, before: Point, moved:TouchReceiver.TouchEvent) = memScoped {
     fun getMoveDistance(before:Float,after:Float):Int{
         return ((after - before) * sensitivity).roundToInt()
     }

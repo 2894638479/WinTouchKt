@@ -1,4 +1,4 @@
-package button
+package geometry
 
 import json.RectJson
 import wrapper.D2dBrush
@@ -14,19 +14,19 @@ class MutableRect(
     var right:Float,
     var bottom:Float,
 ){
-    operator fun plusAssign(other:Rect){
+    operator fun plusAssign(other: Rect){
         left = min(left,other.left)
         top = min(top,other.top)
         right = max(right,other.right)
         bottom = max(bottom,other.bottom)
     }
-    operator fun plusAssign(point:Point){
+    operator fun plusAssign(point: Point){
         left += point.x
         top += point.y
         right += point.x
         bottom += point.y
     }
-    fun toRect():Rect = Rect(left, top, right, bottom)
+    fun toRect(): Rect = Rect(left, top, right, bottom)
 }
 
 class Rect(
@@ -34,12 +34,12 @@ class Rect(
     val top:Float,
     val right:Float,
     val bottom:Float
-):Shape{
+): Shape {
     val x get() = (left + right) / 2
     val y get() = (top + bottom) / 2
     val w get() = (right - left) / 2
     val h get() = (bottom - top) / 2
-    fun toMutableRect():MutableRect = MutableRect(left, top, right, bottom)
+    fun toMutableRect(): MutableRect = MutableRect(left, top, right, bottom)
     fun toRectJson() = RectJson(x,y,w,h)
     override fun containPoint(x: Float, y: Float): Boolean {
         return x > left

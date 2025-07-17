@@ -1,8 +1,6 @@
 package sendInput
 
-import button.Point
-import kotlinx.cinterop.ExperimentalForeignApi
-import libs.Clib.TouchInfo
+import geometry.Point
 import platform.windows.MOUSEEVENTF_HWHEEL
 import platform.windows.MOUSEEVENTF_WHEEL
 import platform.windows.mouse_event

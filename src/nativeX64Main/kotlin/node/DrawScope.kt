@@ -1,7 +1,9 @@
-package draw
+package node
 
-import button.Button
-import button.Shape
+import geometry.BLACK
+import geometry.Color
+import geometry.Font
+import geometry.Shape
 import kotlinx.cinterop.*
 import libs.Clib.*
 import platform.windows.*
@@ -9,7 +11,7 @@ import sendInput.KeyHandler.Companion.KEY_HIDE
 import wrapper.*
 
 @OptIn(ExperimentalForeignApi::class)
-class DrawScope(private val buttons:Sequence<Button>,val hwnd: Hwnd) {
+class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
     var alpha: UByte = 128u
         set(value) {
             field = value
@@ -30,7 +32,7 @@ class DrawScope(private val buttons:Sequence<Button>,val hwnd: Hwnd) {
             shape.d2dDraw(target,cache.transparentBrush,w)
         }
         toErase.clear()
-        fun drawButton(button:Button){
+        fun drawButton(button: Button){
             val style = button.currentStyle
             val shape = button.shape
             val outlineWidth = button.cache.outlineWidth
@@ -56,7 +58,7 @@ class DrawScope(private val buttons:Sequence<Button>,val hwnd: Hwnd) {
     private val toErase = mutableListOf<Pair<Shape,Float>>()
     private fun invalidate() = InvalidateRect(hwnd.HWND,null,1)
     fun toDraw(button: Button) { toDraw += button; invalidate() }
-    fun toErase(button:Button) { toErase += button.shape to button.cache.outlineWidth; invalidate() }
+    fun toErase(button: Button) { toErase += button.shape to button.cache.outlineWidth; invalidate() }
     fun toDrawAll() { reDraw = true; invalidate() }
     var showStatus = true
         set(value) {
@@ -90,16 +92,16 @@ class DrawScope(private val buttons:Sequence<Button>,val hwnd: Hwnd) {
             transparentBrush.free()
         }
 
-        fun font(key:Font) = fonts[key] ?: checkOrClear()
+        fun font(key: Font) = fonts[key] ?: checkOrClear()
             .run { writeFactory }
             .let { D2dFont.create(it,key) }
             .apply { fonts[key] = this }
 
-        fun brush(key:Color) = brushes[key] ?: checkOrClear()
+        fun brush(key: Color) = brushes[key] ?: checkOrClear()
             .run { target }
             .let { D2dBrush.create(it,key) }
             .apply { brushes[key] = this }
 
-        val transparentBrush = D2dBrush.create(target,BLACK)
+        val transparentBrush = D2dBrush.create(target, BLACK)
     }
 }

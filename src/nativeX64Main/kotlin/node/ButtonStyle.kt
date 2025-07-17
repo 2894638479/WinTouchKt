@@ -1,6 +1,6 @@
-package button
+package node
 
-import draw.Color
+import geometry.Color
 import kotlinx.serialization.Serializable
 
 

@@ -1,5 +1,6 @@
-package buttonGroup
+package group
 
+import node.Group
 import touch.TouchReceiver
 
 open class NormalGroup(

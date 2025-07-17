@@ -1,4 +1,4 @@
-package button
+package geometry
 
 import kotlinx.serialization.Serializable
 import wrapper.D2dBrush
@@ -13,13 +13,14 @@ class Round(
     val x:Float,
     val y:Float,
     val r:Float
-):Shape{
+): Shape {
     override fun containPoint(x: Float, y: Float) = (x - this.x).pow(2) + (y - this.y).pow(2) < r.pow(2).withSign(r)
     override fun d2dDraw(target: D2dTarget, brush: D2dBrush, width: Float) = target.d2dDrawRound(brush,x,y,r,r,width)
     override fun d2dFill(target: D2dTarget, brush: D2dBrush) = target.d2dFillRound(brush,x,y,r,r)
     override fun rescaled(scale: Float) = Round(x*scale, y*scale, r*scale)
     override fun offset(offset: Point) = Round(x + offset.x, y + offset.y, r)
-    override val innerRect: Rect get() {
+    override val innerRect: Rect
+        get() {
         val r = r * 0.70710677f
         return Rect(x - r,y - r,x + r,y + r)
     }

@@ -1,6 +1,6 @@
 package wrapper
 
-import button.Rect
+import geometry.Rect
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped

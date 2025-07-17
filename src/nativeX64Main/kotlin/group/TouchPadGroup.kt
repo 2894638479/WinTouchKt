@@ -1,6 +1,7 @@
-package buttonGroup
+package group
 
-import button.Point
+import node.Group
+import geometry.Point
 import logger.warningBox
 import platform.windows.GetTickCount64
 import sendInput.moveCursor
@@ -11,7 +12,7 @@ class TouchPadGroup(
     group: Group,
     val sensitivity:Float,
     val ms:ULong
-):GroupTouchDispatcher(group) {
+): GroupTouchDispatcher(group) {
     private var lastTouchPoint : Point? = null
     private var lastDownTime = buttons.map { 0uL }.toULongArray()
     private var keyDownCount = buttons.map { 0u }.toUIntArray()

@@ -1,7 +1,9 @@
-package button
+package node
 
-import buttonGroup.Group
-import container.Node
+import geometry.Rect
+import geometry.Round
+import geometry.RoundedRect
+import geometry.Shape
 import kotlinx.serialization.Serializable
 import logger.info
 import wrapper.SerializerWrapper
@@ -10,8 +12,8 @@ import wrapper.WeakRefDel
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
     var key:Set<UByte>,
-    shapeOrig:Shape,
-):Node(){
+    shapeOrig: Shape,
+): Node(){
     var shapeOrig = shapeOrig
         set(value) { field = value.apply { cache.invalidate() } }
     val shape get() = cache.shape ?: error("button get shape error")
@@ -41,7 +43,7 @@ class Button(
     }
     fun inArea(x:Float,y:Float) = shape.containPoint(x,y)
 
-    object ButtonSerializer : SerializerWrapper<Button,ButtonSerializer.Descriptor>("Button",Descriptor){
+    object ButtonSerializer : SerializerWrapper<Button, ButtonSerializer.Descriptor>("Button", Descriptor){
         object Descriptor: SerializerWrapper.Descriptor<Button>() {
             val name = "name" from {name}
             val key = "key" from {key}

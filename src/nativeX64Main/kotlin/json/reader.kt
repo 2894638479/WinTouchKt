@@ -1,6 +1,5 @@
 package json
 
-import container.Container
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString

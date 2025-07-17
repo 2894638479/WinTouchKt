@@ -1,6 +1,6 @@
 package wrapper
 
-import button.Rect
+import geometry.Rect
 import kotlinx.cinterop.*
 import libs.Clib.*
 
@@ -58,7 +58,7 @@ fun D2dTarget.d2dFillRound(brush: D2dBrush, x:Float,y:Float,rx:Float,ry:Float){
 }
 
 @OptIn(ExperimentalForeignApi::class)
-fun D2dTarget.d2dDrawText(brush: D2dBrush,font:D2dFont, bound:Rect, string: String){
+fun D2dTarget.d2dDrawText(brush: D2dBrush, font:D2dFont, bound: Rect, string: String){
     if(string.isBlank()) return
     val par = paramBuffer.rect.set(this,brush,bound.left,bound.top,bound.right,bound.bottom).ptr
     d2dPushClip(par,true)

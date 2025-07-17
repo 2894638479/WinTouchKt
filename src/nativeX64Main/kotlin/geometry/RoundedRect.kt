@@ -1,4 +1,4 @@
-package button
+package geometry
 
 import json.RoundedRectJson
 import wrapper.D2dBrush
@@ -13,7 +13,7 @@ class RoundedRect(
     val right:Float,
     val bottom:Float,
     val r:Float
-):Shape {
+): Shape {
     val x get() = (left + right) / 2
     val y get() = (top + bottom) / 2
     val w get() = (right - left) / 2
@@ -43,7 +43,8 @@ class RoundedRect(
     override fun rescaled(scale: Float) = RoundedRect(left*scale, top*scale, right*scale, bottom*scale, r*scale)
     override fun offset(offset: Point) = RoundedRect(left + offset.x, top + offset.y, right + offset.x, bottom + offset.y,r)
     override fun padding(width: Float) = RoundedRect(left + width, top + width, right - width, bottom - width, max(r - width,0f))
-    override val innerRect: Rect get() {
+    override val innerRect: Rect
+        get() {
         val r1 = r * 0.29289323f
         return Rect(left + r1, top + r1, right - r1, bottom - r1)
     }
