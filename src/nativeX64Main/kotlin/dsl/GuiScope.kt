@@ -6,15 +6,14 @@ abstract class GuiScope(
     parent: GuiWindow?, name:String,
     modifier: Modifier,
     alignment: Alignment
-): GuiComponent(modifier, alignment) {
-    internal val onDestroy = mutableListOf<()->Unit>()
+): GuiComponent(modifier, alignment),State.Scope {
+    override val _onDestroy = mutableListOf<()->Unit>()
     private val window = object : GuiWindow(name,
         if(parent == null) modifier.width else 0,
         if(parent == null) modifier.height else 0,parent){
         override fun onSize() = this@GuiScope.onSize()
         override fun onDestroy(): Boolean {
-            onDestroy.forEach { it() }
-            onDestroy.clear()
+            destroy()
             children.clear()
             onCommand.clear()
             return super.onDestroy()
@@ -49,57 +48,35 @@ abstract class GuiScope(
     }
     fun VisibleIf(state: State<Boolean>, block: GuiScope.()->Unit){
         val list = captureAddedChild { block() }
-        fun setVisibility(visible:Boolean){
-            if(visible) list.forEach {
-                it.hwnd.show()
-            } else list.forEach {
-                it.hwnd.hide()
-            }
+        state.listen(true){
+            if(it) list.forEach { it.hwnd.show() }
+            else list.forEach { it.hwnd.hide() }
             onSize()
         }
-        val listener = state.listen(::setVisibility)
-        setVisibility(state.value)
-        onDestroy += { state.unListen(listener) }
     }
 
 
     fun <P1,T> combine(p1: State<P1>, func:(P1)->T) = State(func(p1.value)).apply {
-        val l1 = p1.listen { value = func(it) }
-        onDestroy += { p1.unListen(l1) }
+        p1.listen { value = func(it) }
     }
     fun <P1,P2,T> combine(p1: State<P1>, p2: State<P2>, func:(P1, P2)->T)
             = State(func(p1.value, p2.value)).apply {
-        val l1 = p1.listen { value = func(it,p2.value) }
-        val l2 = p2.listen { value = func(p1.value,it) }
-        onDestroy += {
-            p1.unListen(l1)
-            p2.unListen(l2)
-        }
+        p1.listen { value = func(it,p2.value) }
+        p2.listen { value = func(p1.value,it) }
     }
     fun <P1,P2,P3,T> combine(p1: State<P1>, p2: State<P2>, p3: State<P3>, func:(P1, P2, P3)->T)
             = State(func(p1.value, p2.value, p3.value)).apply {
         val calValue = { func(p1.value, p2.value, p3.value) }
-        val l1 = p1.listen { value = calValue() }
-        val l2 = p2.listen { value = calValue() }
-        val l3 = p3.listen { value = calValue() }
-        onDestroy += {
-            p1.unListen(l1)
-            p2.unListen(l2)
-            p3.unListen(l3)
-        }
+        p1.listen { value = calValue() }
+        p2.listen { value = calValue() }
+        p3.listen { value = calValue() }
     }
     fun <P1,P2,P3,P4,T> combine(p1: State<P1>, p2: State<P2>, p3: State<P3>, p4: State<P4>, func:(P1, P2, P3, P4)->T)
             = State(func(p1.value, p2.value, p3.value, p4.value)).apply {
         val calValue = { func(p1.value, p2.value, p3.value, p4.value) }
-        val l1 = p1.listen { value = calValue() }
-        val l2 = p2.listen { value = calValue() }
-        val l3 = p3.listen { value = calValue() }
-        val l4 = p4.listen { value = calValue() }
-        onDestroy += {
-            p1.unListen(l1)
-            p2.unListen(l2)
-            p3.unListen(l3)
-            p4.unListen(l4)
-        }
+        p1.listen { value = calValue() }
+        p2.listen { value = calValue() }
+        p3.listen { value = calValue() }
+        p4.listen { value = calValue() }
     }
 }

@@ -1,7 +1,10 @@
 package dsl
 
+import dsl.StateList.Listener
+import wrapper.Destroyable
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
+
 
 
 class State<T>(value:T,mutable:Boolean = true):ReadWriteProperty<Any?,T>{
@@ -14,11 +17,21 @@ class State<T>(value:T,mutable:Boolean = true):ReadWriteProperty<Any?,T>{
                 listeners?.forEach { it(value) }
             }
         }
-    fun listen(listener:(T)->Unit) = listeners?.plusAssign(listener)?.let { listener }
-    fun unListen(listener: ((T) -> Unit)?) {
-        listener?.let {
-            if(listeners == null) error("state is immutable")
-            if (!listeners.remove(it)) error("listener already removed")
+    interface Scope :Destroyable {
+        fun <T> State<T>.listen(trigger:Boolean = false,listener:(T)->Unit){
+            if (trigger) listener(value)
+            listeners?.let {
+                it += listener
+                _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
+            }
+        }
+        fun <T> StateList<T>.listen(trigger:Boolean = false,listener: Listener<T>) = listener.also {
+            if (trigger) listener.onAnyChange()
+            listeners += it
+            _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
+        }
+        fun <T,V> StateList<T>.generateState(func:(List<T>)->V) = State(func(delegate)).also {
+            listen { it.value = func(delegate) }
         }
     }
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {
@@ -29,21 +42,14 @@ class State<T>(value:T,mutable:Boolean = true):ReadWriteProperty<Any?,T>{
     }
 }
 
-class StateList<T> private constructor(private val delegate:MutableList<T>):MutableList<T> by delegate {
+class StateList<T> private constructor(internal val delegate:MutableList<T>):MutableList<T> by delegate {
     constructor(vararg value:T):this(mutableListOf(*value))
-    private val listeners = mutableListOf<Listener<T>>()
+    internal val listeners = mutableListOf<Listener<T>>()
     fun interface Listener<T>{
         fun onAnyChange()
         fun onAddOne(element:T){}
         fun onRemoveOne(element: T){}
         fun onOtherChange(){}
-    }
-    fun listen(listener:Listener<T>) = listener.also { listeners += it }
-    fun unListen(listener: Listener<T>) {
-        if (!listeners.remove(listener)) error("listener already removed")
-    }
-    fun <V> generateState(func:(List<T>)->V) = State(func(delegate)).also {
-        listen { it.value = func(delegate) }
     }
     override fun add(element: T) = delegate.add(element).apply {
         listeners.forEach {

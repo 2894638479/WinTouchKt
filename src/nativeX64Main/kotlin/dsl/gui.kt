@@ -11,7 +11,7 @@ class GuiHwnd(modifier: Modifier, alignment: Alignment, override val hwnd: Hwnd)
 
 fun TopWindow(name: String, minW:Int, minH:Int, block: BoxScope.() -> Unit){
     BoxScope(Modifier().size(minW,minH),Alignment(),null,name).apply {
-        onDestroy += ::scheduleGC
+        _onDestroy += ::scheduleGC
         block()
         hwnd.show()
         hwnd.update()
