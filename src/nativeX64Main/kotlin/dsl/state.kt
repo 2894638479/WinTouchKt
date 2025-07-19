@@ -54,6 +54,8 @@ class MutState<T>(value:T,initListener:((T)->Unit)? = null):State<T>(value),Read
             }
             val trackedStates get() = _trackedStates
         }
+
+        //the `func` will be invoked multiple times  so do not create new state in it.
         fun <T> combine(func:Combination.()->T):MutState<T>{
             val firstCombination = Combination()
             val initValue = firstCombination.func()

@@ -3,11 +3,11 @@ package dsl
 import wrapper.*
 
 
-abstract class GuiComponent(val modifier:Modifier,val alignment:Alignment){
+abstract class AbstractGuiComponent(val modifier:Modifier, val alignment:Alignment){
     abstract val hwnd:Hwnd
 }
 
-class GuiHwnd(modifier: Modifier, alignment: Alignment, override val hwnd: Hwnd):GuiComponent(modifier, alignment)
+class GuiComponent(modifier: Modifier, alignment: Alignment, override val hwnd: Hwnd):AbstractGuiComponent(modifier, alignment)
 
 fun TopWindow(name: String, minW:Int, minH:Int, block: BoxScope.() -> Unit){
     BoxScope(Modifier().size(minW,minH),Alignment(),null,name).apply {

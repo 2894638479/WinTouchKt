@@ -6,7 +6,7 @@ abstract class GuiScope(
     parent: GuiWindow?, name:String,
     modifier: Modifier,
     alignment: Alignment
-): GuiComponent(modifier, alignment),MutState.Scope {
+): AbstractGuiComponent(modifier, alignment),MutState.Scope {
     override val _onDestroy = mutableListOf<()->Unit>()
     private val window = object : GuiWindow(name,
         if(parent == null) modifier.width else 0,
@@ -20,31 +20,37 @@ abstract class GuiScope(
         }
     }
     override val hwnd get() = window.hwnd
-    protected val children = mutableListOf<GuiComponent>()
-    private var onChildAdd:(GuiComponent)->Unit = {}
-    private fun GuiComponent.addToChild(){ children += this; onChildAdd(this) }
-    private fun captureAddedChild(block: GuiScope.() -> Unit):List<GuiComponent>{
-        val list = mutableListOf<GuiComponent>()
+    protected val children = mutableListOf<AbstractGuiComponent>()
+    private var onChildAdd:(AbstractGuiComponent)->Unit = {}
+    private fun AbstractGuiComponent.addToChild(){ children += this; onChildAdd(this) }
+    private fun captureAddedChild(block: GuiScope.() -> Unit):List<AbstractGuiComponent>{
+        val list = mutableListOf<AbstractGuiComponent>()
         onChildAdd = { list += it }
         block()
         onChildAdd = {}
         return list
     }
     abstract fun onSize()
-    fun Box(modifier: Modifier, alignment: Alignment, block: BoxScope.()->Unit){
+    fun Box(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: BoxScope.()->Unit){
         BoxScope(modifier, alignment, window).apply(block).addToChild()
     }
-    fun Button(modifier: Modifier, alignment: Alignment, text:String, onClick:()->Unit){
-        GuiHwnd(modifier, alignment, window.button(text, onClick)).addToChild()
+    fun Button(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text:State<String>, onClick:()->Unit){
+        GuiComponent(modifier, alignment, window.button(text.value, onClick)).apply{
+            if(text is MutState) text.listen { hwnd.name = it }
+        }.addToChild()
     }
-    fun Edit(modifier: Modifier, alignment: Alignment, text: String, onEdit:(String)->Unit){
-        GuiHwnd(modifier, alignment, window.edit(text, onEdit)).addToChild()
+    fun Edit(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text: MutState<String>,onEdit:(String)->Unit){
+        GuiComponent(modifier, alignment, window.edit(text.value) { text.value = it }).apply {
+            text.listen { hwnd.name = it; onEdit(it) }
+        }.addToChild()
     }
-    fun Custom(modifier: Modifier, alignment: Alignment, block:()-> GuiWindow){
-        GuiHwnd(modifier, alignment, block().hwnd).addToChild()
+    fun Custom(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block:()-> GuiWindow){
+        GuiComponent(modifier, alignment, block().hwnd).addToChild()
     }
-    fun Text(modifier: Modifier, alignment: Alignment, text: String){
-        GuiHwnd(modifier, alignment, window.text(text, alignment)).addToChild()
+    fun Text(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text: State<String>){
+        GuiComponent(modifier, alignment, window.text(text.value, alignment)).apply {
+            if(text is MutState) text.listen { hwnd.name = it }
+        }.addToChild()
     }
     fun VisibleIf(state: MutState<Boolean>, block: GuiScope.()->Unit){
         val list = captureAddedChild { block() }
@@ -54,6 +60,4 @@ abstract class GuiScope(
             onSize()
         }
     }
-
-
 }
