@@ -7,10 +7,12 @@ import libs.Clib.GBKToUTF8
 import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
 import logger.info
+import logger.warning
 import node.Container
 import window.loopWindowMessage
 import window.registerGui
 import window.registerLayered
+import wrapper.GuiWindow
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -34,25 +36,53 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     val hwndLayered = container.drawScope.hwnd
     hwndLayered.showAndUpdate()
 
+    val scope = MutState.SimpleScope()
+    class A{
+        val m1 = mutStateOf(0)
+        val m2 = mutStateOf("test")
+    }
+    val a = mutStateOf(A())
+    val b = mutStateOf(4)
+
+    val combined1 = scope.combine {
+        "${a.tracked.m2.tracked} ${b.tracked}"
+    }
+    val combined2 = scope.combine {
+        "${a.tracked.m1.tracked} ${a.tracked.m2.tracked}"
+    }
+    val combined3 = scope.combine {
+        "${a.tracked.m1.tracked} ${a.tracked.m2.tracked} ${b.tracked}"
+    }
+    scope.run {
+        combined1.listen { warning("combined1 $it") }
+        combined2.listen { warning("combined2 $it") }
+        combined3.listen { warning("combined3 $it") }
+    }
+
 
     TopWindow("window",800,800){
-        val state = State(false)
-        val state2 = combine(state){!it}
-        Button(Modifier().width(50).height(50).padding(left = 50, top = 50),Alignment().bottom().right(),"tefs"){
+        val state = MutState(false)
+        Button(Modifier().width(50).height(50).padding(left = 50, top = 50),Alignment().bottom().right(),"m1++"){
             info("clickkkked!")
             state.value = !state.value
+            a.value.m1.value++
+        }
+        Button(Modifier().width(50).height(50).padding(right = 50, top = 50),Alignment().bottom().right(),"change a"){
+            a.value = A()
         }
         Box(Modifier().width(400).height(400),Alignment()){
             VisibleIf(state) {
-                Button(Modifier().width(50).height(50), Alignment().left().middleY(), "s") {
+                Button(Modifier().width(50).height(50), Alignment().left().middleY(), "b++") {
                     info("fsdajk")
+                    b.value++
                 }
-                Edit(Modifier().width(300).height(100), Alignment().right().middleY(), "initial") {
+                Edit(Modifier().width(300).height(100), Alignment().right().middleY(), "m2") {
                     info(it)
+                    a.value.m2.value = it
                 }
             }
         }
-        VisibleIf(state2){
+        VisibleIf(combine{!state.tracked}){
             Text(Modifier().size(100, 50), Alignment().middleX().bottom(), "aaaaaa")
         }
     }

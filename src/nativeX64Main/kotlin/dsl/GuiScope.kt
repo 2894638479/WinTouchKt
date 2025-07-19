@@ -6,7 +6,7 @@ abstract class GuiScope(
     parent: GuiWindow?, name:String,
     modifier: Modifier,
     alignment: Alignment
-): GuiComponent(modifier, alignment),State.Scope {
+): GuiComponent(modifier, alignment),MutState.Scope {
     override val _onDestroy = mutableListOf<()->Unit>()
     private val window = object : GuiWindow(name,
         if(parent == null) modifier.width else 0,
@@ -46,7 +46,7 @@ abstract class GuiScope(
     fun Text(modifier: Modifier, alignment: Alignment, text: String){
         GuiHwnd(modifier, alignment, window.text(text, alignment)).addToChild()
     }
-    fun VisibleIf(state: State<Boolean>, block: GuiScope.()->Unit){
+    fun VisibleIf(state: MutState<Boolean>, block: GuiScope.()->Unit){
         val list = captureAddedChild { block() }
         state.listen(true){
             if(it) list.forEach { it.hwnd.show() }
@@ -56,27 +56,4 @@ abstract class GuiScope(
     }
 
 
-    fun <P1,T> combine(p1: State<P1>, func:(P1)->T) = State(func(p1.value)).apply {
-        p1.listen { value = func(it) }
-    }
-    fun <P1,P2,T> combine(p1: State<P1>, p2: State<P2>, func:(P1, P2)->T)
-            = State(func(p1.value, p2.value)).apply {
-        p1.listen { value = func(it,p2.value) }
-        p2.listen { value = func(p1.value,it) }
-    }
-    fun <P1,P2,P3,T> combine(p1: State<P1>, p2: State<P2>, p3: State<P3>, func:(P1, P2, P3)->T)
-            = State(func(p1.value, p2.value, p3.value)).apply {
-        val calValue = { func(p1.value, p2.value, p3.value) }
-        p1.listen { value = calValue() }
-        p2.listen { value = calValue() }
-        p3.listen { value = calValue() }
-    }
-    fun <P1,P2,P3,P4,T> combine(p1: State<P1>, p2: State<P2>, p3: State<P3>, p4: State<P4>, func:(P1, P2, P3, P4)->T)
-            = State(func(p1.value, p2.value, p3.value, p4.value)).apply {
-        val calValue = { func(p1.value, p2.value, p3.value, p4.value) }
-        p1.listen { value = calValue() }
-        p2.listen { value = calValue() }
-        p3.listen { value = calValue() }
-        p4.listen { value = calValue() }
-    }
 }

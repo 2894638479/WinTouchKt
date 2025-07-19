@@ -1,7 +1,6 @@
 package node
 
 import geometry.*
-import node.Container.ContainerSerializer.Descriptor.from
 import wrapper.*
 
 abstract class Node {

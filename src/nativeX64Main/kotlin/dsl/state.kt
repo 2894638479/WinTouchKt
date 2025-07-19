@@ -1,48 +1,86 @@
 package dsl
 
-import dsl.StateList.Listener
+import dsl.MutStateList.Listener
 import wrapper.Destroyable
+import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+fun <T> stateOf(value:T) = State(value)
+fun <T> stateNull() = State<T?>(null)
+fun <T> mutStateOf(value:T,initListener:((T)->Unit)? = null) = MutState(value,initListener)
+fun <T> mutStateNull(initListener:((T?)->Unit)? = null) = MutState<T?>(null,initListener)
+fun <T> mutStateList(vararg values:T) = MutStateList(*values)
 
+open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
+    override fun getValue(thisRef: Any?, property: KProperty<*>) = value
+}
 
-class State<T>(value:T,mutable:Boolean = true):ReadWriteProperty<Any?,T>{
-    private val listeners = if(mutable) mutableListOf<(T)->Unit>() else null
-    val mutable get() = listeners != null
-    var value = value
+class MutState<T>(value:T,initListener:((T)->Unit)? = null):State<T>(value),ReadWriteProperty<Any?,T>{
+    private val listeners = mutableListOf<(T)->Unit>().also {
+        if(initListener != null) it += initListener
+    }
+    override var value = value
         set(value) {
             if(field != value) {
                 field = value
-                listeners?.forEach { it(value) }
+                listeners.forEach { it(value) }
             }
         }
-    interface Scope :Destroyable {
-        fun <T> State<T>.listen(trigger:Boolean = false,listener:(T)->Unit){
-            if (trigger) listener(value)
-            listeners?.let {
-                it += listener
-                _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
-            }
-        }
-        fun <T> StateList<T>.listen(trigger:Boolean = false,listener: Listener<T>) = listener.also {
-            if (trigger) listener.onAnyChange()
-            listeners += it
-            _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
-        }
-        fun <T,V> StateList<T>.generateState(func:(List<T>)->V) = State(func(delegate)).also {
-            listen { it.value = func(delegate) }
-        }
-    }
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return value
-    }
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         this.value = value
     }
+    class SimpleScope:Scope{ override val _onDestroy = mutableListOf<()->Unit>() }
+    interface Scope :Destroyable {
+        fun <T> MutState<T>.listen(trigger:Boolean = false, listener:(T)->Unit){
+            if (trigger) listener(value)
+            listeners += listener
+            _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
+        }
+        fun <T> MutStateList<T>.listen(trigger:Boolean = false, listener: Listener<T>) {
+            if (trigger) listener.onAnyChange()
+            listeners += listener
+            _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
+        }
+        fun <T,V> MutStateList<T>.generateState(func:(List<T>)->V) = MutState(func(delegate)).also {
+            listen { it.value = func(delegate) }
+        }
+
+        class Combination {
+            private val _trackedStates = mutableSetOf<MutState<*>>()
+            val <T> MutState<T>.tracked:T get() {
+                _trackedStates += this
+                return value
+            }
+            val trackedStates get() = _trackedStates
+        }
+        fun <T> combine(func:Combination.()->T):MutState<T>{
+            val firstCombination = Combination()
+            val initValue = firstCombination.func()
+            val state = mutStateOf(initValue)
+            var trackedStates = firstCombination.trackedStates.toMutableSet()
+            fun <T> MutState<T>.listen1(listener:(T)->Unit){ listeners += listener }
+            fun <T> MutState<T>.remove1(listener:(T)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
+            fun update(any: Any?){
+                val combination = Combination()
+                state.value = combination.func()
+                val newStates = combination.trackedStates
+                if(!trackedStates.containsAll(newStates)){
+                    val added = newStates.subtract(trackedStates)
+                    val removed = trackedStates.subtract(newStates)
+                    trackedStates = newStates
+                    added.forEach { it.listen1(::update) }
+                    removed.forEach { it.remove1(::update) }
+                }
+            }
+            trackedStates.forEach{ it.listen1(::update) }
+            _onDestroy += { trackedStates.forEach { it.remove1(::update) } }
+            return state
+        }
+    }
 }
 
-class StateList<T> private constructor(internal val delegate:MutableList<T>):MutableList<T> by delegate {
+class MutStateList<T> private constructor(internal val delegate:MutableList<T>):MutableList<T> by delegate {
     constructor(vararg value:T):this(mutableListOf(*value))
     internal val listeners = mutableListOf<Listener<T>>()
     fun interface Listener<T>{

@@ -10,23 +10,24 @@ data class Font(
     val style:FONT_STYLE,
     val weight:UShort
 ){
-    constructor(family: String?,size: Float?,style: String?,weight: Int?,scale:Float?):this(
+    constructor(family: String?,size: Float?,style: Style?,weight: Int?,scale:Float?):this(
         family ?: "",
         (size ?: 24f)*(scale ?: 1f),
-        style?.let {
-            styles[it] ?: error("font style error, should be ${styles.keys}")
-        } ?: FONT_STYLE.FONT_STYLE_NORMAL,
+        style?.value ?: FONT_STYLE.FONT_STYLE_NORMAL,
         weight?.let {
             if(it < 1 || it > 999) {
                 error("font weight error, should in 1 to 999")
             } else it.toUShort()
         } ?: 500u
     )
-    companion object{
-        val styles = mapOf(
-            "normal" to FONT_STYLE.FONT_STYLE_NORMAL,
-            "italic" to FONT_STYLE.FONT_STYLE_ITALIC,
-            "oblique" to FONT_STYLE.FONT_STYLE_OBLIQUE
-        )
+    enum class Style(val string: String,val value:FONT_STYLE) {
+        NORMAL("normal",FONT_STYLE.FONT_STYLE_NORMAL),
+        ITALIC("italic",FONT_STYLE.FONT_STYLE_ITALIC),
+        OBLIQUE("oblique",FONT_STYLE.FONT_STYLE_OBLIQUE);
+        companion object {
+            fun byString(str:String) = entries.firstOrNull {
+                it.string == str
+            } ?: error("unknown font style, should be one of " + entries.joinToString(", "))
+        }
     }
 }
