@@ -1,6 +1,5 @@
 package dsl
 
-import logger.warning
 import wrapper.*
 
 class ColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, name:String = "column"):
@@ -12,70 +11,8 @@ class ColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, 
         rect.toOrigin()
         val vc = visibleChildren
         val minH = IntArray(vc.size){ vc[it].minH }
-        val sumMinH = minH.sum()
-        val heights = IntArray(vc.size){ Int.MIN_VALUE }
-        if(sumMinH >= rect.height) {
-            for(i in vc.indices){
-                heights[i] = minH[i]
-            }
-        } else {
-            var sumWeight = 0f
-            var remain = 0
-            fun calSumWeight(){
-                sumWeight = 0f
-                for (i in vc.indices){
-                    if(heights[i] == Int.MIN_VALUE) sumWeight += vc[i].modifier.weight
-                }
-            }
-            fun setOtherTo0(){
-                for (i in vc.indices) {
-                    if(heights[i] == Int.MIN_VALUE) heights[i] = 0
-                }
-            }
-            fun calRemain(){
-                remain = rect.height
-                for (i in vc.indices){
-                    if(heights[i] != Int.MIN_VALUE) remain -= heights[i]
-                }
-            }
-            while(true){
-                calSumWeight()
-                if(sumWeight == 0f) {
-                    setOtherTo0()
-                    warning("column remain sum weight is zero")
-                    break
-                }
-                calRemain()
-                var added = false
-                for (i in vc.indices){
-                    if(heights[i] != Int.MIN_VALUE) continue
-                    val thisH = (vc[i].modifier.weight / sumWeight * remain)
-                    if(thisH <= minH[i]) {
-                        heights[i] = minH[i]
-                        added = true
-                    }
-                }
-                if(!added) {
-                    warning("heights $heights")
-                    while (heights.find { it == Int.MIN_VALUE } != null){
-                        calSumWeight()
-                        if(sumWeight == 0f) {
-                            setOtherTo0()
-                            break
-                        }
-                        calRemain()
-                        for (i in vc.indices) {
-                            if(heights[i] != Int.MIN_VALUE) continue
-                            val thisH = (vc[i].modifier.weight / sumWeight * remain)
-                            warning("sumWeight = $sumWeight remain = $remain weight = ${vc[i].modifier.weight} h = $thisH")
-                            heights[i] = thisH.toInt()
-                            break
-                        }
-                    }
-                    break
-                }
-            }
-        }
+        val weight = FloatArray(vc.size){ vc[it].modifier.weight }
+        val heights = split(weight,minH,rect.height)
         vc.forEachIndexed { i, it ->
             val modifier = it.modifier
             val align = it.alignment

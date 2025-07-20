@@ -1,8 +1,11 @@
 package dsl
 
 import kotlinx.coroutines.flow.asFlow
+import logger.warning
 import wrapper.GuiWindow
 
+
+@Gui
 abstract class GuiScope(
     parent: GuiWindow?, name:String,
     modifier: Modifier,
@@ -41,6 +44,9 @@ abstract class GuiScope(
     fun Column(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ColumnScope.()->Unit){
         ColumnScope(modifier, alignment, window).apply(block).addToChild()
     }
+    fun Row(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: RowScope.()->Unit){
+        RowScope(modifier, alignment, window).apply(block).addToChild()
+    }
     fun Button(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text:State<String>, onClick:()->Unit){
         GuiComponent(modifier, alignment, window.button(text.value, onClick)).apply{
             if(text is MutState) text.listen { hwnd.name = it }
@@ -66,5 +72,71 @@ abstract class GuiScope(
             else list.forEach { it.hwnd.hide() }
             onSize()
         }
+    }
+
+
+
+
+    fun split(weight:FloatArray, min:IntArray,full:Int):IntArray{
+        require(weight.size == min.size) { "collection weight not match min" }
+        if(min.sum() >= full) return min
+        val indices = weight.indices
+        val size = weight.size
+        val results = IntArray(size){ Int.MIN_VALUE }
+        var sumWeight = 0f
+        var remain = 0
+        fun calSumWeight(){
+            sumWeight = 0f
+            for (i in indices){
+                if(results[i] == Int.MIN_VALUE) sumWeight += weight[i]
+            }
+        }
+        fun setOtherTo0(){
+            for (i in indices) {
+                if(results[i] == Int.MIN_VALUE) results[i] = 0
+            }
+        }
+        fun calRemain(){
+            remain = full
+            for (i in indices){
+                if(results[i] != Int.MIN_VALUE) remain -= results[i]
+            }
+        }
+        while(true) {
+            calSumWeight()
+            if (sumWeight == 0f) {
+                setOtherTo0()
+                warning("column remain sum weight is zero")
+                break
+            }
+            calRemain()
+            var added = false
+            for (i in indices) {
+                if (results[i] != Int.MIN_VALUE) continue
+                val thisH = (weight[i] / sumWeight * remain)
+                if (thisH <= min[i]) {
+                    results[i] = min[i]
+                    added = true
+                }
+            }
+            if (!added) {
+                while (results.find { it == Int.MIN_VALUE } != null) {
+                    calSumWeight()
+                    if (sumWeight == 0f) {
+                        setOtherTo0()
+                        break
+                    }
+                    calRemain()
+                    for (i in indices) {
+                        if (results[i] != Int.MIN_VALUE) continue
+                        val thisH = (weight[i] / sumWeight * remain)
+                        results[i] = thisH.toInt()
+                        break
+                    }
+                }
+                break
+            }
+        }
+        return results
     }
 }

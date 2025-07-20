@@ -2,6 +2,9 @@ package dsl
 
 import wrapper.*
 
+@DslMarker
+annotation class Gui
+
 
 abstract class AbstractGuiComponent(val modifier:Modifier, val alignment:Alignment){
     abstract val hwnd:Hwnd

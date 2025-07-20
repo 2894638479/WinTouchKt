@@ -71,6 +71,17 @@ fun Main(args: Array<String>) = processArgs(args).apply {
             Button(Modifier().weight(2f).width(200),Alignment().middleX(),combine { a.tracked.m2.tracked + "2" }){
                 a.value.m1.value++
             }
+            Row {
+                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.tracked.m2.tracked + "0" }){
+                    a.value.m1.value++
+                }
+                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.tracked.m2.tracked  + "1"}){
+                    a.value.m1.value++
+                }
+                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.tracked.m2.tracked + "2" }){
+                    a.value.m1.value++
+                }
+            }
         }
     }
     loopWindowMessage()
