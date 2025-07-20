@@ -60,29 +60,17 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     }
 
 
-    TopWindow("window",800,800){
-        val state = MutState(false)
-        Button(Modifier().width(50).height(50).padding(left = 50, top = 50),Alignment().bottom().right(),combine{a.tracked.m1.tracked.toString()}){
-            info("clickkkked!")
-            state.value = !state.value
-            a.value.m1.value++
-        }
-        Button(Modifier().width(50).height(50).padding(right = 50, top = 50),Alignment().bottom().right(),stateOf("change a")){
-            a.value = A()
-        }
-        Box(Modifier().width(400).height(400),Alignment()){
-            VisibleIf(state) {
-                Button(Modifier().width(50).height(50), Alignment().left().middleY(), combine { b.tracked.toString() }) {
-                    info("fsdajk")
-                    b.value++
-                }
-                Edit(Modifier().width(300).height(100), Alignment().right().middleY(),combine{a.tracked.m2.tracked}) {
-                    a.value.m2.value = it
-                }
+    TopWindow("window",800,600){
+        Column {
+            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.tracked.m2.tracked + "0" }){
+                a.value.m1.value++
             }
-        }
-        VisibleIf(combine{!state.tracked}){
-            Text(Modifier().size(100, 50), Alignment().middleX().bottom(), combined1)
+            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.tracked.m2.tracked  + "1"}){
+                a.value.m1.value++
+            }
+            Button(Modifier().weight(2f).width(200),Alignment().middleX(),combine { a.tracked.m2.tracked + "2" }){
+                a.value.m1.value++
+            }
         }
     }
     loopWindowMessage()

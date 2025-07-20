@@ -1,5 +1,6 @@
 package dsl
 
+import kotlinx.coroutines.flow.asFlow
 import wrapper.GuiWindow
 
 abstract class GuiScope(
@@ -9,8 +10,8 @@ abstract class GuiScope(
 ): AbstractGuiComponent(modifier, alignment),MutState.Scope {
     override val _onDestroy = mutableListOf<()->Unit>()
     private val window = object : GuiWindow(name,
-        if(parent == null) modifier.width else 0,
-        if(parent == null) modifier.height else 0,parent){
+        if(parent == null) modifier.minW else 0,
+        if(parent == null) modifier.minH else 0,parent){
         override fun onSize() = this@GuiScope.onSize()
         override fun onDestroy(): Boolean {
             destroy()
@@ -21,6 +22,9 @@ abstract class GuiScope(
     }
     override val hwnd get() = window.hwnd
     protected val children = mutableListOf<AbstractGuiComponent>()
+    protected val visibleChildren get() = children.filter { it.hwnd.visible }
+    override val minH get() = visibleChildren.maxOf { it.minH }
+    override val minW get() = visibleChildren.maxOf { it.minW }
     private var onChildAdd:(AbstractGuiComponent)->Unit = {}
     private fun AbstractGuiComponent.addToChild(){ children += this; onChildAdd(this) }
     private fun captureAddedChild(block: GuiScope.() -> Unit):List<AbstractGuiComponent>{
@@ -33,6 +37,9 @@ abstract class GuiScope(
     abstract fun onSize()
     fun Box(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: BoxScope.()->Unit){
         BoxScope(modifier, alignment, window).apply(block).addToChild()
+    }
+    fun Column(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ColumnScope.()->Unit){
+        ColumnScope(modifier, alignment, window).apply(block).addToChild()
     }
     fun Button(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text:State<String>, onClick:()->Unit){
         GuiComponent(modifier, alignment, window.button(text.value, onClick)).apply{

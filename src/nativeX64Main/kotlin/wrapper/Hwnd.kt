@@ -23,7 +23,7 @@ value class Hwnd(val value:CPointer<hwndHolder>){
     fun showAndUpdate() { show();update() }
     fun setRect(x:Int, y:Int, w:Int, h:Int){
         info("hwnd moved to $x $y ,size  $w $h")
-        MoveWindow(HWND,x,y,w,h,TRUE).ifFalse { warning("hwnd move false") }
+        MoveWindow(HWND,x,y,w,h, TRUE).ifFalse { warning("hwnd move false") }
     }
     fun setRect(rect: tagRECT) = rect.run { setRect(left,top,right - left,bottom - top) }
     var name:String
