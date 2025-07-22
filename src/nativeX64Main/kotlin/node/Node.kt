@@ -1,136 +1,116 @@
 package node
 
+import dsl.MutState
+import dsl.mutStateNull
 import geometry.*
 import wrapper.*
 
-abstract class Node {
-    abstract val parent: NodeWithChild<*>?
-    var scale:Float? = null
-        set(value) {field = value.apply { iterateChildren{ it.cache.invalidateAll() } }}
-    var offset: Point? = null
-        set(value) {field = value.apply { iterateChildren{ it.cache.invalidate() } }}
-    protected var style: ButtonStyle? = null
-    protected var stylePressed: ButtonStyle? = null
-    class StyleModifier(
-        var style: ButtonStyle?,
-        var stylePressed: ButtonStyle?
-    )
-    fun modifyStyle(block: StyleModifier.()->Unit){
-        StyleModifier(style, stylePressed).let {
-            it.block()
-            style = it.style
-            stylePressed = it.stylePressed
-            iterateChildren{ it.cache.invalidateStyle() }
-        }
-    }
-    var outlineWidth:Float? = null
-    var name:String? = null
-    abstract fun calOuterRect(): Rect?
-    open fun calCurrentShape(): Shape? = null
-    protected open fun findDrawScopeCache(): DrawScope.Cache = parent?.findDrawScopeCache() ?: error("find drawscope cache failed")
-    private inline fun iterateParents(block:(Node)->Unit){
-        var p: Node? = this
-        while (p != null){
-            block(p)
-            p = p.parent
-        }
-    }
-    open fun iterateChildren(block:(Node)->Unit) = block(this)
-    val cache = Cache(this)
-    class Cache(node: Node){
-        private val node by WeakRefNonNull(node)
-        val pressed = StyleCache(node, GREY_BRIGHT){stylePressed}
-        val unPressed = StyleCache(node, GREY_DARK){style}
-        val scale:Float get() {
-            var scale = 1f
-            node.iterateParents {
-                it.scale?.let { scale *= it }
-            }
-            return scale
-        }
+abstract class Node : MutState.Scope {
+    final override val _onDestroy: MutableList<() -> Unit> = mutableListOf()
+    val parentState = mutStateNull<NodeWithChild<*>>()
+    var parent by parentState
 
-        private var _outerRect: Rect? = null
-        val outerRect get() = _outerRect ?: node.calOuterRect().also { _outerRect = it }
+    val contextState:MutState<Container.Context?> = combine { parentState.track?.contextState?.track }
+    var context by contextState
 
-        private var _shape: Shape? = null
-        val shape get() = _shape ?: node.calCurrentShape().also { _shape = it }
+    val nameState = mutStateNull<String>()
+    val scaleState = mutStateNull<Float>()
+    val offsetState = mutStateNull<Point>()
+    val styleState = mutStateNull<ButtonStyle>()
+    val stylePressedState = mutStateNull<ButtonStyle>()
+    val outlineWidthState = mutStateNull<Float>()
 
-        val outlineWidth:Float get() {
-            node.iterateParents { it.outlineWidth?.let { return it } }
-            return 0f
-        }
+    fun styleState(pressed:Boolean) = if(pressed) stylePressedState else styleState
 
-        private var _offset: Point? = null
-        val offset: Point
-            get() = _offset ?: run {
-            var offset = Point(0f,0f)
-            node.iterateParents {
-                it.scale?.let { offset *= it }
-                it.offset?.let { offset += it }
-            }
-            offset.apply { _offset = this }
-        }
+    var name by nameState
+    var scale by scaleState
+    var offset by offsetState
+    var style by styleState
+    var stylePressed by stylePressedState
+    var outlineWidth by outlineWidthState
 
-        fun applyShape(orig: Shape): Shape {
-            var final = orig
-            node.iterateParents {
-                it.scale?.let { final = final.rescaled(it) }
-                it.offset?.let { final = final.offset(it) }
-            }
-            return final
-        }
-
-        fun invalidate(){
-            _outerRect = null
-            _offset = null
-            _shape = null
-        }
-        fun invalidateStyle(){
-            unPressed.invalidate()
-            pressed.invalidate()
-        }
-        fun invalidateAll(){
-            invalidate()
-            invalidateStyle()
-        }
-        class StyleCache(node: Node, private val defaultColor: Color, private val getStyle: Node.()-> ButtonStyle?){
-            private val node by WeakRefNonNull(node)
-            private val outerCache get() = node.findDrawScopeCache()
-            private inline fun <T:Any> find(get: ButtonStyle.()->T?):T?{
-                node.iterateParents {
-                    it.getStyle()?.get()?.let { return it }
+    abstract fun calOuterRect():Rect
+    protected var _outerRect : Rect? = null
+        set(value) {
+            if(field != value) {
+                field = value
+                if (field == null) {
+                    parent?.apply { _outerRect = null }
                 }
-                return null
-            }
-            private inline fun <T:Any> find(default:T,get: ButtonStyle.()->T?) = find(get) ?: default
-            private val color get() = find(defaultColor){color}
-            private val outlineColor get() = find(WHITE){outlineColor}
-            private val textColor get() = find(RED){textColor}
-            private val fontFamily get() = find{fontFamily}
-            private val fontSize get() = find{fontSize}
-            private val fontStyle get() = find{fontStyle}
-            private val fontWeight get() = find{fontWeight}
-
-            private var _font: D2dFont? = null
-            val font get() = _font ?: outerCache.font(Font(fontFamily,fontSize,fontStyle,fontWeight,node.cache.scale))
-
-            private var _brush: D2dBrush? = null
-            val brush get() = _brush ?: outerCache.brush(color).also { _brush = it }
-
-            private var _brushText: D2dBrush? = null
-            val brushText get() = _brushText ?: outerCache.brush(textColor).also { _brushText = it }
-
-            private var _brushOutline: D2dBrush? = null
-            val brushOutline get() = _brushOutline ?: outerCache.brush(outlineColor).also { _brushOutline = it }
-
-            fun invalidate(){
-                _font = null
-                _brush = null
-                _brushText = null
-                _brushOutline = null
             }
         }
+    val outerRect get() = _outerRect ?: calOuterRect().apply { _outerRect = this }
+
+    val displayScale:MutState<Float> = combine {
+        val scale = scaleState.track ?: 1f
+        parentState.track?.displayScale?.track?.let {
+            it * scale
+        } ?: scale
     }
+    val displayOffset:MutState<Point> = combine {
+        val parentScale = parentState.track?.displayScale?.track ?: 1f
+        val parentOffset = parentState.track?.displayOffset?.track ?: Point.origin
+        val offset = offsetState.track ?: Point.origin
+        parentOffset + (offset * parentScale)
+    }
+
+    init {
+        displayScale.listen { _outerRect = null }
+        displayOffset.listen { _outerRect = null }
+    }
+
+
+    val displayStyle = DisplayStyle(this,false)
+    val displayPressedStyle = DisplayStyle(this,true)
+
+    fun displayStyle(pressed:Boolean) = if(pressed) displayPressedStyle else displayStyle
+
+    class DisplayStyle(node:Node,pressed:Boolean){
+        companion object {
+            private fun <T> Node.display(pressed: Boolean,
+                fromStyle:ButtonStyle.()->MutState<T>, fromDisplay:DisplayStyle.()->MutState<T>) = combine {
+                val thisStyle = styleState(pressed).track
+                val parentDisplay = parentState.track?.displayStyle(pressed) ?: return@combine thisStyle?.fromStyle()?.track
+                parentDisplay.fromDisplay().track ?: thisStyle?.fromStyle()?.track
+            }
+        }
+        val color:MutState<Color?> = node.display(pressed,{colorState}){color}
+        val textColor:MutState<Color?> = node.display(pressed,{textColorState}){textColor}
+        val outlineColor:MutState<Color?> = node.display(pressed,{outlineColorState}){outlineColor}
+        val fontFamily:MutState<String?> = node.display(pressed,{fontFamilyState}){fontFamily}
+        val fontSize:MutState<Float?> = node.display(pressed,{fontSizeState}){fontSize}
+        val fontStyle:MutState<Font.Style?> = node.display(pressed,{fontStyleState}){fontStyle}
+        val fontWeight:MutState<Int?> = node.display(pressed,{fontWeightState}){fontWeight}
+
+        val fontState = node.combine {
+            val context = node.contextState.track ?: return@combine null
+            context.drawScope.cache.font(Font(
+                fontFamily.track,
+                fontSize.track,
+                fontStyle.track,
+                fontWeight.track,
+                node.displayScale.track
+            ))
+        }
+        val brushState = node.combine {
+            val drawScope = node.contextState.track?.drawScope ?: return@combine null
+            drawScope.cache.brush(color.track ?: drawScope.defaultColor(pressed))
+        }
+        val textBrushState = node.combine {
+            val drawScope = node.contextState.track?.drawScope ?: return@combine null
+            drawScope.cache.brush(textColor.track ?: drawScope.defaultTextColor(pressed))
+        }
+        val outlineBrushState = node.combine {
+            if(node.outlineWidthState.track.let { (it ?: 0f) <= 0f }) return@combine null
+            val drawScope = node.contextState.track?.drawScope ?: return@combine null
+            drawScope.cache.brush(outlineColor.track ?: drawScope.defaultOutlineColor(pressed))
+        }
+        val font by fontState
+        val brush by brushState
+        val textBrush by textBrushState
+        val outlineBrush by outlineBrushState
+    }
+
     open class Descriptor<T:Node> : SerializerWrapper.Descriptor<T>() {
         val name = "name" from {name}
         val offset = "offset" from {offset}

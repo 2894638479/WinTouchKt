@@ -1,9 +1,6 @@
 package node
 
-import geometry.BLACK
-import geometry.Color
-import geometry.Font
-import geometry.Shape
+import geometry.*
 import kotlinx.cinterop.*
 import libs.Clib.*
 import platform.windows.*
@@ -29,18 +26,19 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
     fun onDraw() = d2dDraw {
         toErase.forEach { (shape,w) ->
             shape.d2dFill(target,cache.transparentBrush)
-            shape.d2dDraw(target,cache.transparentBrush,w)
+            if(w != null) shape.d2dDraw(target,cache.transparentBrush,w)
         }
         toErase.clear()
         fun drawButton(button: Button){
-            val style = button.currentStyle
-            val shape = button.shape
-            val outlineWidth = button.cache.outlineWidth
-            shape.d2dFill(target,style.brush)
-            shape.d2dDraw(target,style.brushOutline,outlineWidth)
-            val textBound = shape.padding(outlineWidth)?.innerRect ?: return
+            val style = button.displayStyle(button.pressed)
+            val shape = button.displayShape
+            val outlineWidth = button.outlineWidth
+            shape.d2dFill(target,style.brush ?: error("brush is null"))
+            if(outlineWidth != null) shape.d2dDraw(target,style.outlineBrush ?: error("outlineBrush is null"),outlineWidth)
+            val textBound = if(outlineWidth == null) shape.innerRect else shape.padding(outlineWidth)?.innerRect ?: return
             val text = button.name ?: return
-            target.d2dDrawText(style.brushText,style.font,textBound,text)
+            target.d2dDrawText(style.textBrush ?: error("textBrush is null"),
+                style.font ?: error("font is null"),textBound,text)
         }
         if(reDraw) buttons.forEach(::drawButton)
         else toDraw.forEach(::drawButton)
@@ -55,10 +53,10 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
     }
 
     private val toDraw = mutableSetOf<Button>()
-    private val toErase = mutableListOf<Pair<Shape,Float>>()
+    private val toErase = mutableListOf<Pair<Shape,Float?>>()
     private fun invalidate() = InvalidateRect(hwnd.HWND,null,1)
     fun toDraw(button: Button) { toDraw += button; invalidate() }
-    fun toErase(button: Button) { toErase += button.shape to button.cache.outlineWidth; invalidate() }
+    fun toErase(button: Button) { toErase += button.shape to button.outlineWidth; invalidate() }
     fun toDrawAll() { reDraw = true; invalidate() }
     var showStatus = true
         set(value) {
@@ -76,6 +74,9 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
         target.free()
         writeFactory.free()
     }
+    fun defaultColor(pressed:Boolean) = if(pressed) GREY_BRIGHT else GREY_DARK
+    fun defaultOutlineColor(pressed:Boolean) = WHITE
+    fun defaultTextColor(pressed: Boolean) = RED
     val cache = Cache(writeFactory,target)
     class Cache(private val writeFactory: D2dWriteFactory, private val target: D2dTarget) {
         private val brushes = HashMap<Color, D2dBrush>(100)

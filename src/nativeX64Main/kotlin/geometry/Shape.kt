@@ -14,4 +14,6 @@ interface Shape {
     val innerRect: Rect
     val outerRect: Rect
     val isValid:Boolean
+
+    operator fun contains(point: Point) = containPoint(point.x,point.y)
 }

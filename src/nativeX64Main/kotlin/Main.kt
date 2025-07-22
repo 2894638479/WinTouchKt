@@ -1,18 +1,17 @@
 import dsl.*
 import error.catchInKotlin
+import error.wrapExceptionName
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
 import libs.Clib.GBKToUTF8
 import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
-import logger.info
 import logger.warning
 import node.Container
 import window.loopWindowMessage
 import window.registerGui
 import window.registerLayered
-import wrapper.GuiWindow
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -28,11 +27,12 @@ fun main() = catchInKotlin {
         str
     }).run { Unit }
 }
-
 fun Main(args: Array<String>) = processArgs(args).apply {
     registerLayered()
     registerGui()
-    val container = json.decodeFromString<Container>(jsonStr)
+    val container = wrapExceptionName("json decode failed"){
+        json.decodeFromString<Container>(jsonStr)
+    }
     val hwndLayered = container.drawScope.hwnd
     hwndLayered.showAndUpdate()
 
@@ -45,13 +45,13 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     val b = mutStateOf(4)
 
     val combined1 = scope.combine {
-        "${a.tracked.m2.tracked} ${b.tracked}"
+        "${a.track.m2.track} ${b.track}"
     }
     val combined2 = scope.combine {
-        "${a.tracked.m1.tracked} ${a.tracked.m2.tracked}"
+        "${a.track.m1.track} ${a.track.m2.track}"
     }
     val combined3 = scope.combine {
-        "${a.tracked.m1.tracked} ${a.tracked.m2.tracked} ${b.tracked}"
+        "${a.track.m1.track} ${a.track.m2.track} ${b.track}"
     }
     scope.run {
         combined1.listen { warning("combined1 $it") }
@@ -62,23 +62,23 @@ fun Main(args: Array<String>) = processArgs(args).apply {
 
     TopWindow("window",800,600){
         Column {
-            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.tracked.m2.tracked + "0" }){
+            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
                 a.value.m1.value++
             }
-            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.tracked.m2.tracked  + "1"}){
+            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
                 a.value.m1.value++
             }
-            Button(Modifier().weight(2f).width(200),Alignment().middleX(),combine { a.tracked.m2.tracked + "2" }){
+            Button(Modifier().weight(2f).width(200),Alignment().middleX(),combine { a.track.m2.track + "2" }){
                 a.value.m1.value++
             }
             Row {
-                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.tracked.m2.tracked + "0" }){
+                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
                     a.value.m1.value++
                 }
-                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.tracked.m2.tracked  + "1"}){
+                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
                     a.value.m1.value++
                 }
-                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.tracked.m2.tracked + "2" }){
+                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.track.m2.track + "2" }){
                     a.value.m1.value++
                 }
             }

@@ -1,49 +1,51 @@
 package node
 
+import dsl.mutStateOf
 import geometry.Rect
 import geometry.Round
 import geometry.RoundedRect
 import geometry.Shape
 import kotlinx.serialization.Serializable
 import logger.info
-import node.Container.ContainerSerializer.Descriptor.from
+import logger.warning
 import wrapper.SerializerWrapper
-import wrapper.WeakRefDel
 
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
     var key:Set<UByte>,
-    shapeOrig: Shape,
+    shape: Shape,
 ): Node(){
-    var shapeOrig = shapeOrig
-        set(value) { field = value.apply { cache.invalidate() } }
-    val shape get() = cache.shape ?: error("button get shape error")
-    override var parent by WeakRefDel<Group>()
-    override fun calOuterRect() = shape.outerRect
-    override fun calCurrentShape() = cache.applyShape(shapeOrig)
-    inline val currentStyle get() = if(pressed) cache.pressed else cache.unPressed
-    var count = 0u
-        private set
-    fun counterIncrease() = count++
-    fun counterDecrease() = count--
-    inline val pressed get() = count != 0u
-    inline val container get() = parent?.parent ?: error("button find container failed")
-    inline val scope get() = container.touchScope
+    private val shapeState = mutStateOf(shape) { _outerRect = null }
+    var shape by shapeState
+    private val displayShapeState = combine {
+        shapeState.track.offset(displayOffset.track).rescaled(displayScale.track)
+    }
+    val displayShape by displayShapeState
+    override fun calOuterRect() = displayShape.outerRect
 
-    inline fun down(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = scope.run {
+    private val pressedState = mutStateOf(false)
+    var pressed by pressedState
+        private set
+
+    private val countState = mutStateOf(0u) {
+        pressed = it != 0u
+    }
+    var count by countState
+
+    inline fun down(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = context?.run {
         info("button $name down")
         keyHandler.downAll(key.filter(filter))
-        counterIncrease()
-        if(drawUi) toDraw(this@Button)
-    }
-    inline fun up(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = scope.run {
+        count++
+        if(drawUi) drawScope.toDraw(this@Button)
+    } ?: error("context is null")
+    inline fun up(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = context?.run {
         info("button $name up")
         keyHandler.upAll(key.filter(filter))
-        counterDecrease()
-        if(drawUi) toDraw(this@Button)
-    }
-    fun inArea(x:Float,y:Float) = shape.containPoint(x,y)
+        count--
+        if(drawUi) drawScope.toDraw(this@Button)
+    } ?: error("context is null")
 
+    fun containPoint(x:Float, y:Float) = shape.containPoint(x,y)
     object ButtonSerializer : SerializerWrapper<Button, ButtonSerializer.Descriptor>("Button", Descriptor){
         object Descriptor: Node.Descriptor<Button>() {
             val key = "key" from {key}
@@ -52,6 +54,7 @@ class Button(
             val round = "round" from {(shape as? Round)}
         }
         override fun Descriptor.generate(): Button {
+            warning("button1")
             var shapeCount = 0
             rect.nullable?.let { shapeCount++ }
             round.nullable?.let { shapeCount++ }
@@ -61,6 +64,7 @@ class Button(
                 ?: roundedRect.nullable
                 ?: round.nullable
                 ?: error("shape is null")
+            warning("button2")
             return Button(key.nonNull,shape).addNodeInfo()
         }
     }

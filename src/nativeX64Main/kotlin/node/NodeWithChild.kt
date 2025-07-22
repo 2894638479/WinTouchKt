@@ -1,21 +1,37 @@
 package node
 
+import dsl.MutStateList
 import geometry.Rect
+import kotlin.math.max
+import kotlin.math.min
+
 
 abstract class NodeWithChild<C: Node>: Node() {
-    protected abstract val children:List<C>
-    final override fun calOuterRect(): Rect? {
-        var res: Rect.Mutable? = null
-        children.forEach {
-            it.cache.outerRect?.let {
-                res?.plusAssign(it) ?: run { res = it.toMutable() }
+    val children = MutStateList<C>().apply {
+        listen(false,object :MutStateList.Listener<C>{
+            override fun onRemove(element: C) {
+                element.parent = null
             }
-        }
-        return res?.toRect()
+            override fun onAdd(element: C) {
+                element.parent = this@NodeWithChild
+            }
+            override fun onAnyChange() {
+                _outerRect = null
+            }
+        })
     }
 
-    final override fun iterateChildren(block: (Node) -> Unit) {
-        super.iterateChildren(block)
-        children.forEach { it.iterateChildren(block) }
+    override fun calOuterRect(): Rect {
+        var rect:Rect.Mutable? = null
+        children.forEach {
+            val outerRect = it.outerRect
+            rect?.run {
+                left = min(left,outerRect.left)
+                right = max(right,outerRect.right)
+                top = min(top,outerRect.top)
+                bottom = max(bottom,outerRect.bottom)
+            } ?: run { rect = outerRect.toMutable() }
+        }
+        return rect?.toRect() ?: Rect.empty
     }
 }

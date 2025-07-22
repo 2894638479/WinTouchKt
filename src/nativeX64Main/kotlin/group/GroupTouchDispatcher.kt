@@ -10,7 +10,7 @@ import wrapper.WeakRefNonNull
 abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
     private val group by WeakRefNonNull(group)
     val buttons:List<Button> get() = group.buttons
-    val rect: Rect? get() = group.cache.outerRect
+    val rect: Rect get() = group.outerRect
     protected val pointers = mutableMapOf<UInt,MutableList<Button>>()
     override fun up(event: TouchReceiver.TouchEvent): Boolean {
         pointers[event.id]?.forEach { it.up() } ?: warningBox("pointer id not down")
@@ -20,8 +20,8 @@ abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
     open fun notifyButtonsChanged(){}
 
     protected fun firstOrNull(x: Float, y: Float): Button? {
-        if (rect?.containPoint(x,y) != true) return null
-        return buttons.firstOrNull { it.inArea(x,y) }
+        if (!rect.containPoint(x,y)) return null
+        return buttons.firstOrNull { it.containPoint(x,y) }
     }
     protected fun alreadyDown(button: Button, id: UInt):Boolean {
         return pointers[id]?.contains(button) ?: false

@@ -34,6 +34,10 @@ class Rect(
         fun toRect(): Rect = Rect(left, top, right, bottom)
     }
 
+    companion object {
+        val empty = Rect(0f,0f,0f,0f)
+    }
+
     val x get() = (left + right) / 2
     val y get() = (top + bottom) / 2
     val w get() = (right - left) / 2

@@ -8,18 +8,21 @@ import kotlin.reflect.KProperty
 
 fun <T> stateOf(value:T) = State(value)
 fun <T> stateNull() = State<T?>(null)
-fun <T> mutStateOf(value:T,initListener:((T)->Unit)? = null) = MutState(value,initListener)
-fun <T> mutStateNull(initListener:((T?)->Unit)? = null) = MutState<T?>(null,initListener)
+fun <T> mutStateOf(value:T) = MutState(value)
+fun <T> mutStateNull() = MutState<T?>(null)
 fun <T> mutStateList(vararg values:T) = MutStateList(*values)
+
+fun <T> MutState.Scope.mutStateOf(value:T,trigger:Boolean = false,initListener:(T)->Unit)
+= MutState(value).apply { listen(trigger,initListener) }
+
+fun <T> MutState.Scope.mutStateNull(trigger:Boolean = false,initListener:(T?)->Unit) = mutStateOf<T?>(null,trigger, initListener)
 
 open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value
 }
 
-class MutState<T>(value:T,initListener:((T)->Unit)? = null):State<T>(value),ReadWriteProperty<Any?,T>{
-    private val listeners = mutableListOf<(T)->Unit>().also {
-        if(initListener != null) it += initListener
-    }
+class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
+    private val listeners = mutableListOf<(T)->Unit>()
     override var value = value
         set(value) {
             if(field != value) {
@@ -46,9 +49,10 @@ class MutState<T>(value:T,initListener:((T)->Unit)? = null):State<T>(value),Read
             listen { it.value = func(delegate) }
         }
 
+        @Gui
         class Combination {
             private val _trackedStates = mutableSetOf<MutState<*>>()
-            val <T> MutState<T>.tracked:T get() {
+            val <T> MutState<T>.track:T get() {
                 _trackedStates += this
                 return value
             }
@@ -83,60 +87,68 @@ class MutState<T>(value:T,initListener:((T)->Unit)? = null):State<T>(value),Read
 }
 
 class MutStateList<T> private constructor(internal val delegate:MutableList<T>):MutableList<T> by delegate {
+    val list:List<T> get() = delegate
     constructor(vararg value:T):this(mutableListOf(*value))
     internal val listeners = mutableListOf<Listener<T>>()
     fun interface Listener<T>{
         fun onAnyChange()
-        fun onAddOne(element:T){}
-        fun onRemoveOne(element: T){}
-        fun onOtherChange(){}
+        fun onAdd(element:T){}
+        fun onRemove(element: T){}
     }
     override fun add(element: T) = delegate.add(element).apply {
         listeners.forEach {
-            it.onAddOne(element)
+            it.onAdd(element)
             it.onAnyChange()
         }
     }
     override fun add(index: Int, element: T) = delegate.add(index, element).apply {
         listeners.forEach {
-            it.onAddOne(element)
+            it.onAdd(element)
             it.onAnyChange()
         }
     }
     override fun addAll(elements: Collection<T>) = delegate.addAll(elements).apply {
         listeners.forEach {
-            it.onOtherChange()
+            for(element in elements) { it.onAdd(element) }
             it.onAnyChange()
         }
     }
     override fun addAll(index: Int, elements: Collection<T>) = delegate.addAll(index, elements).apply {
         listeners.forEach {
-            it.onOtherChange()
+            for(element in elements) { it.onAdd(element) }
             it.onAnyChange()
         }
     }
-    override fun clear() = delegate.clear().apply {
-        listeners.forEach {
-            it.onOtherChange()
-            it.onAnyChange()
+    override fun clear() {
+        val remembered = delegate.toList()
+        delegate.clear().apply {
+            listeners.forEach {
+                for(element in remembered) { it.onRemove(element) }
+                it.onAnyChange()
+            }
         }
     }
     override fun removeAt(index: Int) = delegate.removeAt(index).apply {
         listeners.forEach {
-            it.onRemoveOne(this)
+            it.onRemove(this)
             it.onAnyChange()
         }
     }
     override fun remove(element: T) = delegate.remove(element).apply {
         if(this) listeners.forEach {
-            it.onRemoveOne(element)
+            it.onRemove(element)
             it.onAnyChange()
         }
     }
-    override fun removeAll(elements: Collection<T>) = delegate.removeAll(elements).apply {
-        if(this) listeners.forEach {
-            it.onOtherChange()
-            it.onAnyChange()
+    override fun removeAll(elements: Collection<T>):Boolean {
+        var modified = false
+        for(element in elements) {
+            if (delegate.remove(element)) {
+                listeners.forEach { it.onRemove(element) }
+                modified = true
+            }
         }
+        if (modified) listeners.forEach { it.onAnyChange() }
+        return modified
     }
 }

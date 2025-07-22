@@ -3,6 +3,7 @@ package node
 import geometry.Point
 import group.*
 import kotlinx.serialization.Serializable
+import logger.warning
 import node.Container.ContainerSerializer.Descriptor.from
 import touch.TouchReceiver
 import wrapper.SerializerWrapper
@@ -12,7 +13,6 @@ import wrapper.WeakRefDel
 class Group(
     createDispatcher:(Group)-> GroupTouchDispatcher
 ): NodeWithChild<Button>() {
-    val buttons: MutableList<Button> = mutableListOf()
     var touchDispatcher = createDispatcher(this)
         private set
     val editModeTouchDispatcher = object : GroupTouchDispatcher(this) {
@@ -22,7 +22,7 @@ class Group(
             } != null
         }
         override fun move(event: TouchReceiver.TouchEvent): Boolean {
-            val scope = container.drawScope
+            val scope = context?.drawScope ?: error("context is null")
             val button = pointers[event.id]?.getOrNull(0) ?: error("pointer id not down")
             scope.toErase(button)
             val offset = Point(event.x,event.y)
@@ -35,20 +35,7 @@ class Group(
             return true
         }
     }
-
-    override var parent by WeakRefDel<Container>()
-    inline val container get() = parent ?: error("group parent is null")
-    override val children get() = buttons
-    fun addButton(button: Button){
-        button.parent = this
-        buttons += button
-        touchDispatcher.notifyButtonsChanged()
-    }
-    fun removeButton(button: Button){
-        if(!buttons.remove(button)) error("remove button error")
-        button.parent = null
-        touchDispatcher.notifyButtonsChanged()
-    }
+    val buttons get() = children
 
     object GroupSerializer : SerializerWrapper<Group, GroupSerializer.Descriptor>("Group", Descriptor) {
         object Descriptor: Node.Descriptor<Group>() {
@@ -63,7 +50,7 @@ class Group(
                 is NormalGroup -> 0
                 else -> error("unknown group type")
             }.toUByte() }
-            val buttons = "buttons" from {buttons}
+            val buttons = "buttons" from {buttons.list}
             val sensitivity = "sensitivity" from {
                 (touchDispatcher as? MovePointGroup)?.sensitivity ?:
                 (touchDispatcher as? TouchPadGroup)?.sensitivity
@@ -91,7 +78,7 @@ class Group(
                 }
             }.also {
                 it.addNodeInfo()
-                buttons.nonNull.forEach(it::addButton)
+                it.buttons += buttons.nonNull
             }
         }
     }
