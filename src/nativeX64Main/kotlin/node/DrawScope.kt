@@ -3,6 +3,7 @@ package node
 import geometry.*
 import kotlinx.cinterop.*
 import libs.Clib.*
+import logger.warning
 import platform.windows.*
 import sendInput.KeyHandler.Companion.KEY_HIDE
 import wrapper.*
@@ -22,14 +23,16 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
         block()
         d2dEndDraw(target.value)
     }
-    private var reDraw = true.apply { invalidate() }
+    private var reDraw = true.apply { hwnd.invalidateRect() }
     fun onDraw() = d2dDraw {
+        warning("onDraw invoked")
         toErase.forEach { (shape,w) ->
             shape.d2dFill(target,cache.transparentBrush)
             if(w != null) shape.d2dDraw(target,cache.transparentBrush,w)
         }
         toErase.clear()
         fun drawButton(button: Button){
+            warning("drawing $button at ${button.displayShape} alpha $alpha")
             val style = button.displayStyle(button.pressed)
             val shape = button.displayShape
             val outlineWidth = button.outlineWidth
@@ -44,6 +47,7 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
         else toDraw.forEach(::drawButton)
         reDraw = false
         toDraw.clear()
+        hwnd.validateRect()
     }
 
 
@@ -54,10 +58,10 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
 
     private val toDraw = mutableSetOf<Button>()
     private val toErase = mutableListOf<Pair<Shape,Float?>>()
-    private fun invalidate() = InvalidateRect(hwnd.HWND,null,1)
-    fun toDraw(button: Button) { toDraw += button; invalidate() }
-    fun toErase(button: Button) { toErase += button.shape to button.outlineWidth; invalidate() }
-    fun toDrawAll() { reDraw = true; invalidate() }
+    fun toDraw(button: Button) {
+        warning(toDraw.toString()); toDraw += button; hwnd.invalidateRect() }
+    fun toErase(button: Button) { toErase += button.shape to button.outlineWidth; hwnd.invalidateRect() }
+    fun toDrawAll() { reDraw = true; hwnd.invalidateRect() }
     var showStatus = true
         set(value) {
             field = value

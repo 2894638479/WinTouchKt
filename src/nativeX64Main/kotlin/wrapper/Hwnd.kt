@@ -39,4 +39,6 @@ value class Hwnd(val value:CPointer<hwndHolder>){
             SetWindowTextW(HWND, value)
         }
     val controlId get() = GetDlgCtrlID(HWND).toUShort()
+    fun invalidateRect(rect:RECT? = null) = InvalidateRect(HWND,rect?.ptr,1)
+    fun validateRect(rect: RECT? = null) = ValidateRect(HWND,rect?.ptr)
 }

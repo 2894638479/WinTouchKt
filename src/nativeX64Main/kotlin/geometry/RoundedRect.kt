@@ -2,6 +2,8 @@ package geometry
 
 import geometry.Rect.Serializer.Descriptor
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import wrapper.*
 import kotlin.math.max
 
@@ -66,4 +68,5 @@ class RoundedRect(
             return RoundedRect(x - w2,y - h2,x + w2,y + h2,r.nonNull)
         }
     }
+    override fun toString() = "RoundedRect${Json.encodeToString(this)}"
 }

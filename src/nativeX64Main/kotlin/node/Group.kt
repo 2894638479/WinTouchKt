@@ -3,6 +3,8 @@ package node
 import geometry.Point
 import group.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import logger.warning
 import node.Container.ContainerSerializer.Descriptor.from
 import touch.TouchReceiver
@@ -82,4 +84,6 @@ class Group(
             }
         }
     }
+
+    override fun toString() = "Group${Json.encodeToString(this)}"
 }

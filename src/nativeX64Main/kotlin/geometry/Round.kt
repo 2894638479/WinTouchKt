@@ -1,6 +1,8 @@
 package geometry
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import wrapper.D2dBrush
 import wrapper.D2dTarget
 import wrapper.d2dDrawRound
@@ -27,4 +29,5 @@ class Round(
     override val outerRect: Rect get() = Rect( x - r,y - r, x + r,y + r)
     override fun padding(width: Float) = Round(x, y, r - width)
     override val isValid get() = r > 0
+    override fun toString() = "Round${Json.encodeToString(this)}"
 }

@@ -10,7 +10,9 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.encoding.*
+import kotlinx.serialization.json.Json
 import logger.info
 import logger.warning
 import platform.posix.exit
@@ -36,7 +38,7 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
         val drawScope: DrawScope,
         val keyHandler: KeyHandler
     )
-    var alpha by mutStateNull<UByte> { context?.run { drawScope.alpha = (it ?: 128u) } ?: error("context is null") }
+    var alpha by mutStateNull<UByte>(true) { context?.run { drawScope.alpha = (it ?: 128u) } ?: error("context is null") }
 
     override fun down(event: TouchReceiver.TouchEvent):Boolean {
         groups.firstOrNull {
@@ -99,4 +101,6 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
             }
         }
     }
+
+    override fun toString() = "Container${Json.encodeToString(this)}"
 }

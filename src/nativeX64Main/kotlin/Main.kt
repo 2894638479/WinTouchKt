@@ -33,6 +33,7 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     val container = wrapExceptionName("json decode failed"){
         json.decodeFromString<Container>(jsonStr)
     }
+    warning(container.toString())
     val hwndLayered = container.drawScope.hwnd
     hwndLayered.showAndUpdate()
 
@@ -60,29 +61,29 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     }
 
 
-    TopWindow("window",800,600){
-        Column {
-            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
-                a.value.m1.value++
-            }
-            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
-                a.value.m1.value++
-            }
-            Button(Modifier().weight(2f).width(200),Alignment().middleX(),combine { a.track.m2.track + "2" }){
-                a.value.m1.value++
-            }
-            Row {
-                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
-                    a.value.m1.value++
-                }
-                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
-                    a.value.m1.value++
-                }
-                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.track.m2.track + "2" }){
-                    a.value.m1.value++
-                }
-            }
-        }
-    }
+//    TopWindow("window",800,600){
+//        Column {
+//            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
+//                a.value.m1.value++
+//            }
+//            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
+//                a.value.m1.value++
+//            }
+//            Button(Modifier().weight(2f).width(200),Alignment().middleX(),combine { a.track.m2.track + "2" }){
+//                a.value.m1.value++
+//            }
+//            Row {
+//                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
+//                    a.value.m1.value++
+//                }
+//                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
+//                    a.value.m1.value++
+//                }
+//                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.track.m2.track + "2" }){
+//                    a.value.m1.value++
+//                }
+//            }
+//        }
+//    }
     loopWindowMessage()
 }

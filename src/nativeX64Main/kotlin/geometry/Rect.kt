@@ -1,6 +1,8 @@
 package geometry
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import wrapper.*
 import kotlin.math.max
 import kotlin.math.min
@@ -32,6 +34,7 @@ class Rect(
             bottom += point.y
         }
         fun toRect(): Rect = Rect(left, top, right, bottom)
+        override fun toString() = "Rect.Mutable${Json.encodeToString(toRect())}"
     }
 
     companion object {
@@ -84,4 +87,5 @@ class Rect(
             return Rect(x - w2,y - h2,x + w2,y + h2)
         }
     }
+    override fun toString() = "Rect${Json.encodeToString(this)}"
 }

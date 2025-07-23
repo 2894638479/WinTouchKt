@@ -6,6 +6,8 @@ import geometry.Round
 import geometry.RoundedRect
 import geometry.Shape
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import logger.info
 import logger.warning
 import wrapper.SerializerWrapper
@@ -18,7 +20,8 @@ class Button(
     private val shapeState = mutStateOf(shape) { _outerRect = null }
     var shape by shapeState
     private val displayShapeState = combine {
-        shapeState.track.offset(displayOffset.track).rescaled(displayScale.track)
+        val parentScale = parentState.track?.displayScale?.track ?: 1f
+        shapeState.track.rescaled(parentScale).offset(displayOffset.track)
     }
     val displayShape by displayShapeState
     override fun calOuterRect() = displayShape.outerRect
@@ -45,7 +48,7 @@ class Button(
         if(drawUi) drawScope.toDraw(this@Button)
     } ?: error("context is null")
 
-    fun containPoint(x:Float, y:Float) = shape.containPoint(x,y)
+    fun containPoint(x:Float, y:Float) = displayShape.containPoint(x,y)
     object ButtonSerializer : SerializerWrapper<Button, ButtonSerializer.Descriptor>("Button", Descriptor){
         object Descriptor: Node.Descriptor<Button>() {
             val key = "key" from {key}
@@ -68,4 +71,6 @@ class Button(
             return Button(key.nonNull,shape).addNodeInfo()
         }
     }
+
+    override fun toString() = "Button${Json.encodeToString(this)}"
 }

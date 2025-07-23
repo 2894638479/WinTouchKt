@@ -2,6 +2,7 @@ package window
 
 import node.Container
 import error.catchInKotlin
+import geometry.Rect
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.invoke
 import logger.info
@@ -20,8 +21,7 @@ fun wndProcLayered(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRE
     val container = Container.hwndContainer(Hwnd(hWnd))
     val drawScope = container?.drawScope
     fun default() = DefWindowProcW(hWnd, uMsg, wParam, lParam)
-    ValidateRect(hWnd,null)
-    info("wndProcLayered umsg $uMsg")
+//    info("wndProcLayered umsg $uMsg")
     when (uMsg.toInt()) {
         WM_CREATE -> {
             SetWindowLongPtr!!(hWnd, GWL_STYLE, (WS_POPUP or WS_VISIBLE.toUInt()).toLong())
@@ -34,7 +34,7 @@ fun wndProcLayered(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRE
             container?.destroy()
         }
         WM_PAINT -> {
-            drawScope?.onDraw()?.let { ValidateRect(hWnd,null) }
+            drawScope?.onDraw()
         }
         WM_SIZE -> {
             drawScope?.resize()
