@@ -20,7 +20,7 @@ fun <T> MutState.Scope.mutStateNull(trigger:Boolean = false,initListener:(T?)->U
 open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value
 }
-
+private var currentCombination: MutState.Scope.Combination? = null
 class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
     private val listeners = mutableListOf<(T)->Unit>()
     override var value = value
@@ -32,6 +32,9 @@ class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
         }
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         this.value = value
+    }
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        return currentCombination?.run { track } ?: value
     }
     class SimpleScope:Scope{ override val _onDestroy = mutableListOf<()->Unit>() }
     interface Scope :Destroyable {
@@ -65,14 +68,18 @@ class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
         //the `func` will be invoked multiple times  so do not create new state in it.
         fun <T> combine(func:Combination.()->T):MutState<T>{
             val firstCombination = Combination()
+            currentCombination = firstCombination
             val initValue = firstCombination.func()
+            currentCombination = null
             val state = mutStateOf(initValue)
             var trackedStates = firstCombination.trackedStates.toMutableSet()
             fun <T> MutState<T>.listen1(listener:(T)->Unit){ listeners += listener }
             fun <T> MutState<T>.remove1(listener:(T)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
             fun update(any: Any?){
                 val combination = Combination()
+                currentCombination = combination
                 state.value = combination.func()
+                currentCombination = null
                 val newStates = combination.trackedStates
                 if(!trackedStates.containsAll(newStates)){
                     val added = newStates.subtract(trackedStates)

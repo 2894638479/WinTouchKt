@@ -5,6 +5,8 @@ import libs.Clib.hwndHolder
 import logger.info
 import logger.warning
 import platform.windows.*
+import kotlin.math.max
+import kotlin.math.min
 
 @OptIn(ExperimentalForeignApi::class)
 value class Hwnd(val value:CPointer<hwndHolder>){
@@ -64,6 +66,8 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         si.nMin = 0
         si.nMax = height - 1
         si.fMask = SIF_ALL.toUInt()
+        si.nPos = min(si.nPos,si.nMax - si.nPage.toInt())
+        si.nPos = max(si.nPos,0)
         SetScrollInfo(HWND,bar,si.ptr,TRUE)
         info("npos=${si.nPos}")
         ScrollWindow(HWND,0,-si.nPos,null,null)

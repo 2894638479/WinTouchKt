@@ -39,20 +39,20 @@ fun Main(args: Array<String>) = processArgs(args).apply {
 
     val scope = MutState.SimpleScope()
     class A{
-        val m1 = mutStateOf(0)
-        val m2 = mutStateOf("test")
+        var m1 by mutStateOf(0)
+        var m2 by mutStateOf("test")
     }
-    val a = mutStateOf(A())
-    val b = mutStateOf(4)
+    val a by mutStateOf(A())
+    val b by mutStateOf(4)
 
     val combined1 = scope.combine {
-        "${a.track.m2.track} ${b.track}"
+        "${a.m2} $b"
     }
     val combined2 = scope.combine {
-        "${a.track.m1.track} ${a.track.m2.track}"
+        "${a.m1} ${a.m2}"
     }
     val combined3 = scope.combine {
-        "${a.track.m1.track} ${a.track.m2.track} ${b.track}"
+        "${a.m1} ${a.m2} $b"
     }
     scope.run {
         combined1.listen { warning("combined1 $it") }
@@ -63,27 +63,27 @@ fun Main(args: Array<String>) = processArgs(args).apply {
 
     TopWindow("window",800,600){
         ScrollableColumn {
-            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
-                a.value.m1.value++
+            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.m2 + "0" }){
+                a.m1++
             }
-            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
-                a.value.m1.value++
+            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.m2  + "1"}){
+                a.m1++
             }
-            Button(Modifier().weight(2f).width(200).padding(150),Alignment().middleX(),combine { a.track.m2.track + "2" }){
-                a.value.m1.value++
+            Button(Modifier().weight(2f).width(200).padding(150),Alignment().middleX(),combine { a.m2 + "2" }){
+                a.m1++
             }
             val list = mutStateList("aaa","bbb","ccc")
             Row {
-                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
-                    a.value.m1.value++
+                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.m2 + "0" }){
+                    a.m1++
                     list.removeAt(0)
                 }
-                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
-                    a.value.m1.value++
-                    list.add("${list.size}")
+                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.m2  + "1"}){
+                    a.m1++
+                    list += "${list.size}"
                 }
-                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.track.m2.track + "2" }){
-                    a.value.m1.value++
+                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.m2 + "2" }){
+                    a.m1++
                 }
             }
             List(list){
