@@ -2,26 +2,29 @@ package wrapper
 
 import dsl.Alignment
 import error.catchInKotlin
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.toCPointer
+import kotlinx.cinterop.*
 import logger.info
 import logger.warning
 import platform.windows.*
-import kotlin.collections.mutableMapOf
-import kotlin.collections.set
 
 
 @OptIn(ExperimentalForeignApi::class)
 fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT = catchInKotlin {
-    val guiWindow = guiWindowMap[Hwnd(hWnd)] ?: creatingGuiWindow ?: error("gui window not found")
+    val hwnd = Hwnd(hWnd)
+    val guiWindowFromMap = guiWindowMap[hwnd]
+    val guiWindow = guiWindowFromMap ?: creatingGuiWindow ?: error("gui window not found")
+    val initialized = guiWindowFromMap != null
     info("wndProcGui ${guiWindow.windowName} umsg $uMsg")
     fun default() = DefWindowProcW(hWnd, uMsg, wParam, lParam)
+    fun LOWORD(value: Int) = value and 0xFFFF
+    fun HIWORD(value: Int) = (value shr 16) and 0xFFFF
     when(uMsg.toInt()){
-        WM_SIZE -> {
-            info("gui window size changing to ${Hwnd(hWnd).rect.str()}")
+        WM_SIZE -> memScoped {
+            info("gui window size changing to ${hwnd.rect.str()}")
+            if(!initialized) return default()
             guiWindow.onSize()
+            if(guiWindow.scrollableHeight == -1) return default()
+            hwnd.updateScrollSize(SB_VERT,guiWindow.scrollableHeight)
         }
         WM_GETMINMAXINFO -> {
             val ptr = lParam.toCPointer<MINMAXINFO>()
@@ -33,11 +36,24 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
             } ?: warning("gui window min size set failed")
         }
         WM_COMMAND -> {
-            fun LOWORD(value: Int) = value and 0xFFFF
-            fun HIWORD(value: Int) = (value shr 16) and 0xFFFF
             val id = LOWORD(wParam.toInt()).toUShort()
             val notificationCode = HIWORD(wParam.toInt())
             guiWindow.onWmCommand(id,notificationCode)
+        }
+        WM_VSCROLL -> memScoped {
+            val dy = hwnd.scroll(SB_VERT) {
+                when (LOWORD(wParam.toInt())) {
+                    SB_TOP -> nMin
+                    SB_BOTTOM -> nMax
+                    SB_LINEUP -> nPos - 10
+                    SB_LINEDOWN -> nPos + 10
+                    SB_PAGEUP -> nPos - nPage.toInt()
+                    SB_PAGEDOWN -> nPos + nPage.toInt()
+                    SB_THUMBTRACK, SB_THUMBPOSITION -> HIWORD(wParam.toInt())
+                    else -> nPos
+                }
+            }
+            ScrollWindow(hWnd,0,-dy,null,null)
         }
         WM_CLOSE -> if(!guiWindow.onClose()) return default()
         WM_DESTROY -> if(!guiWindow.onDestroy()) return default()
@@ -59,12 +75,12 @@ const val guiWindowClass = "gui_window"
 abstract class GuiWindow (
     val windowName:String,
     internal var minW:Int = 0, internal var minH:Int = 0,
+    style: Int = 0,
     val parent:GuiWindow? = null
 ) {
-    //防止子类中访问未初始化的hwnd
-    var onSize:()->Unit = { warning("onSize invoked default implement") }
-        private set
-    protected abstract fun onSize()
+    abstract fun onSize()
+    abstract val scrollableHeight: Int
+    abstract val scrollableWidth: Int
 
     var idIncrease = 100.toUShort()
         get() = field++
@@ -95,7 +111,7 @@ abstract class GuiWindow (
         null
     ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()}")) }
 
-    fun button(string:String, onClick:()->Unit) = createSubHwnd( WS_TABSTOP or BS_DEFPUSHBUTTON, WC_BUTTONA,string).apply {
+    fun button(string:String, onClick:()->Unit) = createSubHwnd(WS_TABSTOP or BS_DEFPUSHBUTTON, WC_BUTTONA,string).apply {
         onCommand[controlId] = onClick
     }
 
@@ -110,8 +126,9 @@ abstract class GuiWindow (
 
     val hwnd:Hwnd = run {
         val styleEx = (WS_EX_TOPMOST).toUInt()
-        val style = (WS_OVERLAPPEDWINDOW or WS_VISIBLE).toUInt()
-        if(parent == null){
+        creatingGuiWindow = this
+        val wnd =  if(parent == null){
+            val style = (WS_OVERLAPPEDWINDOW or WS_VISIBLE or style).toUInt()
             allocRECT {
                 left = 0
                 top = 0
@@ -121,14 +138,13 @@ abstract class GuiWindow (
                 minW = right - left
                 minH = bottom - top
             }
-        }
-        creatingGuiWindow = this
-        val wnd = if (parent == null) CreateWindowExW(
-            styleEx,guiWindowClass, windowName, style,
-            CW_USEDEFAULT, CW_USEDEFAULT, 50, 50,
-            null, null, GetModuleHandleW(null), null
-        ) else CreateWindowExW(
-            0u, guiWindowClass, windowName, (WS_CHILD or WS_VISIBLE).toUInt(),
+            CreateWindowExW(
+                styleEx,guiWindowClass, windowName, style,
+                CW_USEDEFAULT, CW_USEDEFAULT, 50, 50,
+                null, null, GetModuleHandleW(null), null
+            )
+        } else CreateWindowExW(
+            0u, guiWindowClass, windowName, (WS_CHILD or WS_VISIBLE or style).toUInt(),
             0, 0, 50, 50, parent.hwnd.HWND, (parent.idIncrease).toLong().toCPointer(),
             GetModuleHandleW(null), null
         )
@@ -136,8 +152,5 @@ abstract class GuiWindow (
         Hwnd(wnd ?: error("gui window create failed ${GetLastError()}")).also{
             guiWindowMap[it] = this
         }
-    }
-    init {
-        onSize = ::onSize
     }
 }

@@ -1,21 +1,30 @@
 package dsl
 
-import kotlinx.coroutines.flow.asFlow
 import logger.warning
+import platform.windows.RECT
 import wrapper.GuiWindow
+import wrapper.height
+import wrapper.width
+import kotlin.math.max
 
 
 @Gui
 abstract class GuiScope(
     parent: GuiWindow?, name:String,
     modifier: Modifier,
-    alignment: Alignment
+    alignment: Alignment,
+    style:Int = 0
 ): AbstractGuiComponent(modifier, alignment),MutState.Scope {
     override val _onDestroy = mutableListOf<()->Unit>()
     private val window = object : GuiWindow(name,
         if(parent == null) modifier.minW else 0,
-        if(parent == null) modifier.minH else 0,parent){
-        override fun onSize() = this@GuiScope.onSize()
+        if(parent == null) modifier.minH else 0,
+        style,parent
+    ){
+        val scope = this@GuiScope
+        override fun onSize() = scope.onSize()
+        override val scrollableHeight get() = scope.scrollableHeight
+        override val scrollableWidth get() = scope.scrollableWidth
         override fun onDestroy(): Boolean {
             destroy()
             children.clear()
@@ -23,11 +32,13 @@ abstract class GuiScope(
             return super.onDestroy()
         }
     }
+    open val scrollableHeight get() = -1
+    open val scrollableWidth get() = -1
     override val hwnd get() = window.hwnd
     protected val children = mutableListOf<AbstractGuiComponent>()
     protected val visibleChildren get() = children.filter { it.hwnd.visible }
-    override val minH get() = visibleChildren.maxOf { it.minH }
-    override val minW get() = visibleChildren.maxOf { it.minW }
+    override val innerMinH get() = visibleChildren.maxOf { it.outerMinH }
+    override val innerMinW get() = visibleChildren.maxOf { it.outerMinW }
     private var onChildAdd:(AbstractGuiComponent)->Unit = {}
     private fun AbstractGuiComponent.addToChild(){ children += this; onChildAdd(this) }
     private fun captureAddedChild(block: GuiScope.() -> Unit):List<AbstractGuiComponent>{
@@ -73,7 +84,9 @@ abstract class GuiScope(
             onSize()
         }
     }
-
+    fun ScrollableColumn(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ScrollableColumnScope.()->Unit){
+        ScrollableColumnScope(modifier, alignment, window).apply(block).addToChild()
+    }
 
 
 
@@ -138,5 +151,45 @@ abstract class GuiScope(
             }
         }
         return results
+    }
+
+
+    fun RECT.placeTB(modifier: Modifier, bound: RECT, align: Alignment) {
+        if (modifier.height == 0) {
+            top = bound.top
+            bottom = bound.bottom
+        } else {
+            val height = modifier.run { height + paddingH }
+            if (align.bottom) {
+                bottom = bound.bottom
+                top = bottom - height
+            } else if (align.middleY) {
+                top = bound.top + (bound.height - height) / 2
+                bottom = top + height
+            } else if (align.top) {
+                top = 0
+                bottom = top + height
+            }
+        }
+    }
+
+
+    fun RECT.placeLR(modifier: Modifier, bound: RECT, align: Alignment) {
+        if (modifier.width == 0) {
+            left = bound.left
+            right = bound.right
+        } else {
+            val width = modifier.run { width + paddingW }
+            if (align.right) {
+                right = bound.right
+                left = right - width
+            } else if (align.middleX) {
+                left = bound.left + (bound.width - width) / 2
+                right = left + width
+            } else if (align.left) {
+                left = 0
+                right = width
+            }
+        }
     }
 }
