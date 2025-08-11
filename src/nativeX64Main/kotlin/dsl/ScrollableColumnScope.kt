@@ -23,7 +23,7 @@ class ScrollableColumnScope(modifier: Modifier, alignment: Alignment, parent: Gu
                 h += it.innerMinH
                 bottom = h
                 h += it.modifier.paddingBottom
-                it.hwnd.setRect(this)
+                it.hwnd.rect = this
             }
         }
         scrollableHeight = h

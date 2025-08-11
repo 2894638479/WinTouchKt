@@ -49,7 +49,7 @@ class BoxScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, nam
                 top += modifier.paddingTop
                 bottom -= modifier.paddingBottom
 
-                it.hwnd.setRect(this)
+                it.hwnd.rect = this
             }
         }
     }

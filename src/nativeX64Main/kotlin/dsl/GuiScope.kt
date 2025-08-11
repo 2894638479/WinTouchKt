@@ -5,7 +5,6 @@ import platform.windows.RECT
 import wrapper.GuiWindow
 import wrapper.height
 import wrapper.width
-import kotlin.math.max
 
 
 @Gui
@@ -15,14 +14,22 @@ abstract class GuiScope(
     alignment: Alignment,
     style:Int = 0
 ): AbstractGuiComponent(modifier, alignment),MutState.Scope {
-    override val _onDestroy = mutableListOf<()->Unit>()
+    override var _onDestroy = mutableListOf<()->Unit>()
+    private inline fun <T> remapScope(scope: MutState.Scope, block:GuiScope.()->T):T{
+        val rem = _onDestroy
+        _onDestroy = scope._onDestroy
+        return block().also { _onDestroy = rem }
+    }
     private val window = object : GuiWindow(name,
         if(parent == null) modifier.minW else 0,
         if(parent == null) modifier.minH else 0,
         style,parent
     ){
         val scope = this@GuiScope
-        override fun onSize() = scope.onSize()
+        override fun onSize() {
+            scope.onSize()
+            super.onSize()
+        }
         override val scrollableHeight get() = scope.scrollableHeight
         override val scrollableWidth get() = scope.scrollableWidth
         override fun onDestroy(): Boolean {
@@ -35,18 +42,16 @@ abstract class GuiScope(
     open val scrollableHeight get() = -1
     open val scrollableWidth get() = -1
     override val hwnd get() = window.hwnd
-    protected val children = mutableListOf<AbstractGuiComponent>()
+    protected var children = mutableListOf<AbstractGuiComponent>()
     protected val visibleChildren get() = children.filter { it.hwnd.visible }
     override val innerMinH get() = visibleChildren.maxOf { it.outerMinH }
     override val innerMinW get() = visibleChildren.maxOf { it.outerMinW }
-    private var onChildAdd:(AbstractGuiComponent)->Unit = {}
-    private fun AbstractGuiComponent.addToChild(){ children += this; onChildAdd(this) }
-    private fun captureAddedChild(block: GuiScope.() -> Unit):List<AbstractGuiComponent>{
-        val list = mutableListOf<AbstractGuiComponent>()
-        onChildAdd = { list += it }
+    private fun AbstractGuiComponent.addToChild(){ children += this }
+    private fun remapChild(block: GuiScope.() -> Unit):List<AbstractGuiComponent>{
+        val rem = children
+        children = mutableListOf()
         block()
-        onChildAdd = {}
-        return list
+        return children.also { children = rem }
     }
     abstract fun onSize()
     fun Box(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: BoxScope.()->Unit){
@@ -77,15 +82,41 @@ abstract class GuiScope(
         }.addToChild()
     }
     fun VisibleIf(state: MutState<Boolean>, block: GuiScope.()->Unit){
-        val list = captureAddedChild { block() }
+        val list = remapChild { block() }
+        children += list
         state.listen(true){
             if(it) list.forEach { it.hwnd.show() }
             else list.forEach { it.hwnd.hide() }
-            onSize()
+            window.onSize()
         }
     }
     fun ScrollableColumn(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ScrollableColumnScope.()->Unit){
         ScrollableColumnScope(modifier, alignment, window).apply(block).addToChild()
+    }
+    fun <T> List(list: MutStateList<T>, item: GuiScope.(T)-> Unit){
+        class ListItem(val element:T,val scope: MutState.Scope,val child: List<AbstractGuiComponent>)
+        val items = mutableListOf<ListItem>()
+        list.listen(true,object:MutStateList.Listener<T>{
+            override fun onAdd(element: T) {
+                val scope = MutState.SimpleScope()
+                val child = remapScope(scope){
+                    remapChild{ item(element) }
+                }
+                val item = ListItem(element,scope,child)
+                items += item
+                children += child
+                window.onSize()
+            }
+            override fun onRemove(element: T) {
+                val item = items.firstOrNull { it.element == element } ?: error("not found item")
+                items.remove(item)
+                if(!children.removeAll(item.child)) error("child remove failed")
+                item.child.forEach { it.hwnd.destroy() }
+                item.scope.destroy()
+                window.onSize()
+            }
+            override fun onAnyChange() {}
+        })
     }
 
 

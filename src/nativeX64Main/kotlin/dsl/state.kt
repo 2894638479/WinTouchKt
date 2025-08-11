@@ -41,7 +41,10 @@ class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
             _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
         }
         fun <T> MutStateList<T>.listen(trigger:Boolean = false, listener: Listener<T>) {
-            if (trigger) listener.onAnyChange()
+            if (trigger) {
+                listener.onAnyChange()
+                forEach { listener.onAdd(it) }
+            }
             listeners += listener
             _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
         }

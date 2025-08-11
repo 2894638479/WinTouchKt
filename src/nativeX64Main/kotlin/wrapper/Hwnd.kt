@@ -10,9 +10,12 @@ import platform.windows.*
 value class Hwnd(val value:CPointer<hwndHolder>){
     constructor(hwnd: HWND?):this(hwnd?.reinterpret<hwndHolder>() ?: error("hwnd is null"))
     val HWND:HWND get() = value.reinterpret()
-    val rect get() = rectBuffer.apply {
-        GetClientRect(HWND, rectBuffer.ptr)
-    }
+    var rect get() = rectBuffer.apply {
+            GetClientRect(HWND, rectBuffer.ptr)
+        }
+        set(value) {
+            value.run { setRect(left,top,right - left,bottom - top) }
+        }
     companion object {
         private val rectBuffer  = nativeHeap.alloc<RECT>()
     }
@@ -26,7 +29,7 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         MoveWindow(HWND,x,y,w,h, TRUE).ifFalse { warning("hwnd move false") }
     }
     fun close() = CloseWindow(HWND)
-    fun setRect(rect: tagRECT) = rect.run { setRect(left,top,right - left,bottom - top) }
+    fun destroy() = DestroyWindow(HWND)
     var name:String
         get() {
             val length = GetWindowTextLengthW(HWND)
@@ -62,6 +65,7 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         si.nMax = height - 1
         si.fMask = SIF_ALL.toUInt()
         SetScrollInfo(HWND,bar,si.ptr,TRUE)
+        info("npos=${si.nPos}")
         ScrollWindow(HWND,0,-si.nPos,null,null)
     }
 }

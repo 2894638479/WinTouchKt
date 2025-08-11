@@ -23,7 +23,7 @@ class ColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, 
                 top = offsetY
                 bottom = top + heights[i]
                 totalH += height
-                it.hwnd.setRect(this)
+                it.hwnd.rect = this
             }
         }
     }

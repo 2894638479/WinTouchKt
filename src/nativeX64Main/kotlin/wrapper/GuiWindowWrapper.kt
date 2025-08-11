@@ -23,8 +23,6 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
             info("gui window size changing to ${hwnd.rect.str()}")
             if(!initialized) return default()
             guiWindow.onSize()
-            if(guiWindow.scrollableHeight == -1) return default()
-            hwnd.updateScrollSize(SB_VERT,guiWindow.scrollableHeight)
         }
         WM_GETMINMAXINFO -> {
             val ptr = lParam.toCPointer<MINMAXINFO>()
@@ -78,7 +76,10 @@ abstract class GuiWindow (
     style: Int = 0,
     val parent:GuiWindow? = null
 ) {
-    abstract fun onSize()
+    open fun onSize(){
+        if(scrollableHeight == -1) return
+        hwnd.updateScrollSize(SB_VERT,scrollableHeight)
+    }
     abstract val scrollableHeight: Int
     abstract val scrollableWidth: Int
 

@@ -22,7 +22,7 @@ class RowScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, nam
                 left = offsetX
                 right = left + widths[i]
                 totalW += width
-                it.hwnd.setRect(this)
+                it.hwnd.rect = this
             }
         }
     }

@@ -72,16 +72,22 @@ fun Main(args: Array<String>) = processArgs(args).apply {
             Button(Modifier().weight(2f).width(200).padding(150),Alignment().middleX(),combine { a.track.m2.track + "2" }){
                 a.value.m1.value++
             }
+            val list = mutStateList("aaa","bbb","ccc")
             Row {
                 Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.track.m2.track + "0" }){
                     a.value.m1.value++
+                    list.removeAt(0)
                 }
                 Button(Modifier().weight(3f),Alignment().middleX(),combine { a.track.m2.track  + "1"}){
                     a.value.m1.value++
+                    list.add("${list.size}")
                 }
                 Button(Modifier().weight(2f),Alignment().middleX(),combine { a.track.m2.track + "2" }){
                     a.value.m1.value++
                 }
+            }
+            List(list){
+                Text(Modifier().height(200), Alignment().middleX(),stateOf(it))
             }
         }
     }
