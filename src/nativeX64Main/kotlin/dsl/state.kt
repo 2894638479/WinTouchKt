@@ -1,6 +1,7 @@
 package dsl
 
 import dsl.MutStateList.Listener
+import error.wrapExceptionName
 import wrapper.Destroyable
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
@@ -8,26 +9,29 @@ import kotlin.reflect.KProperty
 
 fun <T> stateOf(value:T) = State(value)
 fun <T> stateNull() = State<T?>(null)
-fun <T> mutStateOf(value:T) = MutState(value)
-fun <T> mutStateNull() = MutState<T?>(null)
+fun <T> mutStateOf(value:T,constraint:((T)->T)? = null) = MutState(value,constraint)
+fun <T: Any> mutStateNull(constraint:((T?)->T?)? = null) = MutState(null,constraint)
 fun <T> mutStateList(vararg values:T) = MutStateList(*values)
 
-fun <T> MutState.Scope.mutStateOf(value:T,trigger:Boolean = false,initListener:(T)->Unit)
-= MutState(value).apply { listen(trigger,initListener) }
+fun <T> MutState.Scope.mutStateOf(value:T,trigger:Boolean = false,constraint:((T)->T)? = null,initListener:(T)->Unit)
+= MutState(value,constraint).apply { listen(trigger,initListener) }
 
-fun <T> MutState.Scope.mutStateNull(trigger:Boolean = false,initListener:(T?)->Unit) = mutStateOf<T?>(null,trigger, initListener)
+fun <T: Any> MutState.Scope.mutStateNull(trigger:Boolean = false, constraint:((T?)->T?)? = null, initListener:(T?)->Unit) = mutStateOf(null,trigger,constraint, initListener)
 
 open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value
 }
 private var currentCombination: MutState.Scope.Combination? = null
-class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
+class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadWriteProperty<Any?,T>{
     private val listeners = mutableListOf<(T)->Unit>()
     override var value = value
         set(value) {
             if(field != value) {
-                field = value
-                listeners.forEach { it(value) }
+                val newField = constraint?.invoke(value) ?: value
+                if(field != newField){
+                    field = newField
+                    listeners.forEach { it(field) }
+                }
             }
         }
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
@@ -66,7 +70,7 @@ class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
         }
 
         //the `func` will be invoked multiple times  so do not create new state in it.
-        fun <T> combine(func:Combination.()->T):MutState<T>{
+        fun <T> combine(func:Combination.()->T):MutState<T> = wrapExceptionName("combine failed"){
             val firstCombination = Combination()
             currentCombination = firstCombination
             val initValue = firstCombination.func()
@@ -75,7 +79,7 @@ class MutState<T>(value:T):State<T>(value),ReadWriteProperty<Any?,T>{
             var trackedStates = firstCombination.trackedStates.toMutableSet()
             fun <T> MutState<T>.listen1(listener:(T)->Unit){ listeners += listener }
             fun <T> MutState<T>.remove1(listener:(T)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
-            fun update(any: Any?){
+            fun update(any: Any?) = wrapExceptionName("combination update failed"){
                 val combination = Combination()
                 currentCombination = combination
                 state.value = combination.func()

@@ -1,6 +1,7 @@
 import dsl.*
 import error.catchInKotlin
 import error.wrapExceptionName
+import gui.MainContent
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
@@ -62,33 +63,8 @@ fun Main(args: Array<String>) = processArgs(args).apply {
 
 
     TopWindow("window",800,600){
-        ScrollableColumn {
-            Button(Modifier().weight(1f).width(200).minHeight(200),Alignment().middleX(),combine { a.m2 + "0" }){
-                a.m1++
-            }
-            Button(Modifier().weight(3f).width(200),Alignment().middleX(),combine { a.m2  + "1"}){
-                a.m1++
-            }
-            Button(Modifier().weight(2f).width(200).padding(150),Alignment().middleX(),combine { a.m2 + "2" }){
-                a.m1++
-            }
-            val list = mutStateList("aaa","bbb","ccc")
-            Row {
-                Button(Modifier().weight(1f).minHeight(200),Alignment().middleX(),combine { a.m2 + "0" }){
-                    a.m1++
-                    list.removeAt(0)
-                }
-                Button(Modifier().weight(3f),Alignment().middleX(),combine { a.m2  + "1"}){
-                    a.m1++
-                    list += "${list.size}"
-                }
-                Button(Modifier().weight(2f),Alignment().middleX(),combine { a.m2 + "2" }){
-                    a.m1++
-                }
-            }
-            List(list){
-                Text(Modifier().height(200), Alignment().middleX(),stateOf(it))
-            }
+        wrapExceptionName("creating MainContent") {
+            MainContent(container)
         }
     }
     loopWindowMessage()

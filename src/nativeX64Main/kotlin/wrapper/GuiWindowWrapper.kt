@@ -2,6 +2,7 @@ package wrapper
 
 import dsl.Alignment
 import error.catchInKotlin
+import error.wrapExceptionName
 import kotlinx.cinterop.*
 import logger.info
 import logger.warning
@@ -9,20 +10,21 @@ import platform.windows.*
 
 
 @OptIn(ExperimentalForeignApi::class)
-fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT = catchInKotlin {
+fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT = catchInKotlin("wndProcGui error") {
     val hwnd = Hwnd(hWnd)
     val guiWindowFromMap = guiWindowMap[hwnd]
     val guiWindow = guiWindowFromMap ?: creatingGuiWindow ?: error("gui window not found")
     val initialized = guiWindowFromMap != null
-    info("wndProcGui ${guiWindow.windowName} umsg $uMsg")
     fun default() = DefWindowProcW(hWnd, uMsg, wParam, lParam)
     fun LOWORD(value: Int) = value and 0xFFFF
     fun HIWORD(value: Int) = (value shr 16) and 0xFFFF
     when(uMsg.toInt()){
         WM_SIZE -> memScoped {
-            info("gui window size changing to ${hwnd.rect.str()}")
+            info("gui window size changing to ${hwnd.useRect { it.str() }}")
             if(!initialized) return default()
-            guiWindow.onSize()
+            wrapExceptionName({ "onSize error" }){
+                guiWindow.onSize()
+            }
         }
         WM_GETMINMAXINFO -> {
             val ptr = lParam.toCPointer<MINMAXINFO>()

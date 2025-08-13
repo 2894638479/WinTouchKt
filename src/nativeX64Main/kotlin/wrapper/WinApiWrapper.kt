@@ -4,6 +4,7 @@ import geometry.Rect
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.usePinned
 import platform.windows.RECT
 import platform.windows.WINBOOL
 import kotlin.math.roundToInt

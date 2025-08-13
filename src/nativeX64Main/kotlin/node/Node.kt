@@ -4,6 +4,7 @@ import dsl.MutState
 import dsl.mutStateNull
 import geometry.*
 import wrapper.*
+import kotlin.math.abs
 
 abstract class Node : MutState.Scope {
     final override val _onDestroy: MutableList<() -> Unit> = mutableListOf()
@@ -14,7 +15,7 @@ abstract class Node : MutState.Scope {
     var context by contextState
 
     val nameState = mutStateNull<String>()
-    val scaleState = mutStateNull<Float>()
+    val scaleState = mutStateNull<Float>(constraint = {it?.let {if(it==0f) 0.1f else abs(it)}})
     val offsetState = mutStateNull<Point>()
     val styleState = mutStateNull<ButtonStyle>()
     val stylePressedState = mutStateNull<ButtonStyle>()
@@ -48,7 +49,7 @@ abstract class Node : MutState.Scope {
         } ?: scale
     }
     val displayOffset:MutState<Point> = combine {
-        val parentScale = parentState.track?.displayScale?.track ?: 1f
+        val parentScale = parent?.displayScale?.track ?: 1f
         val parentOffset = parentState.track?.displayOffset?.track ?: Point.origin
         val offset = offsetState.track ?: Point.origin
         parentOffset + (offset * parentScale)

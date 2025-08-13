@@ -25,10 +25,16 @@ inline fun <T> catchInKotlin(block:()->T):T {
     }
 }
 
-inline fun <T> wrapExceptionName(name:String,block: () -> T):T{
+inline fun <T> catchInKotlin(name: String,block:()->T):T = catchInKotlin({name},block)
+inline fun <T> catchInKotlin(name:()-> String,block:()->T):T = catchInKotlin {
+    wrapExceptionName(name,block)
+}
+
+inline fun <T> wrapExceptionName(name:String,block: () -> T) = wrapExceptionName({name},block)
+inline fun <T> wrapExceptionName(name:()->String,block: () -> T):T{
     try {
         return block()
     } catch (e:Throwable) {
-        throw Exception(name,e)
+        throw Exception(name(),e)
     }
 }

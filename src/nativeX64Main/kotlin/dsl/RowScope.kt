@@ -1,28 +1,35 @@
 package dsl
 
-import platform.windows.RECT
+import error.wrapExceptionName
 import wrapper.*
 
-class RowScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, name:String = "column"):
+class RowScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, name:String = "row"):
     GuiScope(parent,name,modifier, alignment) {
     fun Modifier.weight(value:Float) = apply { weight = value }
-    override fun onSize() {
+    override fun onSize() = wrapExceptionName("RowScope onSize") {
         var totalW = 0
-        val rect = hwnd.rect.apply { toOrigin() }
-        val vc = visibleChildren
-        val minW = IntArray(vc.size){ vc[it].outerMinW }
-        val weight = FloatArray(vc.size){ vc[it].modifier.weight }
-        val widths = split(weight,minW,rect.width)
-        vc.forEachIndexed { i, it ->
-            val modifier = it.modifier
-            val align = it.alignment
-            allocRECT {
-                placeTB(modifier, rect, align)
-                val offsetX = totalW
-                left = offsetX
-                right = left + widths[i]
-                totalW += width
-                it.hwnd.rect = this
+        hwnd.useRect { rect ->
+            rect.toOrigin()
+            val vc = visibleChildren
+            val minW = IntArray(vc.size) { vc[it].outerMinW }
+            val weight = FloatArray(vc.size){ vc[it].modifier.run { if(width == 0) weight else 0f } }
+            val staticW = vc.sumOf { if(it.modifier.width == 0) 0 else it.modifier.width + it.modifier.paddingW }
+            val widths = split(weight,minW,rect.width - staticW).mapIndexed { i,it ->
+                val modifier = vc[i].modifier
+                if(modifier.width == 0) it else modifier.width + modifier.paddingW
+            }
+            vc.forEachIndexed { i, it ->
+                val modifier = it.modifier
+                val align = it.alignment
+                allocRECT {
+                    placeTB(modifier, rect, align)
+                    val offsetX = totalW
+                    left = offsetX
+                    right = left + widths[i]
+                    totalW += width
+                    padding(modifier)
+                    it.hwnd.setRect(this)
+                }
             }
         }
     }

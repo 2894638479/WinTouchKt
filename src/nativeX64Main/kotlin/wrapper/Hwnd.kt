@@ -12,15 +12,13 @@ import kotlin.math.min
 value class Hwnd(val value:CPointer<hwndHolder>){
     constructor(hwnd: HWND?):this(hwnd?.reinterpret<hwndHolder>() ?: error("hwnd is null"))
     val HWND:HWND get() = value.reinterpret()
-    var rect get() = rectBuffer.apply {
-            GetClientRect(HWND, rectBuffer.ptr)
+    fun <T> useRect(block:(RECT)->T) = memScoped {
+        alloc<RECT>().run {
+            GetClientRect(HWND,ptr)
+            block(this)
         }
-        set(value) {
-            value.run { setRect(left,top,right - left,bottom - top) }
-        }
-    companion object {
-        private val rectBuffer  = nativeHeap.alloc<RECT>()
     }
+    fun setRect(rect:RECT) = rect.run { setRect(left,top,right - left,bottom - top) }
     fun show() = ShowWindow(HWND, SW_SHOW)
     fun hide() = ShowWindow(HWND, SW_HIDE)
     val visible get() = IsWindowVisible(HWND) != FALSE
@@ -32,9 +30,25 @@ value class Hwnd(val value:CPointer<hwndHolder>){
     }
     fun close() = CloseWindow(HWND)
     fun destroy() = DestroyWindow(HWND)
+    fun enable() = EnableWindow(HWND,TRUE)
+    fun disable() = EnableWindow(HWND,FALSE)
+    fun enable(bool: Boolean) = if(bool) enable() else disable()
+    val nameLength get() = GetWindowTextLengthW(HWND)
+    var sel get() = memScoped {
+            val start = alloc<IntVar>()
+            val end = alloc<IntVar>()
+            SendMessage!!(HWND, EM_GETSEL.toUInt(), start.ptr.toLong().toULong(), end.ptr.toLong())
+            start.value to end.value
+        }
+        set(value) {
+            val len = nameLength
+            val start = min(len,value.first)
+            val end = min(len,value.second)
+            SendMessage!!(HWND, EM_SETSEL.toUInt(),start.toULong(),end.toLong())
+        }
     var name:String
         get() {
-            val length = GetWindowTextLengthW(HWND)
+            val length = nameLength
             memScoped {
                 val buffer = allocArray<UShortVar>(length + 1)
                 GetWindowTextW(HWND,buffer,length + 1)
@@ -62,14 +76,13 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         val si = alloc<tagSCROLLINFO>()
         si.fMask = SIF_POS.toUInt()
         GetScrollInfo(HWND,bar,si.ptr)
-        si.nPage = rect.height.toUInt()
+        si.nPage = useRect { it.height.toUInt() }
         si.nMin = 0
         si.nMax = height - 1
         si.fMask = SIF_ALL.toUInt()
         si.nPos = min(si.nPos,si.nMax - si.nPage.toInt())
         si.nPos = max(si.nPos,0)
         SetScrollInfo(HWND,bar,si.ptr,TRUE)
-        info("npos=${si.nPos}")
         ScrollWindow(HWND,0,-si.nPos,null,null)
     }
 }

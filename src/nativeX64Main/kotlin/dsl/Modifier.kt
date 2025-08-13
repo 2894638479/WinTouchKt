@@ -43,8 +43,8 @@ fun Modifier.padding(horizontal:Int = 0, vertical:Int = 0) = apply {
 }
 
 fun Modifier.padding(left:Int = 0, top:Int = 0, right:Int = 0, bottom:Int = 0) = apply {
-    paddingLeft = left
-    paddingTop = top
-    paddingRight = right
-    paddingBottom = bottom
+    paddingLeft += left
+    paddingTop += top
+    paddingRight += right
+    paddingBottom += bottom
 }
