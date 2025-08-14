@@ -17,7 +17,7 @@ import window.registerLayered
 
 @OptIn(ExperimentalForeignApi::class)
 fun main() = catchInKotlin {
-    PrepareForUIAccess()
+//    PrepareForUIAccess()
     val argc = platform.posix.__argc
     val argv = platform.posix.__argv
     Main(Array(argc - 1){ i ->

@@ -17,7 +17,7 @@ class Modifier internal constructor(
         get() = max(field,width)
     internal var minH = minH
         get() = max(field,height)
-    constructor():this(0,0,1f,0,0,0,0,0,0)
+    constructor():this(0,0,0f,0,0,0,0,0,0)
     internal val paddingW get() = paddingLeft + paddingRight
     internal val paddingH get() = paddingTop + paddingBottom
 }

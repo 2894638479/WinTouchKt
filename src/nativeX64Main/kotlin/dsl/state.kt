@@ -2,6 +2,7 @@ package dsl
 
 import dsl.MutStateList.Listener
 import error.wrapExceptionName
+import logger.warning
 import wrapper.Destroyable
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
@@ -23,14 +24,14 @@ open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
 }
 private var currentCombination: MutState.Scope.Combination? = null
 class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadWriteProperty<Any?,T>{
-    private val listeners = mutableListOf<(T)->Unit>()
+    val listeners = mutableListOf<(T)->Unit>()
     override var value = value
         set(value) {
             if(field != value) {
                 val newField = constraint?.invoke(value) ?: value
                 if(field != newField){
                     field = newField
-                    listeners.forEach { it(field) }
+                    listeners.toList().forEach { it(field) }
                 }
             }
         }
@@ -39,6 +40,10 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
     }
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {
         return currentCombination?.run { track } ?: value
+    }
+
+    override fun toString(): String {
+        return super.toString() +'{' + value.toString() +'}'
     }
     class SimpleScope:Scope{ override val _onDestroy = mutableListOf<()->Unit>() }
     interface Scope :Destroyable {
@@ -62,11 +67,11 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
         @Gui
         class Combination {
             private val _trackedStates = mutableSetOf<MutState<*>>()
-            val <T> MutState<T>.track:T get() {
+            val <T> MutState<T>.track:T get() = wrapExceptionName("Combination.track") {
                 _trackedStates += this
                 return value
             }
-            val trackedStates get() = _trackedStates
+            val trackedStates:Set<MutState<*>> get() = _trackedStates
         }
 
         //the `func` will be invoked multiple times  so do not create new state in it.
@@ -76,25 +81,31 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
             val initValue = firstCombination.func()
             currentCombination = null
             val state = mutStateOf(initValue)
-            var trackedStates = firstCombination.trackedStates.toMutableSet()
-            fun <T> MutState<T>.listen1(listener:(T)->Unit){ listeners += listener }
-            fun <T> MutState<T>.remove1(listener:(T)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
-            fun update(any: Any?) = wrapExceptionName("combination update failed"){
-                val combination = Combination()
-                currentCombination = combination
-                state.value = combination.func()
-                currentCombination = null
-                val newStates = combination.trackedStates
-                if(!trackedStates.containsAll(newStates)){
-                    val added = newStates.subtract(trackedStates)
-                    val removed = trackedStates.subtract(newStates)
-                    trackedStates = newStates
-                    added.forEach { it.listen1(::update) }
-                    removed.forEach { it.remove1(::update) }
+            var trackedStates = firstCombination.trackedStates
+            fun MutState<*>.listen1(listener:(Any?)->Unit){ listeners += listener }
+            fun MutState<*>.remove1(listener:(Any?)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
+
+            val update = object: Function1<Any?,Unit> {
+                override operator fun invoke(any: Any?)= wrapExceptionName("combination update failed"){
+                    warning("updating $state")
+                    val combination = Combination()
+                    currentCombination = combination
+                    val value = combination.func()
+                    currentCombination = null
+                    state.value = value
+                    val newStates = combination.trackedStates
+                    if(!trackedStates.containsAll(newStates)){
+                        val added = newStates.subtract(trackedStates)
+                        val removed = trackedStates.subtract(newStates)
+                        warning("added $added removed $removed")
+                        trackedStates = newStates
+                        removed.forEach { it.remove1(this) }
+                        added.forEach { it.listen1(this) }
+                    }
                 }
             }
-            trackedStates.forEach{ it.listen1(::update) }
-            _onDestroy += { trackedStates.forEach { it.remove1(::update) } }
+            trackedStates.forEach{ it.listen1(update) }
+            _onDestroy += { trackedStates.forEach { it.remove1(update) } }
             return state
         }
     }

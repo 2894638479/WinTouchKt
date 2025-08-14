@@ -3,29 +3,28 @@ package gui
 import dsl.Alignment
 import dsl.GuiScope
 import dsl.Modifier
-import dsl.MutState
+import dsl.State
 import dsl.height
+import dsl.middleY
 import dsl.padding
 import dsl.stateOf
 
-fun GuiScope.EditFloat(modifier: Modifier,alignment: Alignment,floatState: MutState<Float?>){
+fun GuiScope.EditFloat(modifier:Modifier,alignment:Alignment,get:State<Float?>,set:(Float?)->Unit){
     Row(modifier,alignment) {
-        var float by floatState
+        val float by get
         val text = combine { float?.toString() ?: "" }
         var last = text.value
-        Edit(Modifier().height(30).weight(2f),Alignment(),text){
+        Edit(Modifier().height(20).weight(2f),Alignment().middleY(),text){
             it.ifBlank {
-                float = null
+                set(null)
                 last = ""
                 return@Edit
             }
             it.toFloatOrNull()?.let {
-                float = it
+                set(it)
                 last = text.value
             } ?: run { text.value = last }
         }
-        Button(Modifier().height(30).weight(1f).padding(left = 10), Alignment(), stateOf("默认"),combine{ float != null }){
-            float = null
-        }
+        DefaultButton(active =  combine{ float != null }){ set(null) }
     }
 }

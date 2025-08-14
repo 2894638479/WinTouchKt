@@ -7,6 +7,7 @@ import wrapper.GuiWindow
 import wrapper.height
 import wrapper.str
 import wrapper.width
+import kotlin.math.max
 
 
 @Gui
@@ -197,41 +198,33 @@ abstract class GuiScope(
 
 
     fun RECT.placeTB(modifier: Modifier, bound: RECT, align: Alignment) {
-        if (modifier.height == 0) {
-            top = bound.top
+        val height = if(modifier.minH == 0) bound.height
+        else modifier.run { minH + paddingH }
+        if (align.bottom) {
             bottom = bound.bottom
+            top = bottom - height
+        } else if (align.middleY) {
+            top = bound.top + (bound.height - height) / 2
+            bottom = top + height
         } else {
-            val height = modifier.run { height + paddingH }
-            if (align.bottom) {
-                bottom = bound.bottom
-                top = bottom - height
-            } else if (align.middleY) {
-                top = bound.top + (bound.height - height) / 2
-                bottom = top + height
-            } else {
-                top = 0
-                bottom = top + height
-            }
+            top = 0
+            bottom = top + height
         }
     }
 
 
     fun RECT.placeLR(modifier: Modifier, bound: RECT, align: Alignment) {
-        if (modifier.width == 0) {
-            left = bound.left
+        val width = if(modifier.minW == 0) bound.width
+        else modifier.run { minW + paddingW }
+        if (align.right) {
             right = bound.right
+            left = right - width
+        } else if (align.middleX) {
+            left = bound.left + (bound.width - width) / 2
+            right = left + width
         } else {
-            val width = modifier.run { width + paddingW }
-            if (align.right) {
-                right = bound.right
-                left = right - width
-            } else if (align.middleX) {
-                left = bound.left + (bound.width - width) / 2
-                right = left + width
-            } else {
-                left = 0
-                right = width
-            }
+            left = 0
+            right = width
         }
     }
 
