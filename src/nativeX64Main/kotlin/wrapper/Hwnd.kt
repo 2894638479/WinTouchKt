@@ -29,7 +29,16 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         MoveWindow(HWND,x,y,w,h, TRUE).ifFalse { warning("hwnd move false") }
     }
     fun close() = CloseWindow(HWND)
-    fun destroy() = DestroyWindow(HWND)
+    fun destroy() {
+        parent?.let {
+            SendMessage!!(
+                it.HWND, WM_COMMAND.toUInt(),
+                (MY_DESTROY.toULong() shl 16) or controlId.toULong(),
+                HWND.toLong()
+            )
+        }
+        DestroyWindow(HWND)
+    }
     fun enable() = EnableWindow(HWND,TRUE)
     fun disable() = EnableWindow(HWND,FALSE)
     fun enable(bool: Boolean) = if(bool) enable() else disable()
@@ -59,6 +68,7 @@ value class Hwnd(val value:CPointer<hwndHolder>){
             SetWindowTextW(HWND, value)
         }
     val controlId get() = GetDlgCtrlID(HWND).toUShort()
+    val parent get() = GetParent(HWND)?.let{ Hwnd(it) }
     fun invalidateRect(rect:RECT? = null) = InvalidateRect(HWND,rect?.ptr,1)
     fun validateRect(rect: RECT? = null) = ValidateRect(HWND,rect?.ptr)
     inline fun scroll(bar:Int,value:tagSCROLLINFO.()->Int) = memScoped {
@@ -85,4 +95,5 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         SetScrollInfo(HWND,bar,si.ptr,TRUE)
         ScrollWindow(HWND,0,-si.nPos,null,null)
     }
+    override fun toString() = "Hwnd{name=$name,rect=${useRect { it.str() }},parent:$parent}"
 }

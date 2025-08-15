@@ -59,7 +59,7 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
         WM_DESTROY -> if(!guiWindow.onDestroy()) return default()
         WM_NCDESTROY -> {
             return default().apply {
-                guiWindowMap.remove(Hwnd(hWnd))
+                if(guiWindowMap.remove(Hwnd(hWnd)) == null) error("guiWindow ${Hwnd(hWnd)} remove failed")
             }
         }
         else -> return default()
@@ -70,6 +70,8 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
 private val guiWindowMap = mutableMapOf<Hwnd,GuiWindow>()
 private var creatingGuiWindow :GuiWindow? = null
 const val guiWindowClass = "gui_window"
+const val BN_LAST = 0x0FFF
+const val MY_DESTROY = BN_LAST + 1
 
 @OptIn(ExperimentalForeignApi::class)
 abstract class GuiWindow (
@@ -86,15 +88,21 @@ abstract class GuiWindow (
     abstract val scrollableWidth: Int
 
     var idIncrease = 100.toUShort()
-        get() = field++
+        get() {
+            do { field++ } while (onCommand.containsKey(field))
+            return field
+        }
     val onCommand = mutableMapOf<UShort,()->Unit>()
     fun onWmCommand(id:UShort,nCode:Int){
         when(nCode){
             BN_CLICKED -> {
-                onCommand[id]?.invoke() ?: error("no onClick found for id $id")
+                onCommand[id]?.invoke() ?: error("no onClick found for id $id in $hwnd")
             }
             EN_CHANGE -> {
-                onCommand[id]?.invoke() ?: warning("no onEdit found for id $id")
+                onCommand[id]?.invoke() ?: warning("no onEdit found for id $id in $hwnd")
+            }
+            MY_DESTROY -> {
+                onCommand.remove(id)
             }
         }
     }
@@ -102,7 +110,7 @@ abstract class GuiWindow (
     open fun onClose() = false
     open fun onDestroy() = false
 
-    private fun createSubHwnd(style:Int,className:String,windowName:String) = CreateWindowExW(
+    private fun createSubHwnd(style:Int,className:String,windowName:String,onCommand:()->Unit = {}) = CreateWindowExW(
         0u,
         className,
         windowName,
@@ -112,17 +120,17 @@ abstract class GuiWindow (
         idIncrease.toLong().toCPointer(),
         GetModuleHandleW(null),
         null
-    ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()}")) }
-
-    fun button(string:String, onClick:()->Unit) = createSubHwnd(WS_TABSTOP or BS_DEFPUSHBUTTON, WC_BUTTONA,string).apply {
-        onCommand[controlId] = onClick
+    ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()}")) }.apply {
+        this@GuiWindow.onCommand[controlId] = onCommand
     }
 
-    fun edit(string:String, onEdit:(String)->Unit) = createSubHwnd(WS_TABSTOP or ES_LEFT or WS_BORDER, WC_EDITA,string).also {
+    fun button(string:String, onClick:()->Unit) =
+        createSubHwnd(WS_TABSTOP or BS_DEFPUSHBUTTON, WC_BUTTONA,string,onClick)
+
+    fun edit(string:String, onEdit:(String)->Unit) =
+        createSubHwnd(WS_TABSTOP or ES_LEFT or WS_BORDER, WC_EDITA,string).also {
+        onCommand[it.controlId] = { onEdit(it.name) }
         onEdit(string)
-        onCommand[it.controlId] = {
-            onEdit(it.name)
-        }
     }
 
     fun text(text:String,alignment: Alignment) = createSubHwnd(alignment.staticStyle, WC_STATICA,text)
