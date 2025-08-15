@@ -58,9 +58,12 @@ fun D2dTarget.d2dFillRound(brush: D2dBrush, x:Float,y:Float,rx:Float,ry:Float){
 }
 
 @OptIn(ExperimentalForeignApi::class)
+context(point: geometry.Point)
 fun D2dTarget.d2dDrawText(brush: D2dBrush, font:D2dFont, bound: Rect, string: String){
     if(string.isBlank()) return
-    val par = paramBuffer.rect.set(this,brush,bound.left,bound.top,bound.right,bound.bottom).ptr
+    val par = with(point){
+        paramBuffer.rect.set(this@d2dDrawText,brush,bound.left,bound.top,bound.right,bound.bottom).ptr
+    }
     d2dPushClip(par,true)
     d2dDrawText(par,font.value,string.wcstr)
     d2dPopClip(value)

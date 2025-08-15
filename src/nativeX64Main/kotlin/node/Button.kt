@@ -1,6 +1,7 @@
 package node
 
 import dsl.mutStateOf
+import geometry.Point
 import geometry.Rect
 import geometry.Round
 import geometry.RoundedRect
@@ -17,15 +18,7 @@ class Button(
     var key:Set<UByte>,
     shape: Shape,
 ): Node(){
-    private val shapeState = mutStateOf(shape) { _outerRect = null }
-    var shape by shapeState
-    private val displayShapeState = combine {
-        val parentScale = parentState.track?.displayScale?.track ?: 1f
-        shapeState.track.rescaled(parentScale).offset(displayOffset.track)
-    }
-    val displayShape by displayShapeState
-    override fun calOuterRect() = displayShape.outerRect
-
+    var shape by mutStateOf(shape)
     private val pressedState = mutStateOf(false)
     var pressed by pressedState
         private set
@@ -48,7 +41,7 @@ class Button(
         if(drawUi) drawScope.toDraw(this@Button)
     } ?: error("context is null")
 
-    fun containPoint(x:Float, y:Float) = displayShape.containPoint(x,y)
+    fun containPoint(x:Float, y:Float) = with(displayOffset){ Point(x,y) in shape.rescaled(displayScale) }
     object ButtonSerializer : SerializerWrapper<Button, ButtonSerializer.Descriptor>("Button", Descriptor){
         object Descriptor: Node.Descriptor<Button>() {
             val key = "key" from {key}

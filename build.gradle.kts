@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
+
 plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.0"
     alias(libs.plugins.kotlinMultiplatform)
@@ -40,4 +43,8 @@ kotlin {
             }
         }
     }
+}
+val compileKotlinNativeX64: KotlinNativeCompile by tasks
+compileKotlinNativeX64.compilerOptions {
+    freeCompilerArgs.set(listOf("-Xcontext-parameters"))
 }

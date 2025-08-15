@@ -25,16 +25,16 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
     }
     private var reDraw = true.apply { hwnd.invalidateRect() }
     fun onDraw() = d2dDraw {
-        warning("onDraw invoked")
         toErase.forEach { (shape,w) ->
-            shape.d2dFill(target,cache.transparentBrush)
-            if(w != null) shape.d2dDraw(target,cache.transparentBrush,w)
+
+//            shape.d2dFill(target,cache.transparentBrush)
+//            if(w != null) shape.d2dDraw(target,cache.transparentBrush,w)
         }
         toErase.clear()
-        fun drawButton(button: Button){
-            warning("drawing $button at ${button.displayShape} alpha $alpha")
+        fun drawButton(button: Button) = with(button.displayOffset){
+            warning("drawing $button at ${button.offset} shape ${button.shape} alpha $alpha")
             val style = button.displayStyle(button.pressed)
-            val shape = button.displayShape
+            val shape = button.shape.rescaled(button.displayScale)
             val outlineWidth = button.outlineWidth
             shape.d2dFill(target,style.brush ?: error("brush is null"))
             if(outlineWidth != null) shape.d2dDraw(target,style.outlineBrush ?: error("outlineBrush is null"),outlineWidth)

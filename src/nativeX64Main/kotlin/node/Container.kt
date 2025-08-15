@@ -26,13 +26,13 @@ import wrapper.SerializerWrapper
 class Container :TouchReceiver, NodeWithChild<Group>(){
     val groups get() = children
     private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
-    var isEditMode = mutStateOf(false)
+    var isEditMode by mutStateOf(false)
     val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
     val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
     init {
         context = Context(drawScope,keyHandler)
-        contextState.listen { error("should not modify context of container") }
+        combine { context }.listen { error("should not modify context of container") }
     }
     class Context(
         val drawScope: DrawScope,

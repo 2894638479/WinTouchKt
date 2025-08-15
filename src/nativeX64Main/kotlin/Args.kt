@@ -16,6 +16,7 @@ fun readFile(filePath: String):String? {
 val json = Json {
     prettyPrint = true
     explicitNulls = false
+    ignoreUnknownKeys = true
 }
 
 

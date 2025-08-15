@@ -21,7 +21,6 @@ fun GuiScope.MainContent(container: Container) = Row {
     val nodeState = mutStateOf<Node>(container) { warning(it.toString()) }
     var node by nodeState
     ScrollableColumn(M.weight(1f)) {
-        container.nameState.listen{warning("1")}
         Button(M.padding(10).height(50), text = combine { container.name ?: "null" }){
             node = container
         }

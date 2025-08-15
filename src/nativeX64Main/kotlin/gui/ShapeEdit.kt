@@ -30,17 +30,17 @@ fun GuiScope.ShapeEdit(modifier: Modifier = M, alignment: Alignment = A, get: St
             when(it) {
                 Rect::class -> {
                     Row(M.height(40),A.left()){
-                        Text(M.size(20,20),A.middleY(), stateOf("x"))
-                        EditFloat(M,A,combine { (shape as Rect).x }){
-                            if(it != null) shape = (shape as Rect).run{ Rect.byPos(it,y,w,h) }
+                        Text(M.size(20,20),A.middleY(), stateOf("宽"))
+                        EditFloat(M,A,combine { (shape as Rect).width }){
+                            if(it != null) shape = (shape as Rect).run{ Rect(it,height) }
                         }
                     }
                 }
                 RoundedRect::class -> {
                     Row(M.height(40),A.left()){
-                        Text(M.size(20,20).padding(h = 5),A.middleY(), stateOf("x"))
-                        EditFloat(M.height(20).padding(h = 5),A.middleY(),combine { (shape as RoundedRect).x }){
-                            if(it != null) shape = (shape as RoundedRect).run{ RoundedRect.byPos(it,y,w,h,r) }
+                        Text(M.size(20,20).padding(h = 5),A.middleY(), stateOf("width"))
+                        EditFloat(M.height(20).padding(h = 5),A.middleY(),combine { (shape as RoundedRect).width }){
+                            if(it != null) shape = (shape as RoundedRect).run{ RoundedRect(it,height,r) }
                         }
                     }
                 }

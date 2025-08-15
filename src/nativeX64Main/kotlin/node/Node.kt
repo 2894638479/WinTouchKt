@@ -3,61 +3,35 @@ package node
 import dsl.MutState
 import dsl.mutStateNull
 import geometry.*
+import geometry.Point
 import wrapper.*
 import kotlin.math.abs
 
 abstract class Node : MutState.Scope {
     final override val _onDestroy: MutableList<() -> Unit> = mutableListOf()
-    val parentState = mutStateNull<NodeWithChild<*>>()
-    var parent by parentState
+    var parent by mutStateNull<NodeWithChild<*>>()
+    var context: Container.Context? by combine { parent?.context }
 
-    val contextState:MutState<Container.Context?> = combine { parentState.track?.contextState?.track }
-    var context by contextState
+    var name by mutStateNull<String>()
+    var scale by mutStateNull<Float>(constraint = { it?.let { if (it == 0f) 0.1f else abs(it) } })
+    var offset by mutStateNull<Point>()
+    var style by mutStateNull<ButtonStyle>()
+    var stylePressed by mutStateNull<ButtonStyle>()
+    var outlineWidth by mutStateNull<Float>()
 
-    val nameState = mutStateNull<String>()
-    val scaleState = mutStateNull<Float>(constraint = {it?.let {if(it==0f) 0.1f else abs(it)}})
-    val offsetState = mutStateNull<Point>()
-    val styleState = mutStateNull<ButtonStyle>()
-    val stylePressedState = mutStateNull<ButtonStyle>()
-    val outlineWidthState = mutStateNull<Float>()
+    fun style(pressed:Boolean) = if(pressed) stylePressed else style
 
-    fun styleState(pressed:Boolean) = if(pressed) stylePressedState else styleState
-
-    var name by nameState
-    var scale by scaleState
-    var offset by offsetState
-    var style by styleState
-    var stylePressed by stylePressedState
-    var outlineWidth by outlineWidthState
-
-    abstract fun calOuterRect():Rect
-    protected var _outerRect : Rect? = null
-        set(value) {
-            if(field != value) {
-                field = value
-                if (field == null) {
-                    parent?.apply { _outerRect = null }
-                }
-            }
-        }
-    val outerRect get() = _outerRect ?: calOuterRect().apply { _outerRect = this }
-
-    val displayScale:MutState<Float> = combine {
-        val scale = scaleState.track ?: 1f
-        parentState.track?.displayScale?.track?.let {
+    val displayScale:Float by combine {
+        val scale = scale ?: 1f
+        parent?.displayScale?.let {
             it * scale
         } ?: scale
     }
-    val displayOffset:MutState<Point> = combine {
-        val parentScale = parent?.displayScale?.track ?: 1f
-        val parentOffset = parentState.track?.displayOffset?.track ?: Point.origin
-        val offset = offsetState.track ?: Point.origin
+    val displayOffset:Point by combine {
+        val parentScale = parent?.displayScale ?: 1f
+        val parentOffset = parent?.displayOffset ?: Point.origin
+        val offset = offset ?: Point.origin
         parentOffset + (offset * parentScale)
-    }
-
-    init {
-        displayScale.listen { _outerRect = null }
-        displayOffset.listen { _outerRect = null }
     }
 
 
@@ -69,42 +43,42 @@ abstract class Node : MutState.Scope {
     class DisplayStyle(node:Node,pressed:Boolean){
         companion object {
             private fun <T> Node.display(pressed: Boolean,
-                fromStyle:ButtonStyle.()->MutState<T>, fromDisplay:DisplayStyle.()->MutState<T>) = combine {
-                val thisStyle = styleState(pressed).track
-                val parentDisplay = parentState.track?.displayStyle(pressed) ?: return@combine thisStyle?.fromStyle()?.track
-                parentDisplay.fromDisplay().track ?: thisStyle?.fromStyle()?.track
+                fromStyle:ButtonStyle.()->T, fromDisplay:DisplayStyle.()->T) = combine {
+                val thisStyle = style(pressed)
+                val parentDisplay = parent?.displayStyle(pressed) ?: return@combine thisStyle?.fromStyle()
+                thisStyle?.fromStyle() ?: parentDisplay.fromDisplay()
             }
         }
-        val color:MutState<Color?> = node.display(pressed,{colorState}){color}
-        val textColor:MutState<Color?> = node.display(pressed,{textColorState}){textColor}
-        val outlineColor:MutState<Color?> = node.display(pressed,{outlineColorState}){outlineColor}
-        val fontFamily:MutState<String?> = node.display(pressed,{fontFamilyState}){fontFamily}
-        val fontSize:MutState<Float?> = node.display(pressed,{fontSizeState}){fontSize}
-        val fontStyle:MutState<Font.Style?> = node.display(pressed,{fontStyleState}){fontStyle}
-        val fontWeight:MutState<Int?> = node.display(pressed,{fontWeightState}){fontWeight}
+        val color: Color? by node.display(pressed,{color}){color}
+        val textColor: Color? by node.display(pressed,{textColor}){textColor}
+        val outlineColor: Color? by node.display(pressed,{outlineColor}){outlineColor}
+        val fontFamily: String? by node.display(pressed,{fontFamily}){fontFamily}
+        val fontSize: Float? by node.display(pressed,{fontSize}){fontSize}
+        val fontStyle: Font.Style? by node.display(pressed,{fontStyle}){fontStyle}
+        val fontWeight: Int? by node.display(pressed,{fontWeight}){fontWeight}
 
         val fontState = node.combine {
-            val context = node.contextState.track ?: return@combine null
+            val context = node.context ?: return@combine null
             context.drawScope.cache.font(Font(
-                fontFamily.track,
-                fontSize.track,
-                fontStyle.track,
-                fontWeight.track,
-                node.displayScale.track
+                fontFamily,
+                fontSize,
+                fontStyle,
+                fontWeight,
+                node.displayScale
             ))
         }
         val brushState = node.combine {
-            val drawScope = node.contextState.track?.drawScope ?: return@combine null
-            drawScope.cache.brush(color.track ?: drawScope.defaultColor(pressed))
+            val drawScope = node.context?.drawScope ?: return@combine null
+            drawScope.cache.brush(color ?: drawScope.defaultColor(pressed))
         }
         val textBrushState = node.combine {
-            val drawScope = node.contextState.track?.drawScope ?: return@combine null
-            drawScope.cache.brush(textColor.track ?: drawScope.defaultTextColor(pressed))
+            val drawScope = node.context?.drawScope ?: return@combine null
+            drawScope.cache.brush(textColor ?: drawScope.defaultTextColor(pressed))
         }
         val outlineBrushState = node.combine {
-            if(node.outlineWidthState.track.let { (it ?: 0f) <= 0f }) return@combine null
-            val drawScope = node.contextState.track?.drawScope ?: return@combine null
-            drawScope.cache.brush(outlineColor.track ?: drawScope.defaultOutlineColor(pressed))
+            if(node.outlineWidth.let { (it ?: 0f) <= 0f }) return@combine null
+            val drawScope = node.context?.drawScope ?: return@combine null
+            drawScope.cache.brush(outlineColor ?: drawScope.defaultOutlineColor(pressed))
         }
         val font by fontState
         val brush by brushState
