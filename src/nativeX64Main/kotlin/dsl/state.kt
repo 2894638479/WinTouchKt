@@ -81,6 +81,15 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
             val trackedStates:Set<MutState<*>> get() = _trackedStates
         }
 
+        fun <T> extract(func:()->T): MutState<T> = wrapExceptionName("extract failed"){
+            val combination = Combination()
+            currentCombination = combination
+            func()
+            currentCombination = null
+            require(combination.trackedStates.size == 1)
+            combination.trackedStates.first() as MutState<T>
+        }
+
         //the `func` will be invoked multiple times  so do not create new state in it.
         fun <T> combine(func:Combination.()->T):MutState<T> = wrapExceptionName("combine failed"){
             val firstCombination = Combination()
