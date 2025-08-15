@@ -9,7 +9,7 @@ import kotlin.math.min
 
 
 @Serializable(with = Rect.Serializer::class)
-class Rect(
+data class Rect(
     val left:Float,
     val top:Float,
     val right:Float,
@@ -39,6 +39,11 @@ class Rect(
 
     companion object {
         val empty = Rect(0f,0f,0f,0f)
+        fun byPos(x: Float,y: Float,w: Float,h: Float): Rect{
+            val w2 = w / 2
+            val h2 = h / 2
+            return Rect(x-w2,y-h2,x+w2,y+h2)
+        }
     }
 
     val x get() = (left + right) / 2
@@ -79,13 +84,7 @@ class Rect(
             val w = "w" from {w}
             val h = "h" from {h}
         }
-        override fun Descriptor.generate(): Rect {
-            val x = x.nonNull
-            val y = y.nonNull
-            val w2 = w.nonNull / 2
-            val h2 = h.nonNull / 2
-            return Rect(x - w2,y - h2,x + w2,y + h2)
-        }
+        override fun Descriptor.generate(): Rect = byPos(x.nonNull,y.nonNull,w.nonNull,h.nonNull)
     }
     override fun toString() = "Rect${Json.encodeToString(this)}"
 }

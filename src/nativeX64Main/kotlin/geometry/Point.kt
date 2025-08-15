@@ -5,7 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Serializable
-class Point (
+data class Point (
     val x:Float,
     val y:Float
 ){

@@ -41,15 +41,15 @@ class Group(
 
     object GroupSerializer : SerializerWrapper<Group, GroupSerializer.Descriptor>("Group", Descriptor) {
         object Descriptor: Node.Descriptor<Group>() {
-            val type = "type" from { when(touchDispatcher){
-                is SlideGroup ->  1
-                is HoldSlideGroup -> 2
-                is HoldGroup -> 3
-                is HoldGroupDoubleClk -> 4
-                is TouchPadGroup -> 7
-                is MouseGroup -> 8
-                is ScrollGroup -> 9
-                is NormalGroup -> 0
+            val type = "type" from { when(touchDispatcher::class){
+                NormalGroup::class -> 0
+                SlideGroup::class ->  1
+                HoldSlideGroup::class -> 2
+                HoldGroup::class -> 3
+                HoldGroupDoubleClk::class -> 4
+                TouchPadGroup::class -> 7
+                MouseGroup::class -> 8
+                ScrollGroup::class -> 9
                 else -> error("unknown group type")
             }.toUByte() }
             val buttons = "buttons" from {buttons.list}

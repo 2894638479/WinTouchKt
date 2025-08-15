@@ -11,7 +11,7 @@ import kotlin.math.pow
 import kotlin.math.withSign
 
 @Serializable
-class Round(
+data class Round(
     val x:Float,
     val y:Float,
     val r:Float

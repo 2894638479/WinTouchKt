@@ -1,6 +1,7 @@
 package dsl
 
 import error.wrapExceptionName
+import logger.info
 import logger.warning
 import platform.windows.RECT
 import wrapper.GuiWindow
@@ -122,13 +123,31 @@ abstract class GuiScope(
             override fun onRemove(element: T) = wrapExceptionName("removing element from List") {
                 val item = items.firstOrNull { it.element == element } ?: error("not found item")
                 items.remove(item)
-                if(!children.removeAll(item.child)) error("child remove failed")
+                children.removeAll(item.child)
                 item.child.forEach { it.hwnd.destroy() }
                 item.scope.destroy()
                 window.onSize()
             }
             override fun onAnyChange() {}
         })
+    }
+
+    fun <T> By(state:MutState<T>,content:(T)-> Unit){
+        var list = listOf<AbstractGuiComponent>()
+        val scope = MutState.SimpleScope()
+        state.listen(true) {
+            scope.destroy()
+            children.removeAll(list)
+            info("removed $list ${list.map { it.hwnd.name }}")
+            list.forEach { it.hwnd.destroy() }
+            list = remapChild {
+                remapScope(scope){
+                    content(it)
+                }
+            }
+            children += list
+            onSize()
+        }
     }
 
 
@@ -149,7 +168,7 @@ abstract class GuiScope(
         }
         fun setOtherTo0(){
             for (i in indices) {
-                if(results[i] == Int.MIN_VALUE) results[i] = 0
+                if(results[i] == Int.MIN_VALUE) results[i] = min[i]
             }
         }
         fun calRemain(){
@@ -162,7 +181,7 @@ abstract class GuiScope(
             calSumWeight()
             if (sumWeight == 0f) {
                 setOtherTo0()
-                warning("column remain sum weight is zero")
+                warning("remain sum weight is zero")
                 break
             }
             calRemain()

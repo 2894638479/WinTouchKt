@@ -25,7 +25,7 @@ value class Hwnd(val value:CPointer<hwndHolder>){
     fun update() = UpdateWindow(HWND)
     fun showAndUpdate() { show();update() }
     fun setRect(x:Int, y:Int, w:Int, h:Int){
-        info("hwnd moved to $x $y ,size  $w $h")
+        info("hwnd $name moved to $x $y ,size $w $h visible $visible")
         MoveWindow(HWND,x,y,w,h, TRUE).ifFalse { warning("hwnd move false") }
     }
     fun close() = CloseWindow(HWND)

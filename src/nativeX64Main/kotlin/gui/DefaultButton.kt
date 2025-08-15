@@ -1,18 +1,18 @@
 package gui
 
+import dsl.A
 import dsl.Alignment
 import dsl.GuiScope
+import dsl.M
 import dsl.Modifier
 import dsl.State
-import dsl.height
 import dsl.middleY
 import dsl.minHeight
 import dsl.minWidth
-import dsl.padding
 import dsl.stateOf
 
-fun GuiScope.DefaultButton(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(),
+fun GuiScope.DefaultButton(modifier: Modifier = M, alignment: Alignment = A,
          active: State<Boolean>,onClick:()->Unit){
-    Button(modifier.minHeight(30).minWidth(50), Alignment().middleY(),
+    Button(modifier.minHeight(25).minWidth(50), alignment.middleY(),
         stateOf("默认"),active,onClick)
 }

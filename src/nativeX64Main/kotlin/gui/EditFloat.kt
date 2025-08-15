@@ -1,30 +1,21 @@
 package gui
 
-import dsl.Alignment
-import dsl.GuiScope
-import dsl.Modifier
-import dsl.State
-import dsl.height
-import dsl.middleY
-import dsl.padding
-import dsl.stateOf
+import dsl.*
+import wrapper.Delegate
 
-fun GuiScope.EditFloat(modifier:Modifier,alignment:Alignment,get:State<Float?>,set:(Float?)->Unit){
-    Row(modifier,alignment) {
-        val float by get
-        val text = combine { float?.toString() ?: "" }
-        var last = text.value
-        Edit(Modifier().height(20).weight(2f),Alignment().middleY(),text){
-            it.ifBlank {
-                set(null)
-                last = ""
-                return@Edit
-            }
-            it.toFloatOrNull()?.let {
-                set(it)
-                last = text.value
-            } ?: run { text.value = last }
+fun GuiScope.EditFloat(modifier:Modifier = M, alignment:Alignment = A, get:State<Float?>, set:(Float?)->Unit){
+    var float by Delegate(get,set)
+    val text = combine { float?.toString() ?: "" }
+    var last = text.value
+    Edit(modifier.minHeight(20).minWidth(40),alignment.middleY(),text){
+        it.ifBlank {
+            float = null
+            last = ""
+            return@Edit
         }
-        DefaultButton(active =  combine{ float != null }){ set(null) }
+        it.toFloatOrNull()?.let {
+            float = it
+            last = text.value
+        } ?: run { text.value = last }
     }
 }

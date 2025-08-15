@@ -1,6 +1,5 @@
 package geometry
 
-import geometry.Rect.Serializer.Descriptor
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -8,13 +7,20 @@ import wrapper.*
 import kotlin.math.max
 
 @Serializable(with = RoundedRect.Serializer::class)
-class RoundedRect(
+data class RoundedRect(
     val left:Float,
     val top:Float,
     val right:Float,
     val bottom:Float,
     val r:Float
 ): Shape {
+    companion object {
+        fun byPos(x: Float,y: Float,w: Float,h: Float,r: Float): RoundedRect{
+            val w2 = w / 2
+            val h2 = h / 2
+            return RoundedRect(x-w2,y-h2,x+w2,y+h2,r)
+        }
+    }
     val x get() = (left + right) / 2
     val y get() = (top + bottom) / 2
     val w get() = (right - left) / 2

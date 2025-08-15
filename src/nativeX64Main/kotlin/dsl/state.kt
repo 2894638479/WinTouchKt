@@ -25,13 +25,20 @@ open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
 private var currentCombination: MutState.Scope.Combination? = null
 class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadWriteProperty<Any?,T>{
     val listeners = mutableListOf<(T)->Unit>()
-    override var value = value
+    override var value: T = value
         set(value) {
             if(field != value) {
                 val newField = constraint?.invoke(value) ?: value
                 if(field != newField){
                     field = newField
-                    listeners.toList().forEach { it(field) }
+                    while (true){
+                        try {
+                            listeners.forEach { it(field) }
+                        } catch (_: ConcurrentModificationException){
+                            continue
+                        }
+                        break
+                    }
                 }
             }
         }
@@ -48,17 +55,17 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
     class SimpleScope:Scope{ override val _onDestroy = mutableListOf<()->Unit>() }
     interface Scope :Destroyable {
         fun <T> MutState<T>.listen(trigger:Boolean = false, listener:(T)->Unit){
-            if (trigger) listener(value)
             listeners += listener
             _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
+            if (trigger) listener(value)
         }
         fun <T> MutStateList<T>.listen(trigger:Boolean = false, listener: Listener<T>) {
+            listeners += listener
+            _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
             if (trigger) {
                 listener.onAnyChange()
                 forEach { listener.onAdd(it) }
             }
-            listeners += listener
-            _onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
         }
         fun <T,V> MutStateList<T>.generateState(func:(List<T>)->V) = MutState(func(delegate)).also {
             listen { it.value = func(delegate) }
@@ -87,7 +94,6 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
 
             val update = object: Function1<Any?,Unit> {
                 override operator fun invoke(any: Any?)= wrapExceptionName("combination update failed"){
-                    warning("updating $state")
                     val combination = Combination()
                     currentCombination = combination
                     val value = combination.func()
@@ -97,7 +103,6 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
                     if(!trackedStates.containsAll(newStates)){
                         val added = newStates.subtract(trackedStates)
                         val removed = trackedStates.subtract(newStates)
-                        warning("added $added removed $removed")
                         trackedStates = newStates
                         removed.forEach { it.remove1(this) }
                         added.forEach { it.listen1(this) }

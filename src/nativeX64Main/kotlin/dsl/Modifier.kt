@@ -21,6 +21,7 @@ class Modifier internal constructor(
     internal val paddingW get() = paddingLeft + paddingRight
     internal val paddingH get() = paddingTop + paddingBottom
 }
+val M get() = Modifier()
 
 fun Modifier.size(width: Int, height: Int) = apply { this.width = width; this.height = height }
 fun Modifier.width(width: Int) = apply { this.width = width }
@@ -35,11 +36,11 @@ fun Modifier.padding(value:Int) = apply {
     paddingBottom = value
 }
 
-fun Modifier.padding(horizontal:Int = 0, vertical:Int = 0) = apply {
-    paddingRight = horizontal
-    paddingLeft = horizontal
-    paddingBottom = vertical
-    paddingTop = vertical
+fun Modifier.padding(h:Int = 0, v:Int = 0) = apply {
+    paddingRight = h
+    paddingLeft = h
+    paddingBottom = v
+    paddingTop = v
 }
 
 fun Modifier.padding(left:Int = 0, top:Int = 0, right:Int = 0, bottom:Int = 0) = apply {

@@ -14,6 +14,7 @@ value class Alignment internal constructor(internal val value:Int){
     internal val middleY get() = value and 0b100000 != 0
     val staticStyle get() = if (right) SS_RIGHT else if(middleX) SS_CENTER else SS_LEFT
 }
+val A get() = Alignment()
 
 fun Alignment.left() = Alignment(value or 0b1)
 fun Alignment.top() = Alignment(value or 0b10)
