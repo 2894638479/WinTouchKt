@@ -13,12 +13,9 @@ class RowScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, nam
             rect.toOrigin()
             val vc = visibleChildren
             val minW = IntArray(vc.size) { vc[it].outerMinW }
-            val weight = FloatArray(vc.size){ vc[it].modifier.run { if(width == 0) weight else 0f } }
-            val staticW = vc.sumOf { if(it.modifier.width == 0) 0 else it.modifier.width + it.modifier.paddingW }
-            val widths = split(weight,minW,rect.width - staticW).mapIndexed { i,it ->
-                val modifier = vc[i].modifier
-                if(modifier.width == 0) it else modifier.width + modifier.paddingW
-            }
+            val forcedW = IntArray(vc.size) { vc[it].modifier.run { if(width == 0) 0 else width + paddingW } }
+            val weight = FloatArray(vc.size){ vc[it].modifier.weight }
+            val widths = split(weight,minW,forcedW,rect.width)
             vc.forEachIndexed { i, it ->
                 val modifier = it.modifier
                 val align = it.alignment

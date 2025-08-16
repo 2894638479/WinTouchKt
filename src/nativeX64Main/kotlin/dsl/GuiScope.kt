@@ -45,6 +45,12 @@ abstract class GuiScope(
             return super.onDestroy()
         }
     }
+    private val top: GuiWindow get() = window.parent ?: window
+    fun reLayout(){
+        top.onSize()
+        onSize()
+        top.hwnd.invalidateRect()
+    }
     open val scrollableHeight get() = -1
     open val scrollableWidth get() = -1
     override val hwnd get() = window.hwnd
@@ -100,7 +106,7 @@ abstract class GuiScope(
         state.listen(true){
             if(it) list.forEach { it.hwnd.show() }
             else list.forEach { it.hwnd.hide() }
-            window.onSize()
+            reLayout()
         }
     }
     fun ScrollableColumn(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ScrollableColumnScope.()->Unit){
@@ -118,7 +124,7 @@ abstract class GuiScope(
                 val item = ListItem(element,scope,child)
                 items += item
                 children += child
-                window.onSize()
+                reLayout()
             }
             override fun onRemove(element: T) = wrapExceptionName("removing element from List") {
                 val item = items.firstOrNull { it.element == element } ?: error("not found item")
@@ -126,7 +132,7 @@ abstract class GuiScope(
                 children.removeAll(item.child)
                 item.child.forEach { it.hwnd.destroy() }
                 item.scope.destroy()
-                window.onSize()
+                reLayout()
             }
             override fun onAnyChange() {}
         })
@@ -145,18 +151,18 @@ abstract class GuiScope(
                 }
             }
             children += list
-            onSize()
+            reLayout()
         }
     }
 
 
 
-    fun split(weight:FloatArray, min:IntArray,full:Int):IntArray = wrapExceptionName("split error"){
+    fun split(weight:FloatArray, min:IntArray,forced:IntArray,full:Int):IntArray = wrapExceptionName("split error"){
         require(weight.size == min.size) { "collection weight not match min" }
         if(min.sum() >= full) return min
         val indices = weight.indices
         val size = weight.size
-        val results = IntArray(size){ Int.MIN_VALUE }
+        val results = IntArray(size){ forced[it].let { if(it == 0) Int.MIN_VALUE else it }  }
         var sumWeight = 0f
         var remain = 0
         fun calSumWeight(){

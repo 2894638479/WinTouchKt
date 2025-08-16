@@ -115,7 +115,7 @@ abstract class GuiWindow (
         className,
         windowName,
         (WS_VISIBLE or WS_CHILD or style).toUInt(),
-        100, 100, 100,100,
+        0,0,0,0,
         hwnd.HWND,
         idIncrease.toLong().toCPointer(),
         GetModuleHandleW(null),
@@ -151,12 +151,12 @@ abstract class GuiWindow (
             }
             CreateWindowExW(
                 styleEx,guiWindowClass, windowName, style,
-                CW_USEDEFAULT, CW_USEDEFAULT, 50, 50,
+                CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,
                 null, null, GetModuleHandleW(null), null
             )
         } else CreateWindowExW(
             0u, guiWindowClass, windowName, (WS_CHILD or WS_VISIBLE or style).toUInt(),
-            0, 0, 50, 50, parent.hwnd.HWND, (parent.idIncrease).toLong().toCPointer(),
+            0, 0, 0, 0, parent.hwnd.HWND, (parent.idIncrease).toLong().toCPointer(),
             GetModuleHandleW(null), null
         )
         creatingGuiWindow = null

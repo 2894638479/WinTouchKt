@@ -14,9 +14,9 @@ class ColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, 
             rect.toOrigin()
             val vc = visibleChildren
             val minH = IntArray(vc.size){ vc[it].outerMinH }
-            val weight = FloatArray(vc.size){ vc[it].modifier.run { if(height == 0) weight else 0f } }
-            val staticH = vc.sumOf { if(it.modifier.height == 0) 0 else it.modifier.height + it.modifier.paddingH}
-            val heights = split(weight,minH,rect.height - staticH).mapIndexed { i,it ->
+            val staticH = IntArray(vc.size){ vc[it].modifier.run { if(height == 0) 0 else height + paddingH }}
+            val weight = FloatArray(vc.size){ vc[it].modifier.weight }
+            val heights = split(weight,minH,staticH,rect.height).mapIndexed { i,it ->
                 val modifier = vc[i].modifier
                 if(modifier.height == 0) it else modifier.height + modifier.paddingH
             }

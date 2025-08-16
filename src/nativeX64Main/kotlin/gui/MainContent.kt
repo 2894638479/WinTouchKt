@@ -1,43 +1,59 @@
 package gui
 
 import dsl.A
-import dsl.Alignment
 import dsl.GuiScope
 import dsl.M
 import dsl.Modifier
 import dsl.height
+import dsl.middleY
 import dsl.mutStateOf
 import dsl.padding
 import dsl.right
+import dsl.size
+import dsl.width
 import kotlinx.cinterop.ExperimentalForeignApi
-import logger.info
-import logger.warning
+import node.Button
 import node.Container
+import node.Group
 import node.Node
 
 
 @OptIn(ExperimentalForeignApi::class)
 fun GuiScope.MainContent(container: Container) = Row {
-    val nodeState = mutStateOf<Node>(container)
-    var node by nodeState
+    var node by mutStateOf<Node>(container)
+    fun GuiScope.NodeButton(modifier: Modifier,buttonNode:Node){
+        Button(
+            modifier.padding(5).height(40),
+            text = combine {
+                val prefix = when(buttonNode::class){
+                    Container::class ->"配置："
+                    Group::class -> "分组："
+                    Button::class -> "按钮："
+                    else -> "未知："
+                }
+                prefix + (buttonNode.name ?: "")
+            },
+            enable = combine { buttonNode != node }
+        ){ node = buttonNode }
+    }
     ScrollableColumn(M.weight(1f)) {
-        Button(M.padding(10).height(50), text = combine { container.name ?: "null" }){
-            node = container
-        }
+        NodeButton(M,container)
         List(container.children){
             Column {
-                Button(M.padding(10).padding(left = 30).height(50),A.right(),combine { it.name ?: "null" }){
-                    node = it
+                var fold by mutStateOf(false)
+                Row {
+                    Button(M.size(30,30).padding(5),A.middleY(),combine { if(fold) ">" else "v" }){ fold = !fold }
+                    NodeButton(M.weight(1f),it)
                 }
-                List(it.children){
-                    Button(M.padding(10).padding(left = 50).height(50),A.right(),combine { it.name ?: "null" }){
-                        node = it
+                By(extract{ fold }){ fold ->
+                    if(!fold) List(it.children){
+                        NodeButton(M.padding(left = 40),it)
                     }
                 }
             }
         }
     }
     Column(M.weight(2f)) {
-        Node(nodeState)
+        Node(extract { node })
     }
 }
