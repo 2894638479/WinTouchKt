@@ -18,7 +18,7 @@ import node.Node
 
 @OptIn(ExperimentalForeignApi::class)
 fun GuiScope.MainContent(container: Container) = Row {
-    val nodeState = mutStateOf<Node>(container) { warning(it.toString()) }
+    val nodeState = mutStateOf<Node>(container)
     var node by nodeState
     ScrollableColumn(M.weight(1f)) {
         Button(M.padding(10).height(50), text = combine { container.name ?: "null" }){

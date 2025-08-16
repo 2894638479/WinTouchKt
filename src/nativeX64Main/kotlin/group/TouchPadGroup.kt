@@ -58,8 +58,8 @@ class TouchPadGroup(
             if(time - lastDownTime[index] < ms){
                 dispatch(ms.toUInt()) {
                     if(keyDownCount[index] == 0u) {
-                        it.down(false)
-                        it.up(false)
+                        it.down(true)
+                        it.up(true)
                     }
                 }
             }

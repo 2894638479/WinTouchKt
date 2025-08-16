@@ -13,6 +13,7 @@ import dsl.padding
 import dsl.stateOf
 import logger.info
 import node.Button
+import node.Group
 import node.Node
 
 fun GuiScope.Node(nodeState: MutState<Node>){
@@ -29,9 +30,7 @@ fun GuiScope.Node(nodeState: MutState<Node>){
         PointEdit(M.padding(h = 5).weight(1f),A.middleY(),combine { node.offset }){node.offset = it}
     }
     By(combine { node::class }){
-        info("node ${it==Button::class} $it")
         if(it == Button::class) {
-            info("node1")
 //            Text(M.height(100),A,stateOf("测试"))
             ShapeEdit(M.height(200),A,combine { (node as Button).shape }){(node as Button).shape = it}
         }

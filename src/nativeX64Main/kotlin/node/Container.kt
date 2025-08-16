@@ -26,7 +26,7 @@ import wrapper.SerializerWrapper
 class Container :TouchReceiver, NodeWithChild<Group>(){
     val groups get() = children
     private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
-    var isEditMode by mutStateOf(false)
+    var isEditModeNode by mutStateOf(false)
     val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
     val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
@@ -38,7 +38,11 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
         val drawScope: DrawScope,
         val keyHandler: KeyHandler
     )
-    var alpha by mutStateNull<UByte>(true) { context?.run { drawScope.alpha = (it ?: 128u) } ?: error("context is null") }
+    var alpha by mutStateNull<UByte>().apply {
+        listen(true) {
+            context?.run { drawScope.alpha = (it ?: 128u) } ?: error("context is null")
+        }
+    }
 
     override fun down(event: TouchReceiver.TouchEvent):Boolean {
         groups.firstOrNull {

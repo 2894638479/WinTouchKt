@@ -2,6 +2,7 @@ package dsl
 
 import dsl.MutStateList.Listener
 import error.wrapExceptionName
+import logger.info
 import logger.warning
 import wrapper.Destroyable
 import kotlin.properties.ReadOnlyProperty
@@ -13,11 +14,6 @@ fun <T> stateNull() = State<T?>(null)
 fun <T> mutStateOf(value:T,constraint:((T)->T)? = null) = MutState(value,constraint)
 fun <T: Any> mutStateNull(constraint:((T?)->T?)? = null) = MutState(null,constraint)
 fun <T> mutStateList(vararg values:T) = MutStateList(*values)
-
-fun <T> MutState.Scope.mutStateOf(value:T,trigger:Boolean = false,constraint:((T)->T)? = null,initListener:(T)->Unit)
-= MutState(value,constraint).apply { listen(trigger,initListener) }
-
-fun <T: Any> MutState.Scope.mutStateNull(trigger:Boolean = false, constraint:((T?)->T?)? = null, initListener:(T?)->Unit) = mutStateOf(null,trigger,constraint, initListener)
 
 open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value
@@ -35,6 +31,7 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value),ReadW
                         try {
                             listeners.forEach { it(field) }
                         } catch (_: ConcurrentModificationException){
+                            warning("concurrent modifying $this, retrying")
                             continue
                         }
                         break

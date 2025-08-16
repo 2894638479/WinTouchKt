@@ -38,30 +38,6 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     val hwndLayered = container.drawScope.hwnd
     hwndLayered.showAndUpdate()
 
-    val scope = MutState.SimpleScope()
-    class A{
-        var m1 by mutStateOf(0)
-        var m2 by mutStateOf("test")
-    }
-    val a by mutStateOf(A())
-    val b by mutStateOf(4)
-
-    val combined1 = scope.combine {
-        "${a.m2} $b"
-    }
-    val combined2 = scope.combine {
-        "${a.m1} ${a.m2}"
-    }
-    val combined3 = scope.combine {
-        "${a.m1} ${a.m2} $b"
-    }
-    scope.run {
-        combined1.listen { warning("combined1 $it") }
-        combined2.listen { warning("combined2 $it") }
-        combined3.listen { warning("combined3 $it") }
-    }
-
-
     TopWindow("window",800,600){
         wrapExceptionName("creating MainContent") {
             MainContent(container)

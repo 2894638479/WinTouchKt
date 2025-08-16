@@ -24,12 +24,9 @@ class Group(
             } != null
         }
         override fun move(event: TouchReceiver.TouchEvent): Boolean {
-            val scope = context?.drawScope ?: error("context is null")
             val button = pointers[event.id]?.getOrNull(0) ?: error("pointer id not down")
-            scope.toErase(button)
             val offset = Point(event.x,event.y)
             button.offset = button.offset?.plus(offset) ?: offset
-            scope.toDrawAll()
             return true
         }
         override fun up(event: TouchReceiver.TouchEvent): Boolean {

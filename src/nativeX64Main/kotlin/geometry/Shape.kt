@@ -18,4 +18,5 @@ interface Shape {
 
     context(offset: Point)
     operator fun contains(point: Point) = (point - offset).run { containPointByRelativePos(x,y) }
+    fun rescaled(scale:Float?) = scale?.let { rescaled(it) } ?: this
 }

@@ -1,6 +1,7 @@
 package node
 
 import dsl.mutStateOf
+import error.wrapExceptionName
 import geometry.Point
 import geometry.Rect
 import geometry.Round
@@ -12,6 +13,7 @@ import kotlinx.serialization.json.Json
 import logger.info
 import logger.warning
 import wrapper.SerializerWrapper
+import wrapper.d2dDrawText
 
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
@@ -19,26 +21,65 @@ class Button(
     shape: Shape,
 ): Node(){
     var shape by mutStateOf(shape)
-    private val pressedState = mutStateOf(false)
-    var pressed by pressedState
-        private set
+    var count by mutStateOf(0u)
+    val pressed by combine { count != 0u }
 
-    private val countState = mutStateOf(0u) {
-        pressed = it != 0u
+    val displayGeometry by combine { shape.rescaled(displayScale) to displayOffset }
+    val onErase by combine<DrawScope.()->Unit> {
+        val shape = displayGeometry.first
+        val offset = displayGeometry.second
+        val outlineWidth = outlineWidth ?: 0f
+        {
+            with(offset){
+                shape.d2dFill(target,cache.transparentBrush)
+                if(outlineWidth > 0f) shape.d2dDraw(target,cache.transparentBrush,outlineWidth)
+            }
+        }
+    }.apply {
+        listen {
+            context?.drawScope?.run {
+                reDraw = true
+            }
+        }
     }
-    var count by countState
+    val onDraw by combine<DrawScope.()->Unit> {
+        wrapExceptionName("button onDraw failed") {
+            context ?: return@combine {}
+            val shape = displayGeometry.first
+            val offset = displayGeometry.second
+            val name = name
+            val pressed = pressed
+            val style = displayStyle(pressed)
+            val brush = style.brush ?: return@combine {}
+            val textBrush = style.textBrush ?: return@combine {}
+            val outlineWidth = outlineWidth ?: 0f
+            val outlineBrush = style.outlineBrush
+            val textBound = shape.padding(outlineWidth/2)?.outerRect
+            val font = style.font ?: return@combine {}
+            {
+                with(offset) {
+                    shape.d2dFill(target,brush)
+                    if(outlineBrush != null) shape.d2dDraw(target,outlineBrush,outlineWidth)
+                    if(textBound != null && name != null)
+                        target.d2dDrawText(textBrush,font,textBound,name)
+                }
+            }
+        }
+    }.apply {
+        listen {
+            context?.drawScope?.addToDraw(it)
+        }
+    }
 
-    inline fun down(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = context?.run {
+    inline fun down(quiet:Boolean = false, filter:(UByte)->Boolean = {true}) = context?.run {
         info("button $name down")
         keyHandler.downAll(key.filter(filter))
-        count++
-        if(drawUi) drawScope.toDraw(this@Button)
+        if(!quiet) count++
     } ?: error("context is null")
-    inline fun up(drawUi:Boolean = true,filter:(UByte)->Boolean = {true}) = context?.run {
+    inline fun up(quiet:Boolean = false, filter:(UByte)->Boolean = {true}) = context?.run {
         info("button $name up")
         keyHandler.upAll(key.filter(filter))
-        count--
-        if(drawUi) drawScope.toDraw(this@Button)
+        if(!quiet) count--
     } ?: error("context is null")
 
     fun containPoint(x:Float, y:Float) = with(displayOffset){ Point(x,y) in shape.rescaled(displayScale) }

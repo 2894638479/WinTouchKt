@@ -3,6 +3,7 @@ package node
 import dsl.MutState
 import dsl.mutStateNull
 import geometry.*
+import geometry.Font
 import geometry.Point
 import wrapper.*
 import kotlin.math.abs
@@ -57,33 +58,31 @@ abstract class Node : MutState.Scope {
         val fontStyle: Font.Style? by node.display(pressed,{fontStyle}){fontStyle}
         val fontWeight: Int? by node.display(pressed,{fontWeight}){fontWeight}
 
-        val fontState = node.combine {
+        val font by node.combine {
             val context = node.context ?: return@combine null
-            context.drawScope.cache.font(Font(
-                fontFamily,
-                fontSize,
-                fontStyle,
-                fontWeight,
-                node.displayScale
-            ))
+            context.drawScope.cache.font(
+                Font(
+                    fontFamily,
+                    fontSize,
+                    fontStyle,
+                    fontWeight,
+                    node.displayScale
+                )
+            )
         }
-        val brushState = node.combine {
+        val brush by node.combine {
             val drawScope = node.context?.drawScope ?: return@combine null
             drawScope.cache.brush(color ?: drawScope.defaultColor(pressed))
         }
-        val textBrushState = node.combine {
+        val textBrush by node.combine {
             val drawScope = node.context?.drawScope ?: return@combine null
             drawScope.cache.brush(textColor ?: drawScope.defaultTextColor(pressed))
         }
-        val outlineBrushState = node.combine {
-            if(node.outlineWidth.let { (it ?: 0f) <= 0f }) return@combine null
+        val outlineBrush by node.combine {
+            if (node.outlineWidth.let { (it ?: 0f) <= 0f }) return@combine null
             val drawScope = node.context?.drawScope ?: return@combine null
             drawScope.cache.brush(outlineColor ?: drawScope.defaultOutlineColor(pressed))
         }
-        val font by fontState
-        val brush by brushState
-        val textBrush by textBrushState
-        val outlineBrush by outlineBrushState
     }
 
     open class Descriptor<T:Node> : SerializerWrapper.Descriptor<T>() {

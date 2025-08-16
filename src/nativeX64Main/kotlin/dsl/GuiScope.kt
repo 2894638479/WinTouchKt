@@ -138,7 +138,6 @@ abstract class GuiScope(
         state.listen(true) {
             scope.destroy()
             children.removeAll(list)
-            info("removed $list ${list.map { it.hwnd.name }}")
             list.forEach { it.hwnd.destroy() }
             list = remapChild {
                 remapScope(scope){
