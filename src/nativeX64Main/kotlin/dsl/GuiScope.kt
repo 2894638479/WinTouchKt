@@ -141,6 +141,7 @@ abstract class GuiScope(
     fun <T> By(state:MutState<T>,content:(T)-> Unit){
         var list = listOf<AbstractGuiComponent>()
         val scope = MutState.SimpleScope()
+        _onDestroy += { scope.destroy() }
         state.listen(true) {
             scope.destroy()
             children.removeAll(list)
