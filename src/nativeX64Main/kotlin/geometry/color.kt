@@ -15,4 +15,8 @@ data class Color(
     val r:UByte,
     val g:UByte,
     val b:UByte
-)
+){
+    fun setR(value: UByte) = Color(value,g,b)
+    fun setG(value: UByte) = Color(r,value,b)
+    fun setB(value: UByte) = Color(r,g,value)
+}

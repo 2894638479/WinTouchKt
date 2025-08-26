@@ -8,7 +8,6 @@ class BoxScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, nam
     GuiScope(parent,name,modifier, alignment) {
     override fun onSize() = wrapExceptionName("BoxScope onSize") {
         visibleChildren.forEach {
-            if(!it.hwnd.visible) return@forEach
             val modifier = it.modifier
             val align = it.alignment
             hwnd.useRect { rect ->

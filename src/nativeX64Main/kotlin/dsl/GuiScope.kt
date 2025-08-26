@@ -1,14 +1,12 @@
 package dsl
 
 import error.wrapExceptionName
-import logger.info
 import logger.warning
 import platform.windows.RECT
 import wrapper.GuiWindow
 import wrapper.height
 import wrapper.str
 import wrapper.width
-import kotlin.math.max
 
 
 @Gui
@@ -39,7 +37,7 @@ abstract class GuiScope(
         override val scrollableHeight get() = scope.scrollableHeight
         override val scrollableWidth get() = scope.scrollableWidth
         override fun onDestroy(): Boolean {
-            destroy()
+            destroyChild()
             children.clear()
             onCommand.clear()
             return super.onDestroy()
@@ -54,12 +52,14 @@ abstract class GuiScope(
     open val scrollableHeight get() = -1
     open val scrollableWidth get() = -1
     override val hwnd get() = window.hwnd
-    protected var children = mutableListOf<AbstractGuiComponent>()
-    protected val visibleChildren get() = children.filter { it.hwnd.visible }
+    private var children = mutableListOf<GuiChild>()
+    protected val visibleChildren get() = mutableListOf<AbstractGuiComponent>().apply {
+        children.forEach { it.addTo(this) }
+    }
     override val innerMinH get() = visibleChildren.maxOfOrNull { it.outerMinH } ?: 0
     override val innerMinW get() = visibleChildren.maxOfOrNull { it.outerMinW } ?: 0
     private fun AbstractGuiComponent.addToChild(){ children += this }
-    private fun remapChild(block: GuiScope.() -> Unit):List<AbstractGuiComponent>{
+    private fun remapChild(block: GuiScope.() -> Unit):List<GuiChild>{
         val rem = children
         children = mutableListOf()
         block()
@@ -100,37 +100,30 @@ abstract class GuiScope(
             if(text is MutState) text.listen { hwnd.name = it }
         }.addToChild()
     }
-    fun VisibleIf(state: MutState<Boolean>, block: GuiScope.()->Unit){
-        val list = remapChild { block() }
-        children += list
-        state.listen(true){
-            if(it) list.forEach { it.hwnd.show() }
-            else list.forEach { it.hwnd.hide() }
-            reLayout()
-        }
-    }
     fun ScrollableColumn(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ScrollableColumnScope.()->Unit){
         ScrollableColumnScope(modifier, alignment, window).apply(block).addToChild()
     }
     fun <T> List(list: MutStateList<T>, item: GuiScope.(T)-> Unit){
-        class ListItem(val element:T,val scope: MutState.Scope,val child: List<AbstractGuiComponent>)
+        class ListItem(val element:T,val scope: MutState.Scope,val child: GuiListChild)
+        val fullList = GuiListChild(mutableListOf())
+        children.add(fullList)
         val items = mutableListOf<ListItem>()
         list.listen(true,object:MutStateList.Listener<T>{
             override fun onAdd(element: T) {
                 val scope = MutState.SimpleScope()
-                val child = remapScope(scope){
+                val item = ListItem(element,scope, GuiListChild(mutableListOf()))
+                item.child += remapScope(scope){
                     remapChild{ item(element) }
                 }
-                val item = ListItem(element,scope,child)
                 items += item
-                children += child
+                fullList.add(item.child)
                 reLayout()
             }
             override fun onRemove(element: T) = wrapExceptionName("removing element from List") {
                 val item = items.firstOrNull { it.element == element } ?: error("not found item")
                 items.remove(item)
-                children.removeAll(item.child)
-                item.child.forEach { it.hwnd.destroy() }
+                if(!fullList.remove(item.child)) error("list remove child error")
+                item.child.destroyChild()
                 item.scope.destroy()
                 reLayout()
             }
@@ -139,19 +132,19 @@ abstract class GuiScope(
     }
 
     fun <T> By(state:MutState<T>,content:(T)-> Unit){
-        var list = listOf<AbstractGuiComponent>()
+        val list = GuiListChild(mutableListOf())
+        children.add(list)
         val scope = MutState.SimpleScope()
         _onDestroy += { scope.destroy() }
         state.listen(true) {
             scope.destroy()
-            children.removeAll(list)
-            list.forEach { it.hwnd.destroy() }
-            list = remapChild {
+            list.destroyChild()
+            list.clear()
+            list += remapChild {
                 remapScope(scope){
                     content(it)
                 }
             }
-            children += list
             reLayout()
         }
     }

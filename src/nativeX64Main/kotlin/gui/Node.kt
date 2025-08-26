@@ -29,9 +29,12 @@ fun GuiScope.Node(nodeState: MutState<Node>){
         Text(M.height(20).padding(h = 5).weight(0.13f),A.middleY(),stateOf("位置："))
         PointEdit(M.padding(h = 5).weight(1f),A.middleY(),combine { node.offset }){node.offset = it}
     }
+    By(combine { node.style != null }){
+        if(it) ButtonStyleEdit(M,A,combine { node.style!! })
+    }
+
     By(combine { node::class }){
         if(it == Button::class) {
-//            Text(M.height(100),A,stateOf("测试"))
             ShapeEdit(M.height(200),A,combine { (node as Button).shape }){(node as Button).shape = it}
         }
     }
