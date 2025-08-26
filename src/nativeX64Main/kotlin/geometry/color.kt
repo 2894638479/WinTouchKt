@@ -19,4 +19,6 @@ data class Color(
     fun setR(value: UByte) = Color(value,g,b)
     fun setG(value: UByte) = Color(r,value,b)
     fun setB(value: UByte) = Color(r,g,value)
+    fun toInt() = r.toInt() or (g.toInt() shl 8) or(b.toInt() shl 16)
+    fun toUInt() = toInt().toUInt()
 }

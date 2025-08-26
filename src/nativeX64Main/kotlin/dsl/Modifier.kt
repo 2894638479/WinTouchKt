@@ -29,6 +29,7 @@ fun Modifier.height(height: Int) = apply { this.height = height }
 fun Modifier.min(width: Int, height: Int) = apply { this.minW = width; this.minH = height }
 fun Modifier.minWidth(width: Int) = apply { this.minW = width }
 fun Modifier.minHeight(height: Int) = apply { this.minH = height }
+fun Modifier.minSize(width: Int,height: Int) = minWidth(width).minHeight(height)
 fun Modifier.padding(value:Int) = padding(value,value,value,value)
 
 fun Modifier.padding(h:Int = 0, v:Int = 0) = padding(h,v,h,v)

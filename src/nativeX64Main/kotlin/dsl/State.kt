@@ -18,7 +18,7 @@ fun <T> withCombination(combination: State.Scope.Combination,block: State.Scope.
     return combination.block().also { currentCombination = rem }
 }
 
-open class State<T>(open val value: T):ReadOnlyProperty<Any?,T>{
+open class State<out T>(open val value: T):ReadOnlyProperty<Any?,T>{
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value
     context(scope:Scope)
     fun listen(trigger:Boolean, listener:(T)->Unit){

@@ -1,8 +1,11 @@
 package wrapper
 
 import dsl.Alignment
+import dsl.State
+import dsl.mutStateNull
 import error.catchInKotlin
 import error.wrapExceptionName
+import geometry.Color
 import kotlinx.cinterop.*
 import logger.info
 import logger.warning
@@ -55,6 +58,10 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
             }
             ScrollWindow(hWnd,0,-dy,null,null)
         }
+        WM_ERASEBKGND -> {
+            val hdc = wParam.toLong().toCPointer<HDC__>()
+            if(!guiWindow.onEraseBkGnd(hdc)) return default()
+        }
         WM_CLOSE -> if(!guiWindow.onClose()) return default()
         WM_DESTROY -> if(!guiWindow.onDestroy()) return default()
         WM_NCDESTROY -> {
@@ -106,9 +113,29 @@ abstract class GuiWindow (
             }
         }
     }
+    private var backGndBrush: CPointer<HBRUSH__>? = null
+    var backGndColor :Color? = null
+        set(value) {
+            if(field == value) return
+            field = value
+            backGndBrush?.let { DeleteObject(it) }
+            value?.let { backGndBrush = CreateSolidBrush(it.toUInt()) }
+            hwnd.invalidateRect()
+        }
 
     open fun onClose() = false
-    open fun onDestroy() = false
+    open fun onDestroy(): Boolean{
+        backGndBrush?.let { DeleteObject(it) }
+        return false
+    }
+    fun onEraseBkGnd(hdc:HDC?): Boolean{
+        return backGndBrush?.let { brush ->
+            hwnd.useRect { rect ->
+                FillRect(hdc,rect.ptr,brush)
+            }
+            true
+        } ?: false
+    }
 
     private fun createSubHwnd(style:Int,className:String,windowName:String,onCommand:()->Unit = {}) = CreateWindowExW(
         0u,
@@ -120,7 +147,7 @@ abstract class GuiWindow (
         idIncrease.toLong().toCPointer(),
         GetModuleHandleW(null),
         null
-    ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()}")) }.apply {
+    ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()} class $className window $windowName")) }.apply {
         this@GuiWindow.onCommand[controlId] = onCommand
     }
 

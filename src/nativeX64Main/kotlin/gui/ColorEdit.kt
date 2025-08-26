@@ -23,5 +23,6 @@ fun GuiScope.ColorEdit(modifier: Modifier = M,alignment: Alignment = A,get: Stat
             Text("b")
             Edit(combine { color.b.toString() }){color = color.setB(it)}
         }
+        Box(M.minHeight(20), color = combine { color }){}
     }
 }

@@ -1,6 +1,7 @@
 package dsl
 
 import error.wrapExceptionName
+import geometry.Color
 import logger.warning
 import platform.windows.RECT
 import wrapper.GuiWindow
@@ -14,7 +15,8 @@ abstract class GuiScope(
     parent: GuiWindow?, name:String,
     modifier: Modifier,
     alignment: Alignment,
-    style:Int = 0
+    color:State<Color?> = stateNull(),
+    style:Int = 0,
 ): AbstractGuiComponent(modifier, alignment),State.Scope {
     override var _onDestroy = mutableListOf<()->Unit>()
     private inline fun <T> remapScope(scope: State.Scope, block:GuiScope.()->T):T{
@@ -43,6 +45,9 @@ abstract class GuiScope(
             return super.onDestroy()
         }
     }
+    init {
+        color.listen(true) { window.backGndColor = it }
+    }
     private val top: GuiWindow get() = window.parent ?: window
     fun reLayout(){
         top.onSize()
@@ -66,8 +71,8 @@ abstract class GuiScope(
         return children.also { children = rem }
     }
     abstract fun onSize()
-    fun Box(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: BoxScope.()->Unit){
-        BoxScope(modifier, alignment, window).apply(block).addToChild()
+    fun Box(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(),color:State<Color?> = stateNull(), block: BoxScope.()->Unit){
+        BoxScope(modifier, alignment, window,color = color).apply(block).addToChild()
     }
     fun Column(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ColumnScope.()->Unit){
         ColumnScope(modifier, alignment, window).apply(block).addToChild()

@@ -9,7 +9,7 @@ import wrapper.allocRECT
 import wrapper.toOrigin
 
 class ScrollableColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, name:String = "column"):
-    GuiScope(parent,name,modifier, alignment, WS_VSCROLL) {
+    GuiScope(parent,name,modifier, alignment, style = WS_VSCROLL) {
     override var scrollableHeight = 0
     override val innerMinW get() = super.innerMinW + GetSystemMetrics(SM_CXVSCROLL)
     fun Modifier.weight(value:Float) = apply { weight = value }
