@@ -1,17 +1,17 @@
 package node
 
-import dsl.MutState
+import dsl.State
 import dsl.mutStateNull
-import geometry.*
+import geometry.Color
 import geometry.Font
 import geometry.Point
-import wrapper.*
+import wrapper.SerializerWrapper
 import kotlin.math.abs
 
-abstract class Node : MutState.Scope {
+abstract class Node : State.Scope {
     final override val _onDestroy: MutableList<() -> Unit> = mutableListOf()
     var parent by mutStateNull<NodeWithChild<*>>()
-    var context: Container.Context? by combine { parent?.context }
+    val context: Container.Context? by combine { parent?.context }
 
     var name by mutStateNull<String>()
     var scale by mutStateNull<Float>(constraint = { it?.let { if (it == 0f) 0.1f else abs(it) } })

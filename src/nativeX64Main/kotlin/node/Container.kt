@@ -31,7 +31,7 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
         .also { setHwndContainer(it.hwnd,this) }
     val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
     init {
-        context = Context(drawScope,keyHandler)
+        extract { context }.value = Context(drawScope,keyHandler)
         extract { context }.listen { error("should not modify context of container") }
     }
     class Context(

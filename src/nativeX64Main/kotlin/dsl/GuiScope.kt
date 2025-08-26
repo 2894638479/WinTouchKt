@@ -15,9 +15,9 @@ abstract class GuiScope(
     modifier: Modifier,
     alignment: Alignment,
     style:Int = 0
-): AbstractGuiComponent(modifier, alignment),MutState.Scope {
+): AbstractGuiComponent(modifier, alignment),State.Scope {
     override var _onDestroy = mutableListOf<()->Unit>()
-    private inline fun <T> remapScope(scope: MutState.Scope, block:GuiScope.()->T):T{
+    private inline fun <T> remapScope(scope: State.Scope, block:GuiScope.()->T):T{
         val rem = _onDestroy
         _onDestroy = scope._onDestroy
         return block().also { _onDestroy = rem }
@@ -82,8 +82,8 @@ abstract class GuiScope(
             hwnd.enable(enable.value)
         }.addToChild()
     }
-    fun Edit(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text: MutState<String>,onEdit:(String)->Unit){
-        GuiComponent(modifier, alignment, window.edit(text.value) { text.value = it }).apply {
+    fun Edit(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text: State<String>,onEdit:(String)->Unit){
+        GuiComponent(modifier, alignment, window.edit(text.value,onEdit)).apply {
             text.listen {
                 val sel = hwnd.sel
                 hwnd.name = it
@@ -104,7 +104,7 @@ abstract class GuiScope(
         ScrollableColumnScope(modifier, alignment, window).apply(block).addToChild()
     }
     fun <T> List(list: MutStateList<T>, item: GuiScope.(T)-> Unit){
-        class ListItem(val element:T,val scope: MutState.Scope,val child: GuiListChild)
+        class ListItem(val element:T,val scope: State.Scope,val child: GuiListChild)
         val fullList = GuiListChild(mutableListOf())
         children.add(fullList)
         val items = mutableListOf<ListItem>()
@@ -131,7 +131,7 @@ abstract class GuiScope(
         })
     }
 
-    fun <T> By(state:MutState<T>,content:(T)-> Unit){
+    fun <T> By(state:State<T>,content:(T)-> Unit){
         val list = GuiListChild(mutableListOf())
         children.add(list)
         val scope = MutState.SimpleScope()

@@ -1,9 +1,6 @@
 package node
 
 import dsl.MutStateList
-import geometry.Rect
-import kotlin.math.max
-import kotlin.math.min
 
 
 abstract class NodeWithChild<C: Node>: Node() {

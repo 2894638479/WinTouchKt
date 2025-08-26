@@ -1,19 +1,14 @@
 package gui
 
 import dsl.A
-import dsl.Alignment
 import dsl.GuiScope
 import dsl.M
-import dsl.Modifier
 import dsl.MutState
 import dsl.height
 import dsl.middleY
-import dsl.mutStateOf
 import dsl.padding
 import dsl.stateOf
-import logger.info
 import node.Button
-import node.Group
 import node.Node
 
 fun GuiScope.Node(nodeState: MutState<Node>){
