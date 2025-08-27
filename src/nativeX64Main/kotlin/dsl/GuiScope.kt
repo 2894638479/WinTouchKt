@@ -2,6 +2,7 @@ package dsl
 
 import error.wrapExceptionName
 import geometry.Color
+import logger.info
 import logger.warning
 import platform.windows.RECT
 import wrapper.GuiWindow
@@ -39,7 +40,7 @@ abstract class GuiScope(
         override val scrollableHeight get() = scope.scrollableHeight
         override val scrollableWidth get() = scope.scrollableWidth
         override fun onDestroy(): Boolean {
-            destroyChild()
+            destroy()
             children.clear()
             onCommand.clear()
             return super.onDestroy()
@@ -82,8 +83,8 @@ abstract class GuiScope(
     }
     fun Button(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text:State<String>,enable:State<Boolean> = stateOf(true), onClick:()->Unit){
         GuiComponent(modifier, alignment, window.button(text.value, onClick)).apply{
-            if(text is MutState) text.listen { hwnd.name = it }
-            if(enable is MutState) enable.listen { hwnd.enable(it) }
+            text.listen { hwnd.name = it }
+            enable.listen { hwnd.enable(it) }
             hwnd.enable(enable.value)
         }.addToChild()
     }
@@ -128,7 +129,7 @@ abstract class GuiScope(
                 val item = items.firstOrNull { it.element == element } ?: error("not found item")
                 items.remove(item)
                 if(!fullList.remove(item.child)) error("list remove child error")
-                item.child.destroyChild()
+                item.child.destroyHwnd()
                 item.scope.destroy()
                 reLayout()
             }
@@ -143,7 +144,7 @@ abstract class GuiScope(
         _onDestroy += { scope.destroy() }
         state.listen(true) {
             scope.destroy()
-            list.destroyChild()
+            list.destroyHwnd()
             list.clear()
             list += remapChild {
                 remapScope(scope){

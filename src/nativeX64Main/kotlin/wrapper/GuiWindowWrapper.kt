@@ -1,8 +1,6 @@
 package wrapper
 
 import dsl.Alignment
-import dsl.State
-import dsl.mutStateNull
 import error.catchInKotlin
 import error.wrapExceptionName
 import geometry.Color
@@ -94,7 +92,7 @@ abstract class GuiWindow (
     abstract val scrollableHeight: Int
     abstract val scrollableWidth: Int
 
-    var idIncrease = 100.toUShort()
+    var idIncrease = 0.toUShort()
         get() {
             do { field++ } while (onCommand.containsKey(field))
             return field
@@ -147,7 +145,7 @@ abstract class GuiWindow (
         idIncrease.toLong().toCPointer(),
         GetModuleHandleW(null),
         null
-    ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()} class $className window $windowName")) }.apply {
+    ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()} class $className window $windowName parent $hwnd")) }.apply {
         this@GuiWindow.onCommand[controlId] = onCommand
     }
 
@@ -180,14 +178,14 @@ abstract class GuiWindow (
                 styleEx,guiWindowClass, windowName, style,
                 CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,
                 null, null, GetModuleHandleW(null), null
-            )
+            ) ?: error("gui top window create failed ${GetLastError()} window $windowName")
         } else CreateWindowExW(
             0u, guiWindowClass, windowName, (WS_CHILD or WS_VISIBLE or style).toUInt(),
             0, 0, 0, 0, parent.hwnd.HWND, (parent.idIncrease).toLong().toCPointer(),
             GetModuleHandleW(null), null
-        )
+        ) ?: error("gui child window create failed ${GetLastError()} window $windowName")
         creatingGuiWindow = null
-        Hwnd(wnd ?: error("gui window create failed ${GetLastError()}")).also{
+        Hwnd(wnd).also{
             guiWindowMap[it] = this
         }
     }
