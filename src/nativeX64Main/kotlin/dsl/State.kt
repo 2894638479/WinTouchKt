@@ -60,15 +60,15 @@ open class State<out T>(open val value: T):ReadOnlyProperty<Any?,T>{
                 override operator fun invoke(any: Any?)= wrapExceptionName("combination update failed"){
                     val combination = Combination()
                     val value = withCombination(combination){func()}
-                    state.value = value
                     val newStates = combination.trackedStates
-                    if(!trackedStates.containsAll(newStates)){
+                    if(true){
                         val added = newStates.subtract(trackedStates)
                         val removed = trackedStates.subtract(newStates)
                         trackedStates = newStates
                         removed.forEach { it.remove1(this) }
                         added.forEach { it.listen1(this) }
                     }
+                    state.value = value
                 }
             }
             trackedStates.forEach{ it.listen1(update) }

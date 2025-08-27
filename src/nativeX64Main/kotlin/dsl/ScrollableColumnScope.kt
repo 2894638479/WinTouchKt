@@ -19,7 +19,7 @@ class ScrollableColumnScope(modifier: Modifier, alignment: Alignment, parent: Gu
             hwnd.useRect { rect ->
                 rect.toOrigin()
                 allocRECT {
-                    placeLR(it.modifier, rect, it.alignment)
+                    placeLR(it.modifier, rect, it.alignment){it.outerMinW}
                     h += it.modifier.paddingTop
                     top = h
                     h += it.innerMinH

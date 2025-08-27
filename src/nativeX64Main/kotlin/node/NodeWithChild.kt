@@ -12,7 +12,7 @@ abstract class NodeWithChild<C: Node>: Node() {
             override fun onAdd(element: C) {
                 element.parent = this@NodeWithChild
             }
-            override fun onAnyChange() {
+            override fun onAnyChange(list: List<C>) {
                 context?.drawScope?.run { reDraw = true }
             }
         })

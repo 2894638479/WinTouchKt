@@ -24,7 +24,7 @@ class ColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, 
                 val modifier = it.modifier
                 val align = it.alignment
                 allocRECT {
-                    placeLR(modifier, rect, align)
+                    placeLR(modifier, rect, align){it.outerMinW}
                     val offsetY = totalH
                     top = offsetY
                     bottom = top + heights[i]

@@ -20,7 +20,7 @@ class RowScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, nam
                 val modifier = it.modifier
                 val align = it.alignment
                 allocRECT {
-                    placeTB(modifier, rect, align)
+                    placeTB(modifier, rect, align){it.outerMinH}
                     val offsetX = totalW
                     left = offsetX
                     right = left + widths[i]

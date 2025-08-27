@@ -21,7 +21,7 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
     fun HIWORD(value: Int) = (value shr 16) and 0xFFFF
     when(uMsg.toInt()){
         WM_SIZE -> memScoped {
-            info("gui window size changing to ${hwnd.useRect { it.str() }}")
+//            info("gui window size changing to ${hwnd.useRect { it.str() }}")
             if(!initialized) return default()
             wrapExceptionName({ "onSize error" }){
                 guiWindow.onSize()

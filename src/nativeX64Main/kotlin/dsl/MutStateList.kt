@@ -5,7 +5,7 @@ class MutStateList<T> private constructor(internal val delegate:MutableList<T>):
     constructor(vararg value:T):this(mutableListOf(*value))
     internal val listeners = mutableListOf<Listener<T>>()
     fun interface Listener<T>{
-        fun onAnyChange()
+        fun onAnyChange(list:List<T>)
         fun onAdd(element:T){}
         fun onRemove(element: T){}
     }
@@ -14,36 +14,36 @@ class MutStateList<T> private constructor(internal val delegate:MutableList<T>):
         listeners += listener
         scope._onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
         if (trigger) {
-            listener.onAnyChange()
+            listener.onAnyChange(this)
             forEach { listener.onAdd(it) }
         }
     }
     context(scope: State.Scope)
-    fun <V> state(func:(List<T>)->V) = MutState(func(delegate)).also {
-        listen { it.value = func(delegate) }
+    fun <V> state(func:(List<T>)->V) = MutState(func(delegate)).also { state ->
+        listen { state.value = func(delegate) }
     }
     override fun add(element: T) = delegate.add(element).apply {
         listeners.forEach {
             it.onAdd(element)
-            it.onAnyChange()
+            it.onAnyChange(this@MutStateList)
         }
     }
     override fun add(index: Int, element: T) = delegate.add(index, element).apply {
         listeners.forEach {
             it.onAdd(element)
-            it.onAnyChange()
+            it.onAnyChange(this@MutStateList)
         }
     }
     override fun addAll(elements: Collection<T>) = delegate.addAll(elements).apply {
         listeners.forEach {
             for(element in elements) { it.onAdd(element) }
-            it.onAnyChange()
+            it.onAnyChange(this@MutStateList)
         }
     }
     override fun addAll(index: Int, elements: Collection<T>) = delegate.addAll(index, elements).apply {
         listeners.forEach {
             for(element in elements) { it.onAdd(element) }
-            it.onAnyChange()
+            it.onAnyChange(this@MutStateList)
         }
     }
     override fun clear() {
@@ -51,20 +51,20 @@ class MutStateList<T> private constructor(internal val delegate:MutableList<T>):
         delegate.clear().apply {
             listeners.forEach {
                 for(element in remembered) { it.onRemove(element) }
-                it.onAnyChange()
+                it.onAnyChange(this@MutStateList)
             }
         }
     }
     override fun removeAt(index: Int) = delegate.removeAt(index).apply {
         listeners.forEach {
             it.onRemove(this)
-            it.onAnyChange()
+            it.onAnyChange(this@MutStateList)
         }
     }
     override fun remove(element: T) = delegate.remove(element).apply {
         if(this) listeners.forEach {
             it.onRemove(element)
-            it.onAnyChange()
+            it.onAnyChange(this@MutStateList)
         }
     }
     override fun removeAll(elements: Collection<T>):Boolean {
@@ -75,7 +75,7 @@ class MutStateList<T> private constructor(internal val delegate:MutableList<T>):
                 modified = true
             }
         }
-        if (modified) listeners.forEach { it.onAnyChange() }
+        if (modified) listeners.forEach { it.onAnyChange(this) }
         return modified
     }
 }

@@ -9,6 +9,7 @@ import wrapper.GuiWindow
 import wrapper.height
 import wrapper.str
 import wrapper.width
+import kotlin.math.max
 
 
 @Gui
@@ -32,8 +33,8 @@ abstract class GuiScope(
     ){
         val scope = this@GuiScope
         override fun onSize() {
-            if(parent == null) warning("top window $name onSize ${hwnd.useRect { it.str() }}")
-            else warning("$name onSize ${hwnd.useRect { it.str() }}")
+//            if(parent == null) warning("top window $name onSize ${hwnd.useRect { it.str() }}")
+//            else warning("$name onSize ${hwnd.useRect { it.str() }}")
             scope.onSize()
             super.onSize()
         }
@@ -101,9 +102,9 @@ abstract class GuiScope(
     fun Custom(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block:()-> GuiWindow){
         GuiComponent(modifier, alignment, block().hwnd).addToChild()
     }
-    fun Text(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text: State<String>){
-        GuiComponent(modifier, alignment, window.text(text.value, alignment)).apply {
-            if(text is MutState) text.listen { hwnd.name = it }
+    fun Text(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), text: State<String>,textAlign: Alignment = A.middle()){
+        GuiComponent(modifier, alignment, window.text(text.value, textAlign)).apply {
+            text.listen { hwnd.name = it }
         }.addToChild()
     }
     fun ScrollableColumn(modifier: Modifier = Modifier(), alignment: Alignment = Alignment(), block: ScrollableColumnScope.()->Unit){
@@ -115,6 +116,7 @@ abstract class GuiScope(
         children.add(fullList)
         val items = mutableListOf<ListItem>()
         list.listen(true,object:MutStateList.Listener<T>{
+            override fun onAnyChange(list: List<T>) {}
             override fun onAdd(element: T) {
                 val scope = MutState.SimpleScope()
                 val item = ListItem(element,scope, GuiListChild(mutableListOf()))
@@ -133,7 +135,6 @@ abstract class GuiScope(
                 item.scope.destroy()
                 reLayout()
             }
-            override fun onAnyChange() {}
         })
     }
 
@@ -162,7 +163,11 @@ abstract class GuiScope(
         if(min.sum() >= full) return min
         val indices = weight.indices
         val size = weight.size
-        val results = IntArray(size){ forced[it].let { if(it == 0) Int.MIN_VALUE else it }  }
+        val results = IntArray(size){ index ->
+            forced[index].let {
+                if(it == 0) Int.MIN_VALUE else max(it,min[index])
+            }
+        }
         var sumWeight = 0f
         var remain = 0
         fun calSumWeight(){
@@ -221,9 +226,8 @@ abstract class GuiScope(
     }
 
 
-    fun RECT.placeTB(modifier: Modifier, bound: RECT, align: Alignment) {
-        val height = if(modifier.minH == 0) bound.height
-        else modifier.run { minH + paddingH }
+    fun RECT.placeTB(modifier: Modifier, bound: RECT, align: Alignment,minH:()->Int) {
+        val height = if(modifier.height == 0) bound.height else minH()
         if (align.bottom) {
             bottom = bound.bottom
             top = bottom - height
@@ -237,9 +241,8 @@ abstract class GuiScope(
     }
 
 
-    fun RECT.placeLR(modifier: Modifier, bound: RECT, align: Alignment) {
-        val width = if(modifier.minW == 0) bound.width
-        else modifier.run { minW + paddingW }
+    fun RECT.placeLR(modifier: Modifier, bound: RECT, align: Alignment,minW:()->Int) {
+        val width = if(modifier.width == 0) bound.width else minW()
         if (align.right) {
             right = bound.right
             left = right - width

@@ -15,8 +15,8 @@ class BoxScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?,
             hwnd.useRect { rect ->
                 rect.toOrigin()
                 allocRECT {
-                    placeLR(modifier,rect,align)
-                    placeTB(modifier,rect,align)
+                    placeLR(modifier,rect,align){it.outerMinW}
+                    placeTB(modifier,rect,align){it.outerMinH}
                     padding(modifier)
                     it.hwnd.setRect(this)
                 }

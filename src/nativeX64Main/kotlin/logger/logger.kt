@@ -35,13 +35,13 @@ object AnsiColor {
     fun String.color(value:String) = value + this + RESET
 }
 
-fun info(content:String){
+fun info(content:Any){
     if (printInfo) println("[info] $content".color(WHITE))
 }
-fun warning(content:String){
+fun warning(content:Any){
     if (printWarning) println("[warning] $content".color(YELLOW))
 }
-fun printError(content:String){
+fun printError(content:Any){
     if (printError) println("[error] $content".color(RED))
 }
 
