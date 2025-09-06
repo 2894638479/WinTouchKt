@@ -23,28 +23,41 @@ import wrapper.Delegate
 
 fun GuiScope.ShapeEdit(modifier: Modifier = M, alignment: Alignment = A, get: State<Shape>, set:(Shape)->Unit){
     var shape by Delegate(get,set)
-    info("shape1")
     Column(modifier,alignment) {
-        info("shape2")
+        Row(M.height(60)) {
+            Button(M.padding(10),A,stateOf("矩形"),combine { shape !is Rect }){
+                shape = Rect(100f,100f)
+            }
+            Button(M.padding(10),A,stateOf("圆角矩形"),combine { shape !is RoundedRect }){
+                shape = RoundedRect(100f,100f,20f)
+            }
+            Button(M.padding(10),A,stateOf("圆形"),combine { shape !is Round }){
+                shape = Round(50f)
+            }
+        }
         By(combine { shape::class }) {
             when(it) {
                 Rect::class -> {
-                    Row(M.height(40),A.left()){
-                        Text(M.size(20,20),A.middleY(), stateOf("宽"))
-                        EditFloat(M,A,combine { (shape as Rect).width }){
-                            if(it != null) shape = (shape as Rect).run{ Rect(it,height) }
+                    val rect = shape as Rect
+                    Row {
+                        Text(M.size(25,25).padding(5),A, stateOf("宽"))
+                        EditFloat(M.padding(5),A,combine { rect.width }){
+                            if(it != null) shape = rect.run{ Rect(it,height) }
                         }
                     }
                 }
                 RoundedRect::class -> {
+                    val roundedRect = shape as RoundedRect
                     Row(M.height(40),A.left()){
-                        Text(M.size(20,20).padding(h = 5),A.middleY(), stateOf("width"))
-                        EditFloat(M.height(20).padding(h = 5),A.middleY(),combine { (shape as RoundedRect).width }){
-                            if(it != null) shape = (shape as RoundedRect).run{ RoundedRect(it,height,r) }
+                        Text(M.size(20,20).padding(h = 5),A, stateOf("width"))
+                        EditFloat(M.height(20).padding(h = 5),A,combine { roundedRect.width }){
+                            if(it != null) shape = roundedRect.run{ RoundedRect(it,height,r) }
                         }
                     }
                 }
                 Round::class -> {
+                    val round = shape as Round
+//                    Row(M.height())
                 }
             }
         }

@@ -60,7 +60,7 @@ fun buttonsLayeredWindow(windowName:String): Hwnd {
 fun loopWindowMessage(hwnd: Hwnd? = null) = memScoped {
     val message: MSG = alloc()
     while (GetMessageW(message.ptr, hwnd?.HWND, 0u, 0u) > 0) {
-//        info("message looped once")
+//        info("message looped once ${message.hwnd?.let{Hwnd(it)}} ${message.message}")
         TranslateMessage(message.ptr)
         DispatchMessageW(message.ptr)
     }

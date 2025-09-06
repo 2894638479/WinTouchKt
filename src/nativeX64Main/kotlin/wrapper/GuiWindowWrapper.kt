@@ -1,6 +1,8 @@
 package wrapper
 
 import dsl.Alignment
+import dsl.Modifier
+import dsl.State
 import error.catchInKotlin
 import error.wrapExceptionName
 import geometry.Color
@@ -8,6 +10,7 @@ import kotlinx.cinterop.*
 import logger.info
 import logger.warning
 import platform.windows.*
+import kotlin.math.roundToInt
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -41,7 +44,13 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
             val notificationCode = HIWORD(wParam.toInt())
             guiWindow.onWmCommand(id,notificationCode)
         }
+        WM_HSCROLL -> {
+            if(lParam != 0L) {
+                guiWindow.onHScrollHwnd(Hwnd(lParam.toCPointer()))
+            }
+        }
         WM_VSCROLL -> memScoped {
+            if(lParam != 0L) return@memScoped default()
             val dy = hwnd.scroll(SB_VERT) {
                 when (LOWORD(wParam.toInt())) {
                     SB_TOP -> nMin
@@ -81,10 +90,12 @@ const val MY_DESTROY = BN_LAST + 1
 @OptIn(ExperimentalForeignApi::class)
 abstract class GuiWindow (
     val windowName:String,
-    internal var minW:Int = 0, internal var minH:Int = 0,
+    modifier: Modifier,
     style: Int = 0,
     val parent:GuiWindow? = null
 ) {
+    internal var minW = modifier.minW
+    internal var minH = modifier.minH
     open fun onSize(){
         if(scrollableHeight == -1) return
         hwnd.updateScrollSize(SB_VERT,scrollableHeight)
@@ -104,7 +115,7 @@ abstract class GuiWindow (
                 onCommand[id]?.invoke() ?: error("no onClick found for id $id in $hwnd")
             }
             EN_CHANGE -> {
-                onCommand[id]?.invoke() ?: warning("no onEdit found for id $id in $hwnd")
+                onCommand[id]?.invoke()// ?: warning("no onEdit found for id $id in $hwnd")
             }
             MY_DESTROY -> {
                 onCommand.remove(id)
@@ -160,6 +171,31 @@ abstract class GuiWindow (
 
     fun text(text:String,alignment: Alignment) = createSubHwnd(alignment.staticStyle, WC_STATICA,text)
 
+    fun onHScrollHwnd(hwnd: Hwnd){
+        onCommand[hwnd.controlId]?.invoke()
+    }
+    fun <T> trackBar(range: ClosedRange<T>, steps:Int = 1000, onChange:(T)->Unit) where T:Number, T:Comparable<T>
+    = createSubHwnd(0,"msctls_trackbar32","trackBar").apply {
+        SendMessage!!(HWND, TBM_SETRANGEMIN.toUInt(), FALSE.toULong(), 0)
+        SendMessage!!(HWND, TBM_SETRANGEMAX.toUInt(), FALSE.toULong(), steps.toLong())
+        SendMessage!!(HWND, TBM_SETPAGESIZE.toUInt(), 0u, steps.toLong() / 10)
+        onCommand[controlId] = {
+            val pos = SendMessage!!(HWND,TBM_GETPOS.toUInt(),0u,0L)
+            info(pos)
+            val start = range.start.toDouble()
+            val end = range.endInclusive.toDouble()
+            val progress = pos.toDouble() / steps.toDouble()
+            val value = start + (end - start) * progress
+            onChange(when(range.start::class){
+                Int::class -> value.roundToInt() as T
+                Float::class -> value.toFloat() as T
+                Double::class -> value as T
+                Byte::class -> value.roundToInt().toByte() as T
+                else -> error("unsupported trackbar type: ${range.start::class}")
+            })
+        }
+    }
+
     val hwnd:Hwnd = run {
         val styleEx = (WS_EX_TOPMOST).toUInt()
         creatingGuiWindow = this
@@ -173,12 +209,17 @@ abstract class GuiWindow (
                 AdjustWindowRectEx(ptr,style,FALSE,styleEx)
                 minW = right - left
                 minH = bottom - top
+
+                right = modifier.width
+                bottom = modifier.height
+                AdjustWindowRectEx(ptr,style,FALSE,styleEx)
+
+                CreateWindowExW(
+                    styleEx,guiWindowClass, windowName, style,
+                    CW_USEDEFAULT, CW_USEDEFAULT, right - left,bottom - top,
+                    null, null, GetModuleHandleW(null), null
+                ) ?: error("gui top window create failed ${GetLastError()} window $windowName")
             }
-            CreateWindowExW(
-                styleEx,guiWindowClass, windowName, style,
-                CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,
-                null, null, GetModuleHandleW(null), null
-            ) ?: error("gui top window create failed ${GetLastError()} window $windowName")
         } else CreateWindowExW(
             0u, guiWindowClass, windowName, (WS_CHILD or WS_VISIBLE or style).toUInt(),
             0, 0, 0, 0, parent.hwnd.HWND, (parent.idIncrease).toLong().toCPointer(),

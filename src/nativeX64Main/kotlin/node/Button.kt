@@ -18,9 +18,9 @@ import wrapper.d2dDrawText
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
     var key:Set<UByte>,
-    shape: Shape,
+    initShape: Shape,
 ): Node(){
-    var shape by mutStateOf(shape)
+    var shape by mutStateOf(initShape)
     var count by mutStateOf(0u)
     val pressed by combine { count != 0u }
 
@@ -91,7 +91,6 @@ class Button(
             val round = "round" from {(shape as? Round)}
         }
         override fun Descriptor.generate(): Button {
-            warning("button1")
             var shapeCount = 0
             rect.nullable?.let { shapeCount++ }
             round.nullable?.let { shapeCount++ }
@@ -101,7 +100,6 @@ class Button(
                 ?: roundedRect.nullable
                 ?: round.nullable
                 ?: error("shape is null")
-            warning("button2")
             return Button(key.nonNull,shape).addNodeInfo()
         }
     }

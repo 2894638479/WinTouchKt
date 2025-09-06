@@ -26,9 +26,8 @@ val M get() = Modifier()
 fun Modifier.size(width: Int, height: Int) = apply { this.width = width; this.height = height }
 fun Modifier.width(width: Int) = apply { this.width = width }
 fun Modifier.height(height: Int) = apply { this.height = height }
-fun Modifier.min(width: Int, height: Int) = apply { this.minW = width; this.minH = height }
-fun Modifier.minWidth(width: Int) = apply { this.minW = width }
-fun Modifier.minHeight(height: Int) = apply { this.minH = height }
+fun Modifier.minWidth(width: Int) = apply { minW = max(minW,width) }
+fun Modifier.minHeight(height: Int) = apply { minH = max(minH,height) }
 fun Modifier.minSize(width: Int,height: Int) = minWidth(width).minHeight(height)
 fun Modifier.padding(value:Int) = padding(value,value,value,value)
 

@@ -13,7 +13,7 @@ value class D2dBrush(val value: CPointer<d2dSolidColorBrushHolder>){
         @OptIn(ExperimentalForeignApi::class)
         fun create(target: D2dTarget, key: Color) = memScoped {
             val brush = nativeHeap.alloc<CPointerVar<d2dSolidColorBrushHolder>>()
-            val result =d2dCreateSolidColorBrush(
+            val result = d2dCreateSolidColorBrush(
                 target.value,
                 brush.ptr,
                 key.r.toFloat() / 255f,

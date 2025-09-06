@@ -6,7 +6,6 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
 import libs.Clib.GBKToUTF8
-import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
 import logger.warning
 import node.Container
@@ -28,6 +27,7 @@ fun main() = catchInKotlin {
         str
     }).run { Unit }
 }
+
 fun Main(args: Array<String>) = processArgs(args).apply {
     registerLayered()
     registerGui()
@@ -38,9 +38,11 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     val hwndLayered = container.drawScope.hwnd
     hwndLayered.showAndUpdate()
 
-    TopWindow("window",800,600){
-        wrapExceptionName("creating MainContent") {
-            MainContent(container)
+    context(topWindows){
+        Window("window", M.minWidth(800).minHeight(600)) {
+            wrapExceptionName("creating MainContent") {
+                MainContent(container)
+            }
         }
     }
     loopWindowMessage()

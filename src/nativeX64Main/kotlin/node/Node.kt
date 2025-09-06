@@ -4,7 +4,13 @@ import dsl.State
 import dsl.mutStateNull
 import geometry.Color
 import geometry.Font
+import geometry.GREY_BRIGHT
+import geometry.GREY_DARK
 import geometry.Point
+import geometry.RED
+import geometry.WHITE
+import wrapper.D2dBrush
+import wrapper.D2dFont
 import wrapper.SerializerWrapper
 import kotlin.math.abs
 
@@ -41,26 +47,34 @@ abstract class Node : State.Scope {
 
     fun displayStyle(pressed:Boolean) = if(pressed) displayPressedStyle else displayStyle
 
-    class DisplayStyle(node:Node,pressed:Boolean){
+    class DisplayStyle(private val node:Node,pressed:Boolean): State.Scope by node {
         companion object {
-            private fun <T> Node.display(pressed: Boolean,
-                fromStyle:ButtonStyle.()->T, fromDisplay:DisplayStyle.()->T) = combine {
+            private fun <T> Node.display(
+                pressed: Boolean,
+                default:(Boolean)->T,
+                fromStyle:ButtonStyle.()->T?,
+                fromDisplay:DisplayStyle.()->T?
+            ) = combine {
                 val thisStyle = style(pressed)
-                val parentDisplay = parent?.displayStyle(pressed) ?: return@combine thisStyle?.fromStyle()
-                thisStyle?.fromStyle() ?: parentDisplay.fromDisplay()
+                val parentDisplay = parent?.displayStyle(pressed)
+                    ?: return@combine thisStyle?.fromStyle() ?: default(pressed)
+                thisStyle?.fromStyle() ?: parentDisplay.fromDisplay() ?: default(pressed)
             }
+            fun defaultColor(pressed:Boolean) = if(pressed) GREY_BRIGHT else GREY_DARK
+            fun defaultOutlineColor(pressed:Boolean) = WHITE
+            fun defaultTextColor(pressed: Boolean) = RED
         }
-        val color: Color? by node.display(pressed,{color}){color}
-        val textColor: Color? by node.display(pressed,{textColor}){textColor}
-        val outlineColor: Color? by node.display(pressed,{outlineColor}){outlineColor}
-        val fontFamily: String? by node.display(pressed,{fontFamily}){fontFamily}
-        val fontSize: Float? by node.display(pressed,{fontSize}){fontSize}
-        val fontStyle: Font.Style? by node.display(pressed,{fontStyle}){fontStyle}
-        val fontWeight: Int? by node.display(pressed,{fontWeight}){fontWeight}
+        val color: Color by node.display(pressed,::defaultColor,{color}){color}
+        val textColor: Color by node.display(pressed,::defaultTextColor,{textColor}){textColor}
+        val outlineColor: Color by node.display(pressed,::defaultOutlineColor,{outlineColor}){outlineColor}
+        val fontFamily: String? by node.display(pressed,{null},{fontFamily}){fontFamily}
+        val fontSize: Float? by node.display(pressed,{null},{fontSize}){fontSize}
+        val fontStyle: Font.Style? by node.display(pressed,{null},{fontStyle}){fontStyle}
+        val fontWeight: Int? by node.display(pressed,{null},{fontWeight}){fontWeight}
 
-        val font by node.combine {
-            val context = node.context ?: return@combine null
-            context.drawScope.cache.font(
+        val font : D2dFont? get() {
+            val context = node.context ?: return null
+            return context.drawScope.cache.font(
                 Font(
                     fontFamily,
                     fontSize,
@@ -70,18 +84,18 @@ abstract class Node : State.Scope {
                 )
             )
         }
-        val brush by node.combine {
-            val drawScope = node.context?.drawScope ?: return@combine null
-            drawScope.cache.brush(color ?: drawScope.defaultColor(pressed))
+        val brush : D2dBrush? get() {
+            val drawScope = node.context?.drawScope ?: return null
+            return drawScope.cache.brush(color)
         }
-        val textBrush by node.combine {
-            val drawScope = node.context?.drawScope ?: return@combine null
-            drawScope.cache.brush(textColor ?: drawScope.defaultTextColor(pressed))
+        val textBrush : D2dBrush? get() {
+            val drawScope = node.context?.drawScope ?: return null
+            return drawScope.cache.brush(textColor)
         }
-        val outlineBrush by node.combine {
-            if (node.outlineWidth.let { (it ?: 0f) <= 0f }) return@combine null
-            val drawScope = node.context?.drawScope ?: return@combine null
-            drawScope.cache.brush(outlineColor ?: drawScope.defaultOutlineColor(pressed))
+        val outlineBrush : D2dBrush? get() {
+            if (node.outlineWidth.let { (it ?: 0f) <= 0f }) return null
+            val drawScope = node.context?.drawScope ?: return null
+            return drawScope.cache.brush(outlineColor)
         }
     }
 

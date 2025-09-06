@@ -57,7 +57,7 @@ open class State<out T>(open val value: T):ReadOnlyProperty<Any?,T>{
             fun MutState<*>.remove1(listener:(Any?)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
 
             val update = object: Function1<Any?,Unit> {
-                override operator fun invoke(any: Any?)= wrapExceptionName("combination update failed"){
+                override operator fun invoke(any: Any?)= wrapExceptionName({ "combination update failed $trackedStates" }){
                     val combination = Combination()
                     val value = withCombination(combination){func()}
                     val newStates = combination.trackedStates

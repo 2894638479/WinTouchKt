@@ -7,9 +7,11 @@ import dsl.MutState
 import dsl.height
 import dsl.middle
 import dsl.middleY
+import dsl.minHeight
 import dsl.padding
 import dsl.stateOf
 import node.Button
+import node.ButtonStyle
 import node.Node
 
 fun GuiScope.Node(nodeState: MutState<Node>){
@@ -25,13 +27,20 @@ fun GuiScope.Node(nodeState: MutState<Node>){
         Text(M.padding(h = 5).weight(0.13f),A.middle(),stateOf("位置"))
         PointEdit(M.padding(h = 5).weight(1f),A.middle(),combine { node.offset }){node.offset = it}
     }
-    By(combine { node.style != null }){
-        if(it) ButtonStyleEdit(M,A,combine { node.style!! })
+    Row(M.height(1)) {
+        If(combine { node.style != null }){
+            Column(M.height(1)) {
+                ButtonStyleEdit(M.height(1),A,combine { node.displayStyle },combine { node.style!! })
+                DefaultButton { node.style = null }
+            }
+        } Else {
+            CreateButton { node.style = ButtonStyle() }
+        }
     }
 
     By(combine { node::class }){
         if(it == Button::class) {
-            ShapeEdit(M.height(200),A,combine { (node as Button).shape }){(node as Button).shape = it}
+            ShapeEdit(M.height(1),A,combine { (node as Button).shape }){(node as Button).shape = it}
         }
     }
 }

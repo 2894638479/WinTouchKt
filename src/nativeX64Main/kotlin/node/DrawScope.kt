@@ -1,5 +1,6 @@
 package node
 
+import dsl.mutStateOf
 import geometry.*
 import kotlinx.cinterop.ExperimentalForeignApi
 import libs.Clib.d2dBeginDraw
@@ -7,6 +8,8 @@ import libs.Clib.d2dClear
 import libs.Clib.d2dCreateTarget
 import libs.Clib.d2dEndDraw
 import libs.Clib.d2dResizeRenderTarget
+import logger.info
+import logger.warning
 import platform.windows.LWA_ALPHA
 import platform.windows.LWA_COLORKEY
 import platform.windows.SetLayeredWindowAttributes
@@ -33,9 +36,8 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
         if(reDraw) {
             d2dClear(target.value)
             buttons.forEach { it.onDraw(this) }
-        }
-        else {
-            toErase.forEach{it()}
+        } else {
+            toErase.forEach{ it() }
             toDraw.forEach { it() }
         }
         reDraw = false
@@ -76,16 +78,25 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
         target.free()
         writeFactory.free()
     }
-    fun defaultColor(pressed:Boolean) = if(pressed) GREY_BRIGHT else GREY_DARK
-    fun defaultOutlineColor(pressed:Boolean) = WHITE
-    fun defaultTextColor(pressed: Boolean) = RED
-    val cache = Cache(writeFactory,target)
-    class Cache(private val writeFactory: D2dWriteFactory, private val target: D2dTarget) {
+    private var cacheNotifier by mutStateOf(false)
+    private val _cache = Cache(writeFactory,target){ cacheNotifier = !cacheNotifier }
+    val cache get() = _cache.apply { cacheNotifier }
+    class Cache(private val writeFactory: D2dWriteFactory, private val target: D2dTarget,val notifyCleared:()->Unit) {
         private val brushes = HashMap<Color, D2dBrush>(100)
         private val fonts = HashMap<Font, D2dFont>(100)
-        fun clearBrushes() = brushes.forEach { (_,brush) -> brush.free() }.run { brushes.clear() }
-        fun clearFonts() = fonts.forEach { (_,font) -> font.free() }.run { fonts.clear() }
-        private fun checkOrClear() {
+        private fun clearBrushes() {
+            brushes.forEach { (_,brush) -> brush.free() }
+            brushes.clear()
+            info("brushes cache cleared")
+            notifyCleared()
+        }
+        private fun clearFonts() {
+            fonts.forEach { (_,font) -> font.free() }
+            fonts.clear()
+            info("fonts cache cleared")
+            notifyCleared()
+        }
+        fun checkOrClear() {
             if (brushes.count() >= 200) clearBrushes()
             if (fonts.count() >= 200) clearFonts()
         }

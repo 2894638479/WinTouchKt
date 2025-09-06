@@ -38,7 +38,7 @@ val RECT.midX get() = (left + right) / 2
 val RECT.midY get() = (top + bottom) / 2
 
 @OptIn(ExperimentalForeignApi::class)
-fun allocRECT(block:RECT.()->Unit) = memScoped { alloc<RECT>().block() }
+inline fun <T> allocRECT(block:RECT.()->T) = memScoped { alloc<RECT>().block() }
 
 fun RECT.cutTop(rate:Float) { top += ((bottom - top)*rate).roundToInt() }
 fun RECT.cutBottom(rate:Float) { bottom -= ((bottom - top)*rate).roundToInt() }
