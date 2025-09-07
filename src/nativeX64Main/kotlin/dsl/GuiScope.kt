@@ -86,14 +86,14 @@ abstract class GuiScope(
         RowScope(modifier, alignment, window).apply(block).addToChild()
     }
     fun Button(modifier: Modifier = M, alignment: Alignment = A, text:State<String>,enable:State<Boolean> = stateOf(true), onClick:()->Unit){
-        GuiComponent(modifier, alignment, window.button(text.value, onClick)).apply{
+        GuiComponent(modifier.minHeight(25), alignment, window.button(text.value, onClick)).apply{
             text.listen { hwnd.name = it }
             enable.listen { hwnd.enable(it) }
             hwnd.enable(enable.value)
         }.addToChild()
     }
     fun Edit(modifier: Modifier = M, alignment: Alignment = A, text: State<String>,onEdit:(String)->Unit){
-        GuiComponent(modifier, alignment, window.edit(text.value,onEdit)).apply {
+        GuiComponent(modifier.minHeight(25), alignment, window.edit(text.value,onEdit)).apply {
             text.listen {
                 val sel = hwnd.sel
                 hwnd.name = it
@@ -106,13 +106,13 @@ abstract class GuiScope(
         GuiComponent(modifier, alignment, block().hwnd).addToChild()
     }
     fun Text(modifier: Modifier = M, alignment: Alignment = A, text: State<String>,textAlign: Alignment = A.middle()){
-        GuiComponent(modifier, alignment, window.text(text.value, textAlign)).apply {
+        GuiComponent(modifier.minHeight(25), alignment, window.text(text.value, textAlign)).apply {
             text.listen { hwnd.name = it }
         }.addToChild()
     }
     fun <T> TrackBar(modifier: Modifier = M, alignment: Alignment = A,value: State<T>,range: ClosedRange<T>,steps:Int = 1000,onChange:(T)->Unit)
     where T:Number,T:Comparable<T>{
-        GuiComponent(modifier,alignment,window.trackBar(range,steps,onChange)).apply {
+        GuiComponent(modifier.minHeight(40),alignment,window.trackBar(range,steps,onChange)).apply {
             value.listen(true) {
                 val start = range.start.toDouble()
                 val end = range.endInclusive.toDouble()

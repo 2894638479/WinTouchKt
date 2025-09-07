@@ -53,7 +53,7 @@ fun GuiScope.MainContent(container: Container) = Row {
             }
         }
     }
-    Column(M.weight(2f)) {
+    ScrollableColumn(M.weight(2f)) {
         Node(extract { node })
     }
 }

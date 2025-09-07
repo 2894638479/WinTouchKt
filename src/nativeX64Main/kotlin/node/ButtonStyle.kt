@@ -9,21 +9,13 @@ import wrapper.SerializerWrapper
 
 @Serializable(with = ButtonStyle.Serializer::class)
 class ButtonStyle {
-    val colorState = mutStateNull<Color>()
-    val textColorState = mutStateNull<Color>()
-    val outlineColorState = mutStateNull<Color>()
-    val fontFamilyState = mutStateNull<String>()
-    val fontSizeState = mutStateNull<Float>()
-    val fontStyleState = mutStateNull<Font.Style>()
-    val fontWeightState = mutStateNull<Int>()
-
-    var color by colorState
-    var textColor by textColorState
-    var outlineColor by outlineColorState
-    var fontFamily by fontFamilyState
-    var fontSize by fontSizeState
-    var fontStyle by fontStyleState
-    var fontWeight by fontWeightState
+    var color by mutStateNull<Color>()
+    var textColor by mutStateNull<Color>()
+    var outlineColor by mutStateNull<Color>()
+    var fontFamily by mutStateNull<String>()
+    var fontSize by mutStateNull<Float>()
+    var fontStyle by mutStateNull<Font.Style>()
+    var fontWeight by mutStateNull<Int>()
 
     object Serializer :SerializerWrapper<ButtonStyle,Serializer.Descriptor>("ButtonStyle",Descriptor){
         object Descriptor:SerializerWrapper.Descriptor<ButtonStyle>(){

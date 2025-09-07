@@ -27,17 +27,29 @@ fun GuiScope.Node(nodeState: MutState<Node>){
         Text(M.padding(h = 5).weight(0.13f),A.middle(),stateOf("位置"))
         PointEdit(M.padding(h = 5).weight(1f),A.middle(),combine { node.offset }){node.offset = it}
     }
-    Row(M.height(1)) {
+    Text(M.padding(5).padding(top = 10).padding(h = 10),A,combine { "松开时样式" + (node.style?.let {""} ?: "(默认)") })
+    Row {
         If(combine { node.style != null }){
-            Column(M.height(1)) {
-                ButtonStyleEdit(M.height(1),A,combine { node.displayStyle },combine { node.style!! })
-                DefaultButton { node.style = null }
+            Column {
+                ButtonStyleEdit(M.padding(h = 10),A,combine { node.displayStyle },combine { node.style!! })
+                DefaultButton(M.padding(5).padding(h = 10)) { node.style = null }
             }
         } Else {
-            CreateButton { node.style = ButtonStyle() }
+            CreateButton(M.padding(5).padding(h = 10)) { node.style = ButtonStyle() }
         }
     }
+    Text(M.padding(5).padding(top = 10).padding(h = 10),A,combine { "按下时样式" + (node.style?.let {""} ?: "(默认)") })
 
+    Row {
+        If(combine { node.stylePressed != null }){
+            Column {
+                ButtonStyleEdit(M.padding(h = 10),A,combine { node.displayPressedStyle },combine { node.stylePressed!! })
+                DefaultButton(M.padding(5).padding(h = 10)) { node.stylePressed = null }
+            }
+        } Else {
+            CreateButton(M.padding(5).padding(h = 10)) { node.stylePressed = ButtonStyle() }
+        }
+    }
     By(combine { node::class }){
         if(it == Button::class) {
             ShapeEdit(M.height(1),A,combine { (node as Button).shape }){(node as Button).shape = it}
