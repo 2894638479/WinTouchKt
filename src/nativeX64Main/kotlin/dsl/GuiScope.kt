@@ -2,17 +2,11 @@ package dsl
 
 import error.wrapExceptionName
 import geometry.Color
-import kotlinx.cinterop.invoke
-import logger.info
-import logger.warning
-import platform.windows.LPARAM
 import platform.windows.RECT
-import platform.windows.SendMessage
 import platform.windows.TBM_SETPOS
 import platform.windows.TRUE
 import wrapper.GuiWindow
 import wrapper.height
-import wrapper.str
 import wrapper.width
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -53,11 +47,12 @@ abstract class GuiScope(
     init {
         color.listen(true) { window.backGndColor = it }
     }
-    private val top: GuiWindow get() = window.parent ?: window
     fun reLayout(){
-        top.onSize()
-        onSize()
-        top.hwnd.invalidateRect()
+        fun GuiWindow.layout(){
+            parent?.layout()
+            onSize()
+        }
+        window.layout()
     }
     open val scrollableHeight get() = -1
     open val scrollableWidth get() = -1
@@ -85,6 +80,7 @@ abstract class GuiScope(
     fun Row(modifier: Modifier = M, alignment: Alignment = A, block: RowScope.()->Unit){
         RowScope(modifier, alignment, window).apply(block).addToChild()
     }
+    fun Spacer(modifier: Modifier) = Box(modifier){}
     fun Button(modifier: Modifier = M, alignment: Alignment = A, text:State<String>,enable:State<Boolean> = stateOf(true), onClick:()->Unit){
         GuiComponent(modifier.minHeight(25), alignment, window.button(text.value, onClick)).apply{
             text.listen { hwnd.name = it }

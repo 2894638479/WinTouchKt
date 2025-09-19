@@ -67,10 +67,10 @@ abstract class Node : State.Scope {
         val color: Color by node.display(pressed,::defaultColor,{color}){color}
         val textColor: Color by node.display(pressed,::defaultTextColor,{textColor}){textColor}
         val outlineColor: Color by node.display(pressed,::defaultOutlineColor,{outlineColor}){outlineColor}
-        val fontFamily: String? by node.display(pressed,{null},{fontFamily}){fontFamily}
-        val fontSize: Float? by node.display(pressed,{null},{fontSize}){fontSize}
-        val fontStyle: Font.Style? by node.display(pressed,{null},{fontStyle}){fontStyle}
-        val fontWeight: Int? by node.display(pressed,{null},{fontWeight}){fontWeight}
+        val fontFamily: String by node.display(pressed,{""},{fontFamily}){fontFamily}
+        val fontSize: Float by node.display(pressed,{24f},{fontSize}){fontSize}
+        val fontStyle: Font.Style by node.display(pressed,{Font.Style.NORMAL},{fontStyle}){fontStyle}
+        val fontWeight: Int by node.display(pressed,{500},{fontWeight}){fontWeight}
 
         val font : D2dFont? get() {
             val context = node.context ?: return null

@@ -10,6 +10,7 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKStringFromUtf16
 import libs.Clib.FONT_STYLE
+import logger.warning
 import platform.windows.DEFAULT_CHARSET
 import platform.windows.EnumFontFamiliesEx
 import platform.windows.EnumFontFamiliesExW
@@ -39,15 +40,15 @@ data class Font(
     val style:FONT_STYLE,
     val weight:UShort
 ){
-    constructor(family: String?,size: Float?,style: Style?,weight: Int?,scale:Float?):this(
-        family ?: "",
-        (size ?: 24f)*(scale ?: 1f),
-        style?.value ?: FONT_STYLE.FONT_STYLE_NORMAL,
-        weight?.let {
+    constructor(family: String,size: Float,style: Style,weight: Int,scale:Float):this(
+        family,
+        size * scale,
+        style.value,
+        weight.let {
             if(it !in 1..999) {
                 error("font weight error, should in 1 to 999")
             } else it.toUShort()
-        } ?: 500u
+        }
     )
     enum class Style(val string: String,val value:FONT_STYLE) {
         NORMAL("normal",FONT_STYLE.FONT_STYLE_NORMAL),
@@ -56,7 +57,10 @@ data class Font(
         companion object {
             fun byString(str:String) = entries.firstOrNull {
                 it.string == str
-            } ?: error("unknown font style, should be one of " + entries.joinToString(", "))
+            } ?: run {
+                warning("unknown font style $str, should be one of " + entries.joinToString(", "))
+                NORMAL
+            }
         }
     }
     companion object {

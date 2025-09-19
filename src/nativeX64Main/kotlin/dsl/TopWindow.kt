@@ -8,21 +8,21 @@ class WindowManagerBuilder {
 }
 
 interface WindowManager {
-    operator fun plusAssign(window: GuiScope)
-}
-
-val topWindows = object : WindowManager {
-    val list = mutableListOf<GuiScope>()
-    override fun plusAssign(window: GuiScope) {
-        list += window
-    }
+    context(parentScope: GuiScope)
+    fun add(window: GuiScope)
 }
 
 context(guiScope: GuiScope)
 fun scopeWindows(block: WindowManagerBuilder.()->Unit) = object : WindowManager {
     val list = mutableListOf<GuiScope>()
-    override fun plusAssign(window: GuiScope) {
+    context(parentScope: GuiScope)
+    override fun add(window: GuiScope) {
         list += window
+        parentScope._onDestroy += {
+            if(list.remove(window)) {
+                window.destroyHwnd()
+            }
+        }
     }
     private fun destroy(){
         list.forEach { it.destroyHwnd() }
@@ -45,14 +45,16 @@ fun scopeWindows(block: WindowManagerBuilder.()->Unit) = object : WindowManager 
 }
 
 context(wm: WindowManager)
-fun Window(name: String, modifier: Modifier, block: BoxScope.() -> Unit): GuiScope{
-    val scope = BoxScope(modifier,A,null,name).apply {
+fun GuiScope.Window(name: String, modifier: Modifier, block: BoxScope.() -> Unit)
+= TopWindow(name,modifier,block).also { wm.add(it) }
+
+fun TopWindow(name: String, modifier: Modifier, block: BoxScope.() -> Unit): GuiScope{
+    val window = BoxScope(modifier,A,null,name).apply {
         _onDestroy += ::scheduleGC
         block()
         hwnd.show()
         hwnd.update()
         onSize()
     }
-    wm += scope
-    return scope
+    return window
 }

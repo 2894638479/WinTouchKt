@@ -38,11 +38,9 @@ fun Main(args: Array<String>) = processArgs(args).apply {
     val hwndLayered = container.drawScope.hwnd
     hwndLayered.showAndUpdate()
 
-    context(topWindows){
-        Window("window", M.minWidth(800).minHeight(600)) {
-            wrapExceptionName("creating MainContent") {
-                MainContent(container)
-            }
+    TopWindow("window", M.minWidth(800).minHeight(600)) {
+        wrapExceptionName("creating MainContent") {
+            MainContent(container)
         }
     }
     loopWindowMessage()
