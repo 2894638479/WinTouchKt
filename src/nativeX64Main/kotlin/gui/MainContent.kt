@@ -20,7 +20,7 @@ import node.Node
 
 @OptIn(ExperimentalForeignApi::class)
 fun GuiScope.MainContent(container: Container) = Row {
-    var node by mutStateOf<Node>(container)
+    var node by container::selected
     fun GuiScope.NodeButton(modifier: Modifier,buttonNode:Node){
         Button(
             modifier.padding(5).height(40),

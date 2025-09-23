@@ -8,7 +8,7 @@ open class NormalGroup(
 ) : GroupTouchDispatcher(group) {
     override fun move(event: TouchReceiver.TouchEvent) = true
     override fun down(event: TouchReceiver.TouchEvent): Boolean {
-        return firstOrNull(event.x, event.y)?.let{
+        return event.touched?.let{
             pointers[event.id] = mutableListOf(it)
             it.down()
         } != null

@@ -21,8 +21,8 @@ class Button(
     initShape: Shape,
 ): Node(){
     var shape by mutStateOf(initShape)
-    var count by mutStateOf(0u)
-    val pressed by combine { count != 0u }
+    var count by mutStateOf(0)
+    val pressed by combine { count > 0 }
 
     val displayGeometry by combine { shape.rescaled(displayScale) to displayOffset }
     val onErase by combine<DrawScope.()->Unit> {
@@ -71,15 +71,28 @@ class Button(
         }
     }
 
-    inline fun down(quiet:Boolean = false, filter:(UByte)->Boolean = {true}) = context?.run {
+    inline fun down(filter:(UByte)->Boolean = {true}) = context?.run {
         info("button $name down")
         keyHandler.downAll(key.filter(filter))
-        if(!quiet) count++
+        count++
     } ?: error("context is null")
-    inline fun up(quiet:Boolean = false, filter:(UByte)->Boolean = {true}) = context?.run {
+
+    inline fun up(filter:(UByte)->Boolean = {true}) = context?.run {
         info("button $name up")
+        if(count <= 0) return@run
         keyHandler.upAll(key.filter(filter))
-        if(!quiet) count--
+        count--
+    } ?: error("context is null")
+
+    fun upAll() {
+        while (count > 0) {
+            up()
+        }
+    }
+
+    fun triggerKeys() = context?.run {
+        keyHandler.downAll(key)
+        keyHandler.upAll(key)
     } ?: error("context is null")
 
     fun containPoint(x:Float, y:Float) = with(displayOffset){ Point(x,y) in shape.rescaled(displayScale) }

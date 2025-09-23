@@ -14,7 +14,7 @@ open class MovePointGroup(
     private var lastTouchPoint: Point? = null
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         if(pointers[event.id] == null) return true
-        onMovePoint(sensitivity,lastTouchPoint ?: error("lastTouchPoint is null") , event)
+        onMovePoint(sensitivity,lastTouchPoint ?: return false, event)
         lastTouchPoint = Point(event.x, event.y)
         return true
     }

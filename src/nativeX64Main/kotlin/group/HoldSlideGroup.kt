@@ -12,8 +12,8 @@ class HoldSlideGroup(
     }
     private inline val holdButton get() = buttons[holdIndex]
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
-        val btns = pointers[event.id] ?: error("pointer id not down")
-        firstOrNull(event.x, event.y)?.apply {
+        val btns = pointers[event.id] ?: return false
+        event.touched?.apply {
             if(btns[0] == holdButton){
                 if(this != holdButton) {
                     if (btns.size == 1) {

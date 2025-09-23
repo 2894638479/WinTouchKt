@@ -1,44 +1,74 @@
 package node
 
-import geometry.Point
+import dsl.mutStateOf
+import geometry.plus
 import group.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import logger.warning
-import node.Container.ContainerSerializer.Descriptor.from
+import node.Container.Status.*
 import touch.TouchReceiver
 import wrapper.SerializerWrapper
-import wrapper.WeakRefDel
 
 @Serializable(with = Group.GroupSerializer::class)
 class Group(
     createDispatcher:(Group)-> GroupTouchDispatcher
 ): NodeWithChild<Button>() {
-    var touchDispatcher = createDispatcher(this)
-        private set
-    val editModeTouchDispatcher = object : GroupTouchDispatcher(this) {
-        override fun down(event: TouchReceiver.TouchEvent):Boolean {
-            return firstOrNull(event.x,event.y)?.let {
-                pointers[event.id] = mutableListOf(it)
-            } != null
-        }
-        override fun move(event: TouchReceiver.TouchEvent): Boolean {
-            val button = pointers[event.id]?.getOrNull(0) ?: error("pointer id not down")
-            val offset = Point(event.x,event.y)
-            button.offset = button.offset?.plus(offset) ?: offset
-            return true
-        }
-        override fun up(event: TouchReceiver.TouchEvent): Boolean {
-            pointers.remove(event.id) ?: error("pointer id not down")
-            return true
+    var normalModeTouchDispatcher by mutStateOf(createDispatcher(this))
+    var touchDispatcher: GroupTouchDispatcher? = null
+    init {
+        combine {
+            val parent = (parent as? Container) ?: return@combine null
+            val group = this@Group
+            when(parent.status) {
+                NORMAL -> normalModeTouchDispatcher
+                DRAG_BUTTON -> object : GroupTouchDispatcher(group) {
+                    override fun down(event: TouchReceiver.TouchEvent):Boolean {
+                        return event.touched?.let {
+                            pointers[event.id] = mutableListOf(it)
+                        } != null
+                    }
+                    override fun move(event: TouchReceiver.TouchEvent): Boolean {
+                        val button = pointers[event.id]?.getOrNull(0) ?: return false
+                        button.offset += event.point / button.displayScale
+                        return true
+                    }
+                    override fun up(event: TouchReceiver.TouchEvent) = pointers.remove(event.id) != null
+                }
+                DRAG_GROUP -> object : GroupTouchDispatcher(group) {
+                    override fun down(event: TouchReceiver.TouchEvent) = event.touched != null
+                    override fun move(event: TouchReceiver.TouchEvent): Boolean {
+                        offset += event.point / displayScale
+                        return true
+                    }
+                }
+                DRAG_CONTAINER -> null
+                SELECT_BUTTON -> object : GroupTouchDispatcher(group) {
+                    override fun down(event: TouchReceiver.TouchEvent) = event.touched?.let { pointers[event.id] = mutableListOf(it) } != null
+                    override fun move(event: TouchReceiver.TouchEvent) = event.id in pointers
+                    override fun up(event: TouchReceiver.TouchEvent) = pointers.remove(event.id)?.let { parent.selected = it[0] } != null
+                }
+                SELECT_GROUP -> object : GroupTouchDispatcher(group) {
+                    override fun down(event: TouchReceiver.TouchEvent) = event.touched != null
+                    override fun up(event: TouchReceiver.TouchEvent) = true.also { parent.selected = group }
+                }
+            }
+        }.listen(true) {
+            touchDispatcher?.destroy()
+            touchDispatcher = it
         }
     }
+
     val buttons get() = children
+
+    override fun onAnyChange(list: List<Button>) {
+        touchDispatcher?.notifyButtonsChanged()
+        super.onAnyChange(list)
+    }
 
     object GroupSerializer : SerializerWrapper<Group, GroupSerializer.Descriptor>("Group", Descriptor) {
         object Descriptor: Node.Descriptor<Group>() {
-            val type = "type" from { when(touchDispatcher::class){
+            val type = "type" from { when(normalModeTouchDispatcher::class){
                 NormalGroup::class -> 0
                 SlideGroup::class ->  1
                 HoldSlideGroup::class -> 2

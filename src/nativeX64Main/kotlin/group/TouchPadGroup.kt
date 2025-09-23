@@ -20,17 +20,18 @@ class TouchPadGroup(
     override fun notifyButtonsChanged() {
         lastDownTime = buttons.map { 0uL }.toULongArray()
         keyDownCount = buttons.map { 0u }.toUIntArray()
+        super.notifyButtonsChanged()
     }
 
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         if(pointers[event.id] == null) return true
-        moveCursor(sensitivity,lastTouchPoint ?: error("lastTouchPoint is null") , event)
+        moveCursor(sensitivity,lastTouchPoint ?: return false , event)
         lastTouchPoint = Point(event.x, event.y)
         return true
     }
 
     override fun down(event: TouchReceiver.TouchEvent): Boolean {
-        return firstOrNull(event.x,event.y)?.let{
+        return event.touched?.let{
             pointers[event.id] = mutableListOf(it)
             lastTouchPoint = Point(event.x,event.y)
             val index = buttons.indexOf(it)
@@ -58,12 +59,11 @@ class TouchPadGroup(
             if(time - lastDownTime[index] < ms){
                 dispatch(ms.toUInt()) {
                     if(keyDownCount[index] == 0u) {
-                        it.down(true)
-                        it.up(true)
+                        it.triggerKeys()
                     }
                 }
             }
-        } ?: warningBox("pointer id not down in touchpad")
+        } ?: return false
         return true
     }
 }

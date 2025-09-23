@@ -1,5 +1,6 @@
 package touch
 
+import geometry.Point
 import kotlinx.cinterop.ExperimentalForeignApi
 import libs.Clib.TouchInfo
 
@@ -11,10 +12,12 @@ interface TouchReceiver {
         val id:UInt
     ){
         constructor(event:TouchInfo):this(event.pointX.toFloat(),event.pointY.toFloat(),event.id)
+        val point get() = Point(x, y)
     }
-    fun down(event: TouchEvent):Boolean
-    fun up(event: TouchEvent):Boolean
-    fun move(event: TouchEvent):Boolean
+    fun down(event: TouchEvent):Boolean = true
+    fun up(event: TouchEvent):Boolean = true
+    fun move(event: TouchEvent):Boolean = true
+    val valid: Boolean get() = true
 }
 
 @OptIn(ExperimentalForeignApi::class)

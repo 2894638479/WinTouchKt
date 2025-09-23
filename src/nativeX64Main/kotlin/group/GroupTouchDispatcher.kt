@@ -12,15 +12,26 @@ abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
     val buttons:List<Button> get() = group.buttons
     protected val pointers = mutableMapOf<UInt,MutableList<Button>>()
     override fun up(event: TouchReceiver.TouchEvent): Boolean {
-        pointers[event.id]?.forEach { it.up() } ?: warningBox("pointer id not down")
+        pointers[event.id]?.forEach { it.up() } ?: return false
         pointers.remove(event.id)
         return true
     }
     open fun notifyButtonsChanged(){}
 
-    protected fun firstOrNull(x: Float, y: Float): Button? {
+    var destroyed = false
+        private set
+    override val valid get() = !destroyed
+    fun destroy(){
+        if(destroyed) error("touchDispatcher already destroyed")
+        pointers.values.forEach { it.forEach { it.upAll() } }
+        pointers.clear()
+        destroyed = true
+    }
+
+    private fun firstOrNull(x: Float, y: Float): Button? {
         return buttons.firstOrNull { it.containPoint(x,y) }
     }
+    protected val TouchReceiver.TouchEvent.touched: Button? get() = firstOrNull(x,y)
     protected fun alreadyDown(button: Button, id: UInt):Boolean {
         return pointers[id]?.contains(button) ?: false
     }

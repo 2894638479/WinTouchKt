@@ -2,31 +2,37 @@ package node
 
 import dsl.mutStateNull
 import dsl.mutStateOf
-import node.Button.ButtonSerializer
 import error.wrapExceptionName
-import kotlinx.serialization.KSerializer
+import group.GroupTouchDispatcher
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.encoding.*
 import kotlinx.serialization.json.Json
 import logger.info
-import logger.warning
 import platform.posix.exit
 import sendInput.KeyHandler
 import touch.TouchReceiver
 import window.buttonsLayeredWindow
 import wrapper.Hwnd
 import wrapper.SerializerWrapper
+import geometry.plus
 
 @Serializable(with = Container.ContainerSerializer::class)
 class Container :TouchReceiver, NodeWithChild<Group>(){
+    enum class Status{
+        NORMAL,DRAG_BUTTON,DRAG_GROUP,DRAG_CONTAINER,SELECT_BUTTON,SELECT_GROUP;
+        val str get() = when(this){
+            NORMAL -> "正常模式"
+            DRAG_BUTTON -> "拖拽模式"
+            DRAG_GROUP -> "拖拽整组"
+            DRAG_CONTAINER -> "拖拽全部"
+            SELECT_BUTTON -> "选择模式"
+            SELECT_GROUP -> "选择分组"
+        }
+    }
     val groups get() = children
     private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
-    var isEditModeNode by mutStateOf(false)
+    var status by mutStateOf(Status.NORMAL)
+    var selected by mutStateOf<Node>(this)
     val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
     val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
@@ -45,36 +51,41 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
     }
 
     override fun down(event: TouchReceiver.TouchEvent):Boolean {
-        groups.firstOrNull {
-            wrapExceptionName("dispatcher down error"){
-                it.touchDispatcher.down(event)
+        val receiver = if(status == Status.DRAG_CONTAINER)object : TouchReceiver{
+            override fun move(event: TouchReceiver.TouchEvent): Boolean {
+                offset += event.point / displayScale
+                return true
             }
-        }?.let {
-            activePointers[event.id] = it
-            return true
-        }
-        return false
+        } else groups.firstOrNull {
+            wrapExceptionName("dispatcher down error"){
+                it.touchDispatcher?.down(event) == true
+            }
+        }?.touchDispatcher
+
+        activePointers[event.id] = receiver ?: return false
+        return true
     }
 
     override fun up(event: TouchReceiver.TouchEvent):Boolean {
-        activePointers[event.id]?.let{
-            wrapExceptionName("dispatcher up error") {
-                it.touchDispatcher.up(event)
-            }
-            activePointers.remove(event.id)
-        } ?: return false
+        val dispatcher = activePointers[event.id] ?: return false
+        if(!dispatcher.valid) return false
+        wrapExceptionName("dispatcher up error") {
+            dispatcher.up(event)
+        }
         return true
     }
 
     override fun move(event: TouchReceiver.TouchEvent):Boolean {
+        val dispatcher = activePointers[event.id] ?: return false
+        if(!dispatcher.valid) return false
         wrapExceptionName("dispatcher move error") {
-            activePointers[event.id]?.touchDispatcher?.move(event) ?: return false
+            dispatcher.move(event)
         }
         return true
     }
 
 
-    private val activePointers = mutableMapOf<UInt, Group>()
+    private val activePointers = mutableMapOf<UInt, TouchReceiver>()
     override fun destroy(){
         removeContainer(this)
         context?.drawScope?.destroy() ?: error("drawScope is null")

@@ -11,9 +11,9 @@ class SlideGroup(
         if (slideCount < 1u) error("slide count < 1")
     }
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
-        firstOrNull(event.x, event.y)?.run{
+        event.touched?.run{
             if(alreadyDown(this, event.id)) return true
-            val pressedButtons = pointers[event.id] ?: error("pointer id not down")
+            val pressedButtons = pointers[event.id] ?: return false
             if (pressedButtons.size.toUInt() < slideCount){
                 pressedButtons.add(this)
                 this.down()
