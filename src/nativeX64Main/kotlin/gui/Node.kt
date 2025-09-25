@@ -3,13 +3,8 @@ package gui
 import dsl.A
 import dsl.GuiScope
 import dsl.M
-import dsl.Modifier
-import dsl.MutState
 import dsl.height
-import dsl.middle
-import dsl.middleY
-import dsl.minHeight
-import dsl.minWidth
+import dsl.State
 import dsl.padding
 import dsl.stateOf
 import dsl.width
@@ -18,8 +13,8 @@ import node.ButtonStyle
 import node.Container
 import node.Node
 
-fun GuiScope.Node(nodeState: MutState<Node>) = Column {
-    var node by nodeState
+fun GuiScope.Node(get:State<Node>) = Column {
+    val node by get
     val scale by combine { node.scale }
     Row(M.padding(10)){
         Column(M.padding(h = 5)) {

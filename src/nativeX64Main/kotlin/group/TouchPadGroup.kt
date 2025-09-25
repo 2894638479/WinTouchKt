@@ -25,7 +25,7 @@ class TouchPadGroup(
 
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         if(pointers[event.id] == null) return true
-        moveCursor(sensitivity,lastTouchPoint ?: return false , event)
+        moveCursor((event.point - (lastTouchPoint ?: return false)) * sensitivity)
         lastTouchPoint = Point(event.x, event.y)
         return true
     }

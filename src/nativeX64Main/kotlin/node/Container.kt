@@ -3,6 +3,7 @@ package node
 import dsl.mutStateNull
 import dsl.mutStateOf
 import error.wrapExceptionName
+import geometry.Point
 import group.GroupTouchDispatcher
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -32,7 +33,7 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
     val groups by children
     private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
     var status by mutStateOf(Status.NORMAL)
-    var selected by mutStateOf<Node?>(this)
+    var selected by mutStateOf<Node?>(null)
     val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
     val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
@@ -51,12 +52,24 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
     }
 
     override fun down(event: TouchReceiver.TouchEvent):Boolean {
-        val receiver = if(status == Status.DRAG_CONTAINER)object : TouchReceiver{
-            override fun move(event: TouchReceiver.TouchEvent): Boolean {
-                offset += event.point / displayScale
+        val receiver = if(status == Status.DRAG_CONTAINER) object : TouchReceiver {
+            var lastTouchPoint: Point? = null
+            val pointers = mutableListOf<UInt>()
+            override fun down(event: TouchReceiver.TouchEvent): Boolean {
+                pointers += event.id
+                lastTouchPoint = event.point
                 return true
             }
-        } else groups.firstOrNull {
+            override fun move(event: TouchReceiver.TouchEvent): Boolean {
+                if(event.id !in pointers) return false
+                offset += event.point - (lastTouchPoint ?: error("no lastTouchPoint"))
+                lastTouchPoint = event.point
+                return true
+            }
+            override fun up(event: TouchReceiver.TouchEvent): Boolean {
+                return pointers.remove(event.id)
+            }
+        }.apply { down(event) } else groups.firstOrNull {
             wrapExceptionName("dispatcher down error"){
                 it.touchDispatcher?.down(event) == true
             }

@@ -1,7 +1,7 @@
 package dsl
 
 import error.wrapExceptionName
-import wrapper.Destroyable
+import wrapper.DestroyListenable
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -36,7 +36,7 @@ open class State<out T>(open val value: T):ReadOnlyProperty<Any?,T>{
             return value
         }
     }
-    interface Scope :Destroyable {
+    interface Scope :DestroyListenable {
         @Gui
         class Combination {
             private val _trackedStates = mutableSetOf<Trackable<*>>()

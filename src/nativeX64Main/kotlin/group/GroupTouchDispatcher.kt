@@ -2,12 +2,11 @@ package group
 
 import node.Button
 import node.Group
-import geometry.Rect
-import logger.warningBox
 import touch.TouchReceiver
+import wrapper.Destroyable
 import wrapper.WeakRefNonNull
 
-abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
+abstract class GroupTouchDispatcher(group: Group) : TouchReceiver , Destroyable{
     private val group by WeakRefNonNull(group)
     val buttons:List<Button> get() = group.buttons
     protected val pointers = mutableMapOf<UInt,MutableList<Button>>()
@@ -21,8 +20,8 @@ abstract class GroupTouchDispatcher(group: Group) : TouchReceiver {
     var destroyed = false
         private set
     override val valid get() = !destroyed
-    fun destroy(){
-        if(destroyed) error("touchDispatcher already destroyed")
+    override fun destroy(){
+        if(destroyed) return
         pointers.values.forEach { it.forEach { it.upAll() } }
         pointers.clear()
         destroyed = true

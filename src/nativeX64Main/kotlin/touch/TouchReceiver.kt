@@ -3,6 +3,7 @@ package touch
 import geometry.Point
 import kotlinx.cinterop.ExperimentalForeignApi
 import libs.Clib.TouchInfo
+import wrapper.Destroyable
 
 @OptIn(ExperimentalForeignApi::class)
 interface TouchReceiver {

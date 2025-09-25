@@ -1,8 +1,12 @@
 package wrapper
 
-interface Destroyable {
+interface Destroyable{
+    fun destroy()
+}
+
+interface DestroyListenable: Destroyable {
     val _onDestroy:MutableList<()->Unit>
-    fun destroy(){
+    override fun destroy(){
         _onDestroy.forEach { it() }
         _onDestroy.clear()
     }
