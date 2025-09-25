@@ -79,7 +79,12 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
         writeFactory.free()
     }
     private var cacheNotifier by mutStateOf(false)
-    private val _cache = Cache(writeFactory,target){ cacheNotifier = !cacheNotifier }
+    private val _cache = Cache(writeFactory,target){
+        cacheNotifier = !cacheNotifier
+        toDraw.clear()
+        toErase.clear()
+        reDraw = true
+    }
     val cache get() = _cache.apply { cacheNotifier }
     class Cache(private val writeFactory: D2dWriteFactory, private val target: D2dTarget,val notifyCleared:()->Unit) {
         private val brushes = HashMap<Color, D2dBrush>(100)

@@ -181,7 +181,6 @@ abstract class GuiWindow (
         SendMessage!!(HWND, TBM_SETPAGESIZE.toUInt(), 0u, steps.toLong() / 10)
         onCommand[controlId] = {
             val pos = SendMessage!!(HWND,TBM_GETPOS.toUInt(),0u,0L)
-            info(pos)
             val start = range.start.toDouble()
             val end = range.endInclusive.toDouble()
             val progress = pos.toDouble() / steps.toDouble()
