@@ -1,15 +1,15 @@
 package group
 
+import dsl.mutStateOf
 import node.Group
 import touch.TouchReceiver
+import kotlin.math.max
 
 class SlideGroup(
     group: Group,
-    val slideCount: UInt
+    slideCount: UInt
 ) : NormalGroup(group) {
-    init {
-        if (slideCount < 1u) error("slide count < 1")
-    }
+    var slideCount by mutStateOf(slideCount){ max(it,1u) }
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         event.touched?.run{
             if(alreadyDown(this, event.id)) return true

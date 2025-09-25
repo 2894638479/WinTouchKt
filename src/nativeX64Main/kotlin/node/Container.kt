@@ -29,10 +29,10 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
             SELECT_GROUP -> "选择分组"
         }
     }
-    val groups get() = children
+    val groups by children
     private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
     var status by mutStateOf(Status.NORMAL)
-    var selected by mutStateOf<Node>(this)
+    var selected by mutStateOf<Node?>(this)
     val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
     val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
@@ -106,13 +106,13 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
     object ContainerSerializer : SerializerWrapper<Container,ContainerSerializer.Descriptor>("Container",Descriptor) {
         object Descriptor : Node.Descriptor<Container>() {
             val alpha = "alpha" from {alpha}
-            val groups = "groups" from {groups.list}
+            val groups = "groups" from {groups}
         }
         override fun Descriptor.generate(): Container {
             return Container().also {
                 it.addNodeInfo()
                 it.alpha = alpha.nullable
-                it.groups += groups.nonNull
+                it.children += groups.nonNull
             }
         }
     }

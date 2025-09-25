@@ -1,5 +1,6 @@
 package group
 
+import dsl.mutStateOf
 import node.Group
 import geometry.Point
 import sendInput.moveCursor
@@ -8,9 +9,10 @@ import touch.TouchReceiver
 
 open class MovePointGroup(
     group: Group,
-    val sensitivity: Float,
+    sensitivity: Float,
     private val onMovePoint:(Float, Point, TouchReceiver.TouchEvent) -> Unit
 ) : NormalGroup(group) {
+    var sensitivity by mutStateOf(sensitivity)
     private var lastTouchPoint: Point? = null
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         if(pointers[event.id] == null) return true

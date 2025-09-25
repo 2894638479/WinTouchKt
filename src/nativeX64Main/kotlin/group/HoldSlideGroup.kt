@@ -4,13 +4,9 @@ import node.Group
 import touch.TouchReceiver
 
 class HoldSlideGroup(
-    group: Group,
-    val holdIndex: Int
+    group: Group
 ) : NormalGroup(group){
-    init {
-        if(holdIndex !in buttons.indices) error("hold index not in button indices")
-    }
-    private inline val holdButton get() = buttons[holdIndex]
+    private inline val holdButton get() = buttons.getOrNull(0)
     override fun move(event: TouchReceiver.TouchEvent): Boolean {
         val btns = pointers[event.id] ?: return false
         event.touched?.apply {

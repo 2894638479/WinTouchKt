@@ -4,8 +4,8 @@ import logger.warning
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value), ReadWriteProperty<Any?, T> {
-    val listeners = mutableListOf<(T)->Unit>()
+class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value), ReadWriteProperty<Any?, T>, State.Trackable<T> {
+    override val listeners = mutableListOf<(T)->Unit>()
     override var value: T = value
         set(value) {
             if(field != value) {
@@ -27,9 +27,7 @@ class MutState<T>(value:T,val constraint:((T)->T)? = null):State<T>(value), Read
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         this.value = value
     }
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return currentCombination?.run { track } ?: value
-    }
+    override fun getValue(thisRef: Any?, property: KProperty<*>) = track
 
     context(scope: Scope)
     override fun listen(listener:(T)->Unit){

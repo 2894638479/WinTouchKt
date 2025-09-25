@@ -14,14 +14,14 @@ import wrapper.SerializerWrapper
 class Group(
     createDispatcher:(Group)-> GroupTouchDispatcher
 ): NodeWithChild<Button>() {
-    var normalModeTouchDispatcher by mutStateOf(createDispatcher(this))
+    var normalModeTouchDispatcher by mutStateOf(createDispatcher)
     var touchDispatcher: GroupTouchDispatcher? = null
     init {
         combine {
             val parent = (parent as? Container) ?: return@combine null
             val group = this@Group
             when(parent.status) {
-                NORMAL -> normalModeTouchDispatcher
+                NORMAL -> normalModeTouchDispatcher(group)
                 DRAG_BUTTON -> object : GroupTouchDispatcher(group) {
                     override fun down(event: TouchReceiver.TouchEvent):Boolean {
                         return event.touched?.let {
@@ -59,7 +59,7 @@ class Group(
         }
     }
 
-    val buttons get() = children
+    val buttons by children
 
     override fun onAnyChange(list: List<Button>) {
         touchDispatcher?.notifyButtonsChanged()
@@ -79,7 +79,7 @@ class Group(
                 ScrollGroup::class -> 9
                 else -> error("unknown group type")
             }.toUByte() }
-            val buttons = "buttons" from {buttons.list}
+            val buttons = "buttons" from {buttons}
             val sensitivity = "sensitivity" from {
                 (touchDispatcher as? MovePointGroup)?.sensitivity ?:
                 (touchDispatcher as? TouchPadGroup)?.sensitivity
@@ -89,7 +89,6 @@ class Group(
                 (touchDispatcher as? HoldGroupDoubleClk)?.ms ?:
                 (touchDispatcher as? TouchPadGroup)?.ms
             }
-            val holdIndex = "holdIndex" from {(touchDispatcher as? HoldSlideGroup)?.holdIndex}
         }
 
         override fun Descriptor.generate(): Group {
@@ -97,7 +96,7 @@ class Group(
                 when(type.nullable?.toInt()){
                     0 -> NormalGroup(it)
                     1 -> SlideGroup(it, slideCount.nullable ?: error("no slideCount"))
-                    2 -> HoldSlideGroup(it, holdIndex.nonNull)
+                    2 -> HoldSlideGroup(it)
                     3 -> HoldGroup(it)
                     4 -> HoldGroupDoubleClk(it, ms.nonNull)
                     7 -> TouchPadGroup(it, sensitivity.nonNull, ms.nonNull)
@@ -107,7 +106,7 @@ class Group(
                 }
             }.also {
                 it.addNodeInfo()
-                it.buttons += buttons.nonNull
+                it.children += buttons.nonNull
             }
         }
     }

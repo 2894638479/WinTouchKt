@@ -1,13 +1,15 @@
 package group
 
+import dsl.mutStateOf
 import node.Group
 import platform.windows.GetTickCount64
 import touch.TouchReceiver
 
 class HoldGroupDoubleClk(
     group: Group,
-    val ms: ULong
+    ms: ULong
 ) : GroupTouchDispatcher(group) {
+    var ms by mutStateOf(ms)
     private var lastUpTime = buttons.map { 0uL }.toULongArray()
     override fun notifyButtonsChanged() {
         lastUpTime = buttons.map { 0uL }.toULongArray()

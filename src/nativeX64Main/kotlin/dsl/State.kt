@@ -28,15 +28,22 @@ open class State<out T>(open val value: T):ReadOnlyProperty<Any?,T>{
     context(scope:Scope)
     open fun listen(listener:(T)->Unit){}
 
+    interface Trackable<T> {
+        val value:T
+        val listeners: MutableList<(T)->Unit>
+        val track:T get() {
+            currentCombination?.track(this)
+            return value
+        }
+    }
     interface Scope :Destroyable {
         @Gui
         class Combination {
-            private val _trackedStates = mutableSetOf<MutState<*>>()
-            val <T> MutState<T>.track:T get() = wrapExceptionName("Combination.track") {
-                _trackedStates += this
-                return value
+            private val _trackedStates = mutableSetOf<Trackable<*>>()
+            fun track(trackable: Trackable<*>){
+                _trackedStates += trackable
             }
-            val trackedStates:Set<MutState<*>> get() = _trackedStates
+            val trackedStates:Set<Trackable<*>> get() = _trackedStates
         }
 
         fun <T> extract(func:()->T): MutState<T> = wrapExceptionName("extract failed"){
@@ -53,10 +60,10 @@ open class State<out T>(open val value: T):ReadOnlyProperty<Any?,T>{
             val initValue = withCombination(firstCombination){ func() }
             val state = mutStateOf(initValue)
             var trackedStates = firstCombination.trackedStates
-            fun MutState<*>.listen1(listener:(Any?)->Unit){ listeners += listener }
-            fun MutState<*>.remove1(listener:(Any?)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
+            fun Trackable<*>.listen1(listener:(Any?)->Unit){ listeners += listener }
+            fun Trackable<*>.remove1(listener:(Any?)->Unit){ if(!listeners.remove(listener)) error("combination listener already removed") }
 
-            val update = object: Function1<Any?,Unit> {
+            val update = object: (Any?)->Unit {
                 override operator fun invoke(any: Any?)= wrapExceptionName({ "combination update failed $trackedStates" }){
                     val combination = Combination()
                     val value = withCombination(combination){func()}
