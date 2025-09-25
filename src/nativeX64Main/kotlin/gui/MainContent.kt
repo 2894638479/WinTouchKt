@@ -17,6 +17,7 @@ import dsl.scopeWindows
 import dsl.size
 import dsl.stateOf
 import dsl.width
+import geometry.RoundedRect
 import kotlinx.cinterop.ExperimentalForeignApi
 import node.Button
 import node.Container
@@ -43,17 +44,27 @@ fun GuiScope.MainContent(container: Container) = Row {
         ){ node = buttonNode }
     }
     ScrollableColumn(M.weight(1f)) {
-        NodeButton(M,container)
+        Row {
+            NodeButton(M,container)
+            Button(M.size(30,30).padding(5),A.middleY(),stateOf("+")){ container.children += Group() }
+        }
         List(container.children){
             Column {
                 var fold by mutStateOf(false)
                 Row {
                     Button(M.size(30,30).padding(5),A.middleY(),combine { if(fold) ">" else "v" }){ fold = !fold }
-                    NodeButton(M.weight(1f),it)
+                    NodeButton(M,it)
+                    Button(M.size(30,30).padding(5),A.middleY(),stateOf("+")){
+                        it.children += Button(setOf(), RoundedRect(100f,100f,20f))
+                    }
+                    Button(M.size(30,30).padding(5),A.middleY(),stateOf("-")){ container.children -= it }
                 }
                 By(extract{ fold }){ fold ->
-                    if(!fold) List(it.children){
-                        NodeButton(M.padding(left = 40),it)
+                    if(!fold) List(it.children){ button ->
+                        Row{
+                            NodeButton(M.padding(left = 40),button)
+                            Button(M.size(30,30).padding(5),A.middleY(),stateOf("-")){ it.children -= button }
+                        }
                     }
                 }
             }

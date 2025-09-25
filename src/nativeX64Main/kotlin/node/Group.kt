@@ -14,7 +14,7 @@ import wrapper.SerializerWrapper
 
 @Serializable(with = Group.GroupSerializer::class)
 class Group(
-    createDispatcher:(Group)-> GroupTouchDispatcher
+    createDispatcher:(Group)-> GroupTouchDispatcher = ::NormalGroup
 ): NodeWithChild<Button>() {
     var normalDispatcherCreator by mutStateOf(createDispatcher)
     var normalDispatcher = normalDispatcherCreator(this)

@@ -17,9 +17,10 @@ import wrapper.d2dDrawText
 
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
-    var key:Set<UByte>,
+    key:Set<UByte>,
     initShape: Shape,
 ): Node(){
+    var key by mutStateOf(key)
     var shape by mutStateOf(initShape)
     var count by mutStateOf(0)
     val pressed by combine { count > 0 }

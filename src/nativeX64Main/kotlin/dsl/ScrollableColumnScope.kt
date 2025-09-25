@@ -12,6 +12,7 @@ class ScrollableColumnScope(modifier: Modifier, alignment: Alignment, parent: Gu
     GuiScope(parent,name,modifier, alignment, style = WS_VSCROLL) {
     override var scrollableHeight = 0
     override val innerMinW get() = super.innerMinW + GetSystemMetrics(SM_CXVSCROLL)
+    override val innerMinH get() = 0
     fun Modifier.weight(value:Float) = apply { weight = value }
     override fun onSize() = wrapExceptionName("ScrollableColumn onSize") {
         var h = 0

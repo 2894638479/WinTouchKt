@@ -12,13 +12,19 @@ class MutStateList<T> private constructor(internal val delegate:MutableList<T>):
     internal val listListeners = mutableListOf<Listener<T>>(Listener{ list ->
         listeners.forEach { it(list) }
     })
+
+    context(scope: Scope)
+    override fun listen(listener: (List<T>) -> Unit) {
+        listeners += listener
+        scope._onDestroy += { if (!listeners.remove(listener)) error("listener already removed") }
+    }
     override fun getValue(thisRef: Any?, property: KProperty<*>) = track
     fun interface Listener<T>{
         fun onAnyChange(list:List<T>)
         fun onAdd(element:T){}
         fun onRemove(element: T){}
     }
-    context(scope: State.Scope)
+    context(scope: Scope)
     fun listen(trigger:Boolean = false, listener: Listener<T>) {
         listListeners += listener
         scope._onDestroy += { if (!listListeners.remove(listener)) error("listener already removed") }
@@ -27,7 +33,7 @@ class MutStateList<T> private constructor(internal val delegate:MutableList<T>):
             forEach { listener.onAdd(it) }
         }
     }
-    context(scope: State.Scope)
+    context(scope: Scope)
     fun <V> state(func:(List<T>)->V) = MutState(func(delegate)).also { state ->
         listen { state.value = func(delegate) }
     }

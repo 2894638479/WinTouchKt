@@ -12,6 +12,7 @@ import node.Button
 import node.ButtonStyle
 import node.Container
 import node.Node
+import wrapper.RODelegate
 
 fun GuiScope.Node(get:State<Node>) = Column {
     val node by get
@@ -50,8 +51,16 @@ fun GuiScope.Node(get:State<Node>) = Column {
                 }
             }
         } Else {
-            Spacer(M)
+            If(combine { node is Button }){
+                val button by RODelegate { node as Button }
+                KeyEdit(combine {button.key}){button.key = it}
+            } Else {
+                Spacer(M)
+            }
         }
+    }
+    If(combine { node is Button }){
+        ShapeEdit(M.height(1),A,combine { (node as Button).shape }){(node as Button).shape = it}
     }
 
     Spacer(M.height(20))
@@ -79,11 +88,6 @@ fun GuiScope.Node(get:State<Node>) = Column {
             }
         } Else {
             CreateButton(M.padding(5).padding(h = 10)) { node.stylePressed = ButtonStyle() }
-        }
-    }
-    By(combine { node::class }){
-        if(it == Button::class) {
-            ShapeEdit(M.height(1),A,combine { (node as Button).shape }){(node as Button).shape = it}
         }
     }
 }
