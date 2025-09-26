@@ -23,7 +23,7 @@ fun GuiScope.ButtonStyleEdit(modifier: Modifier = M, alignment: Alignment = A, d
             Row(M.padding(h = 5)) {
                 If(combine { color != null }) {
                     context(windowsByStyle){
-                        EditButton(M.padding(right = 10)) {
+                        EditButton {
                             Window("编辑颜色", M.minSize(400,300)) {
                                 ColorEdit(M.padding(10), A, combine { color!! }) { color = it }
                             }

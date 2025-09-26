@@ -13,7 +13,7 @@ import logger.warning
 import platform.windows.LWA_ALPHA
 import platform.windows.LWA_COLORKEY
 import platform.windows.SetLayeredWindowAttributes
-import sendInput.KeyHandler.Companion.KEY_HIDE
+import sendInput.Keys
 import wrapper.*
 
 @OptIn(ExperimentalForeignApi::class)
@@ -68,7 +68,7 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
             if(value) {
                 reDraw = true
             } else {
-                buttons.filter { !it.key.contains(KEY_HIDE) }.forEach{addToErase(it.onErase)}
+                buttons.filter { !it.key.contains(Keys.HIDE_SHOW.code) }.forEach{addToErase(it.onErase)}
             }
         }
 

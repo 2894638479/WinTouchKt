@@ -65,29 +65,31 @@ fun GuiScope.Node(get:State<Node>) = Column {
 
     Spacer(M.height(20))
 
-    Text(M.padding(5).padding(top = 10).padding(h = 10),A,combine { "松开时样式" + (node.style?.let {""} ?: "(默认)") })
-    Row {
-        If(combine { node.style != null }){
-            Column {
-                ButtonStyleEdit(M.padding(h = 10),A,combine { node.displayStyle },combine { node.style!! })
-                DefaultButton(M.padding(5).padding(h = 10)) { node.style = null }
-            }
+    Row(M.padding(10)) {
+        Text(M.padding(5),A,combine { "松开时样式" + (node.style?.let {""} ?: "(默认)") })
+        If(combine { node.style != null }) {
+            DefaultButton(M.padding(5).padding(h = 10)) { node.style = null }
         } Else {
             CreateButton(M.padding(5).padding(h = 10)) { node.style = ButtonStyle() }
         }
     }
 
+    If(combine { node.style != null }){
+        ButtonStyleEdit(M.padding(h = 10),A,combine { node.displayStyle },combine { node.style!! })
+    }
+
     Spacer(M.height(20))
 
-    Text(M.padding(5).padding(top = 10).padding(h = 10),A,combine { "按下时样式" + (node.stylePressed?.let {""} ?: "(默认)") })
-    Row {
-        If(combine { node.stylePressed != null }){
-            Column {
-                ButtonStyleEdit(M.padding(h = 10),A,combine { node.displayPressedStyle },combine { node.stylePressed!! })
-                DefaultButton(M.padding(5).padding(h = 10)) { node.stylePressed = null }
-            }
+    Row(M.padding(10)) {
+        Text(M.padding(5),A,combine { "按下时样式" + (node.stylePressed?.let {""} ?: "(默认)") })
+        If(combine { node.stylePressed != null }) {
+            DefaultButton(M.padding(5).padding(h = 10)) { node.stylePressed = null }
         } Else {
             CreateButton(M.padding(5).padding(h = 10)) { node.stylePressed = ButtonStyle() }
         }
+    }
+
+    If(combine { node.stylePressed != null }){
+        ButtonStyleEdit(M.padding(h = 10),A,combine { node.displayStyle },combine { node.stylePressed!! })
     }
 }

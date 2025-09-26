@@ -46,5 +46,5 @@ kotlin {
 }
 val compileKotlinNativeX64: KotlinNativeCompile by tasks
 compileKotlinNativeX64.compilerOptions {
-    freeCompilerArgs.set(listOf("-Xcontext-parameters"))
+    freeCompilerArgs.set(listOf("-Xcontext-parameters","-Xnested-type-aliases"))
 }
