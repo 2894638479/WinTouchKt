@@ -1,30 +1,26 @@
-package group
+package touch
 
 import node.Button
 import node.Group
-import touch.TouchReceiver
-import wrapper.Destroyable
-import wrapper.WeakRefNonNull
+import wrapper.WeakRef
 
-abstract class GroupTouchDispatcher(group: Group) : TouchReceiver , Destroyable{
-    private val group by WeakRefNonNull(group)
-    val buttons:List<Button> get() = group.buttons
+open class GroupTouchReceiver(group: Group) : TouchReceiver {
+    val group by WeakRef(group)
+    val buttons:List<Button> get() = group?.buttons ?: emptyList()
     protected val pointers = mutableMapOf<UInt,MutableList<Button>>()
+    open fun notifyButtonsChanged(){}
+    final override var valid = true
+    override fun destroy(){
+        if(!valid) return
+        pointers.values.forEach { it.forEach { it.upAll() } }
+        pointers.clear()
+        valid = false
+    }
+
     override fun up(event: TouchReceiver.TouchEvent): Boolean {
         pointers[event.id]?.forEach { it.up() } ?: return false
         pointers.remove(event.id)
         return true
-    }
-    open fun notifyButtonsChanged(){}
-
-    var destroyed = false
-        private set
-    override val valid get() = !destroyed
-    override fun destroy(){
-        if(destroyed) return
-        pointers.values.forEach { it.forEach { it.upAll() } }
-        pointers.clear()
-        destroyed = true
     }
 
     private fun firstOrNull(x: Float, y: Float): Button? {

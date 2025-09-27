@@ -18,6 +18,7 @@ import dsl.size
 import dsl.stateOf
 import dsl.width
 import geometry.RoundedRect
+import group.NormalGroup
 import kotlinx.cinterop.ExperimentalForeignApi
 import node.Button
 import node.Container
@@ -46,7 +47,7 @@ fun GuiScope.MainContent(container: Container) = Row {
     ScrollableColumn(M.weight(1f)) {
         Row {
             NodeButton(M,container)
-            Button(M.size(30,30).padding(5),A.middleY(),stateOf("+")){ container.children += Group() }
+            Button(M.size(30,30).padding(5),A.middleY(),stateOf("+")){ container.children += Group(NormalGroup()) }
         }
         List(container.children){
             Column {

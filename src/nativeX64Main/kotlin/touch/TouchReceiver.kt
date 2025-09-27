@@ -6,7 +6,7 @@ import libs.Clib.TouchInfo
 import wrapper.Destroyable
 
 @OptIn(ExperimentalForeignApi::class)
-interface TouchReceiver {
+interface TouchReceiver: Destroyable {
     data class TouchEvent(
         val x:Float,
         val y:Float,
@@ -19,6 +19,7 @@ interface TouchReceiver {
     fun up(event: TouchEvent):Boolean = true
     fun move(event: TouchEvent):Boolean = true
     val valid: Boolean get() = true
+    override fun destroy() {}
 }
 
 @OptIn(ExperimentalForeignApi::class)

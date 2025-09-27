@@ -11,6 +11,7 @@ import dsl.width
 import node.Button
 import node.ButtonStyle
 import node.Container
+import node.Group
 import node.Node
 import wrapper.RODelegate
 
@@ -38,26 +39,30 @@ fun GuiScope.Node(get:State<Node>) = Column {
             Text(M.padding(h = 5).width(60),A,stateOf("位置"))
             PointEdit(M.padding(h = 5),A,combine { node.offset }){node.offset = it}
         }
-        If(combine { node is Container }){
-            val alpha by combine { (node as Container).alpha }
-            Column {
-                Row {
-                    Text(M.padding(h = 5).width(120),A, stateOf("不透明度"))
-                    Edit(M.padding(h = 5).weight(1f),A,combine { alpha?.toString() ?: "" }){ (node as Container).alpha = it.toUByteOrNull() }
-                    DefaultButton(M.padding(h = 5).weight(0.3f),active = combine{ alpha != null }){ (node as Container).alpha = null }
-                }
-                TrackBar(M.padding(h = 5),A,combine { alpha?.toInt() ?: 128 },0..255,255){
-                    (node as Container).alpha = it.toUByte()
+        By(combine { node::class }){ when(it){
+            Container::class -> {
+                val alpha by combine { (node as Container).alpha }
+                Column {
+                    Row {
+                        Text(M.padding(h = 5).width(120),A, stateOf("不透明度"))
+                        Edit(M.padding(h = 5).weight(1f),A,combine { alpha?.toString() ?: "" }){ (node as Container).alpha = it.toUByteOrNull() }
+                        DefaultButton(M.padding(h = 5).weight(0.3f),active = combine{ alpha != null }){ (node as Container).alpha = null }
+                    }
+                    TrackBar(M.padding(h = 5),A,combine { alpha?.toInt() ?: 128 },0..255,255){
+                        (node as Container).alpha = it.toUByte()
+                    }
                 }
             }
-        } Else {
-            If(combine { node is Button }){
+            Button::class -> {
                 val button by RODelegate { node as Button }
                 KeyEdit(combine {button.key}){button.key = it}
-            } Else {
-                Spacer(M)
             }
-        }
+            Group::class -> {
+                val group by RODelegate { node as Group }
+                GroupTypeEdit(combine { group.dispatcher }){ group.dispatcher = it }
+            }
+            else -> {Spacer(M)}
+        }}
     }
     If(combine { node is Button }){
         ShapeEdit(M.height(1),A,combine { (node as Button).shape }){(node as Button).shape = it}

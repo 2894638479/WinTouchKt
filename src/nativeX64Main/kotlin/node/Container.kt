@@ -4,7 +4,6 @@ import dsl.mutStateNull
 import dsl.mutStateOf
 import error.wrapExceptionName
 import geometry.Point
-import group.GroupTouchDispatcher
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -71,9 +70,9 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
             }
         }.apply { down(event) } else groups.firstOrNull {
             wrapExceptionName("dispatcher down error"){
-                it.touchDispatcher?.down(event) == true
+                it.touchReceiver?.down(event) == true
             }
-        }?.touchDispatcher
+        }?.touchReceiver
 
         activePointers[event.id] = receiver ?: return false
         return true
@@ -102,7 +101,7 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
     override fun destroy(){
         removeContainer(this)
         context?.drawScope?.destroy() ?: error("drawScope is null")
-        super.destroy()
+        super<NodeWithChild>.destroy()
     }
     companion object {
         private val hwndContainer = HashMap<Hwnd, Container>(10)
