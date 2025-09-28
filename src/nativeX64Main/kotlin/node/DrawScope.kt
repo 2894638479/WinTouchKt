@@ -6,7 +6,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import libs.Clib.d2dBeginDraw
 import libs.Clib.d2dClear
 import libs.Clib.d2dCreateTarget
+import libs.Clib.d2dDrawRect
 import libs.Clib.d2dEndDraw
+import libs.Clib.d2dFillRect
 import libs.Clib.d2dResizeRenderTarget
 import logger.info
 import logger.warning
@@ -17,7 +19,7 @@ import sendInput.Keys
 import wrapper.*
 
 @OptIn(ExperimentalForeignApi::class)
-class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
+class DrawScope(private val buttons:Sequence<Button>,val cursorPos:()->Point?, val hwnd: Hwnd) {
     var alpha: UByte = 128u
         set(value) {
             field = value
@@ -26,16 +28,30 @@ class DrawScope(private val buttons:Sequence<Button>, val hwnd: Hwnd) {
     val factory = D2dFactory.create()
     val target = D2dTarget.create(hwnd,factory)
     val writeFactory = D2dWriteFactory.create()
+
+    fun drawCursor(){
+        val pos = cursorPos() ?: return
+        val brush = cache.brush(RED)
+        val halfWidth = 1f
+        target.d2dFillRect(brush,pos.x - halfWidth,-10000f,pos.x + halfWidth,10000f)
+        target.d2dFillRect(brush,-10000f,pos.y - halfWidth,10000f,pos.y + halfWidth)
+    }
+
     private inline fun d2dDraw(block:()->Unit){
         d2dBeginDraw(target.value)
         block()
         d2dEndDraw(target.value)
     }
     var reDraw = true.apply { hwnd.invalidateRect() }
+        set(value) {
+            field = value
+            if(value) hwnd.invalidateRect()
+        }
     fun onDraw() = d2dDraw {
         if(reDraw) {
             d2dClear(target.value)
             buttons.forEach { it.onDraw(this) }
+            drawCursor()
         } else {
             toErase.forEach{ it() }
             toDraw.forEach { it() }

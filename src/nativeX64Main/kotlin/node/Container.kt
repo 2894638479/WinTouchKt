@@ -18,6 +18,7 @@ import geometry.plus
 import json
 import logger.infoBox
 import logger.warningBox
+import openExitWindow
 import writeFile
 
 @Serializable(with = Container.ContainerSerializer::class)
@@ -38,12 +39,13 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
     private val buttonSequence = sequence { groups.forEach { it.buttons.forEach { yield(it) } } }
     var status by mutStateOf(Status.NORMAL)
     var selected by mutStateOf<Node?>(null)
-    val drawScope = DrawScope(buttonSequence,buttonsLayeredWindow("container_window"))
+    val drawScope = DrawScope(buttonSequence,{selected?.displayOffset},buttonsLayeredWindow("container_window"))
         .also { setHwndContainer(it.hwnd,this) }
-    val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { info("exit pressed");exit(0) }
+    val keyHandler = KeyHandler({ drawScope.run { showStatus = !showStatus } }) { openExitWindow(this) }
     init {
         extract { context }.value = Context(drawScope,keyHandler)
         extract { context }.listen { error("should not modify context of container") }
+        extract { selected }.listen { drawScope.reDraw = true }
     }
     class Context(
         val drawScope: DrawScope,
@@ -125,6 +127,13 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
         if(success) infoBox("配置已保存到$path")
         else warningBox("配置无法保存到$path")
         return success
+    }
+
+    fun closeConfig(){
+        status = Status.NORMAL
+        selected = null
+        drawScope.showStatus = true
+        drawScope.reDraw = true
     }
 
     object ContainerSerializer : SerializerWrapper<Container,ContainerSerializer.Descriptor>("Container",Descriptor) {

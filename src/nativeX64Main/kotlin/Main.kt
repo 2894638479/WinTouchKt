@@ -29,34 +29,39 @@ fun main() = catchInKotlin {
     }).run { Unit }
 }
 
+fun openExitWindow(container:Container){
+    TopWindow("是否退出程序?",M.minSize(400,200)){
+        Column {
+            Text(M.padding(10),A,stateOf("如果直接退出程序，对配置的修改将不会保存"),A.left())
+            Row(M.weight(0f)) {
+                Spacer(M)
+                Button(M.size(80,40).padding(10),A,stateOf("保存并退出")){
+                    if(container.saveToFile()) exitProcess(0)
+                }
+                Button(M.size(80,40).padding(10),A,stateOf("另存并退出")){
+                    val path = chooseSaveFile(hwnd) ?: return@Button
+                    if(container.saveToFile(path)) exitProcess(0)
+                }
+                Button(M.size(80,40).padding(10),A,stateOf("直接退出")){
+                    exitProcess(0)
+                }
+            }
+        }
+    }
+}
+
 fun openProtectWindow(container: Container) = TopWindow("WinTouchKt运行中",M.minSize(400,200), windowProcess = {
     object : WindowProcess by it {
         override fun onClose(): Boolean {
-            TopWindow("是否退出程序?",M.minSize(400,200)){
-                Column {
-                    Text(M.padding(10),A,stateOf("如果直接退出程序，对配置的修改将不会保存"),A.left())
-                    Row(M.weight(0f)) {
-                        Spacer(M)
-                        Button(M.size(80,40).padding(10),A,stateOf("保存并退出")){
-                            if(container.saveToFile()) exitProcess(0)
-                        }
-                        Button(M.size(80,40).padding(10),A,stateOf("另存并退出")){
-                            val path = chooseSaveFile(hwnd) ?: return@Button
-                            if(container.saveToFile(path)) exitProcess(0)
-                        }
-                        Button(M.size(80,40).padding(10),A,stateOf("直接退出")){
-                            exitProcess(0)
-                        }
-                    }
-                }
-            }
+            openExitWindow(container)
             return true
         }
     }
 }){
     val topWindow = hwnd
     Column {
-        Text(M,A,stateOf("WinTouchKt运行中"))
+        Text(M.padding(10),A,stateOf("WinTouchKt运行中"))
+        Text(M.padding(10),A,stateOf("当前文件：${container.filePath}"),A.left())
         Row(M.weight(0f)) {
             Spacer(M)
             Button(M.size(80,40).padding(10),A,stateOf("编辑配置")){
@@ -69,7 +74,14 @@ fun openProtectWindow(container: Container) = TopWindow("WinTouchKt运行中",M.
     }
 }
 
-fun openMainWindow(container: Container) = TopWindow("配置主界面", M.minSize(800,600)) {
+fun openMainWindow(container: Container) = TopWindow("配置主界面", M.minSize(800,600), windowProcess = {
+    object : WindowProcess by it {
+        override fun onClose(): Boolean {
+            container.closeConfig()
+            return false
+        }
+    }
+}) {
     wrapExceptionName("creating MainContent") {
         MainContent(container)
     }
