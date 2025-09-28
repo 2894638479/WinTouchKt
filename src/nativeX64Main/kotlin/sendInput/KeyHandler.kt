@@ -1,10 +1,5 @@
 package sendInput
 
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.UShortVar
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.nativeHeap
-import kotlinx.cinterop.toKStringFromUtf16
 import platform.windows.*
 
 class KeyHandler(val onHideKeyUp:()->Unit,val onExitKeyUp:()->Unit) {
@@ -58,19 +53,6 @@ class KeyHandler(val onHideKeyUp:()->Unit,val onExitKeyUp:()->Unit) {
             functionKeys to "功能键",
             otherKeys to "其它"
         )
-
-
-        @OptIn(ExperimentalForeignApi::class)
-        private val buffer = nativeHeap.allocArray<UShortVar>(256)
-
-        @OptIn(ExperimentalForeignApi::class)
-        fun keyNames(code: UByte):String{
-            if(code == Keys.HIDE_SHOW.code) return "显示/隐藏"
-            if(code == Keys.MENU.code) return "菜单"
-            val scanCode = MapVirtualKeyW(code.toUInt(),MAPVK_VK_TO_VSC.toUInt())
-            GetKeyNameTextW(scanCode.toInt() shl 16,buffer,256)
-            return buffer.toKStringFromUtf16()
-        }
     }
     fun down(key:UByte) = sendKeyEvent(key, KEYEVENT_DOWN)
     fun up(key:UByte) = sendKeyEvent(key, KEYEVENT_UP)

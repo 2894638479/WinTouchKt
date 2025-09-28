@@ -5,8 +5,14 @@ import logger.info
 import logger.warning
 import wrapper.*
 
-class ColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, name:String = "column"):
-    GuiScope(parent,name,modifier, alignment) {
+class ColumnScope(
+    modifier: Modifier,
+    alignment: Alignment,
+    parent: WindowProcess?,
+    name:String = "column",
+    style:Int = 0,
+    windowProcess:(WindowProcess)-> WindowProcess = {it}
+): GuiScope(parent,name,modifier, alignment,style,windowProcess) {
     fun Modifier.weight(value:Float) = apply { weight = value }
     override val innerMinH get() = visibleChildren.sumOf { it.outerMinH }
     override fun onSize() = wrapExceptionName("ColumnScope onSize") {

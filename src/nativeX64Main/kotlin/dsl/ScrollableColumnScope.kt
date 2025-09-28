@@ -5,11 +5,19 @@ import platform.windows.GetSystemMetrics
 import platform.windows.SM_CXVSCROLL
 import platform.windows.WS_VSCROLL
 import wrapper.GuiWindow
+import wrapper.WindowProcess
 import wrapper.allocRECT
 import wrapper.toOrigin
 
-class ScrollableColumnScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, name:String = "column"):
-    GuiScope(parent,name,modifier, alignment, style = WS_VSCROLL) {
+class ScrollableColumnScope(
+    modifier: Modifier,
+    alignment: Alignment,
+    parent: WindowProcess?,
+    name:String = "column",
+    style:Int = 0,
+    windowProcess:(WindowProcess)-> WindowProcess = {it}
+):
+    GuiScope(parent,name,modifier, alignment,WS_VSCROLL or style,windowProcess) {
     override var scrollableHeight = 0
     override val innerMinW get() = super.innerMinW + GetSystemMetrics(SM_CXVSCROLL)
     override val innerMinH get() = 0

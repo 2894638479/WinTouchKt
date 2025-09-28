@@ -5,9 +5,15 @@ import geometry.Color
 import logger.warning
 import wrapper.*
 
-class BoxScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?,
-               name:String = "box",color:State<Color?> = stateNull()):
-    GuiScope(parent,name,modifier, alignment,color) {
+class BoxScope(
+    modifier: Modifier,
+    alignment: Alignment,
+    parent: WindowProcess?,
+    name:String = "box",
+    style:Int = 0,
+    windowProcess:(WindowProcess)-> WindowProcess = {it}
+):
+    GuiScope(parent,name,modifier, alignment,style,windowProcess) {
     override fun onSize() = wrapExceptionName("BoxScope onSize") {
         visibleChildren.forEach {
             val modifier = it.modifier

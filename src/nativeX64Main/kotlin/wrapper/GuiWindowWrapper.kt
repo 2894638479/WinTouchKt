@@ -46,7 +46,7 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
         }
         WM_HSCROLL -> {
             if(lParam != 0L) {
-                guiWindow.onHScrollHwnd(Hwnd(lParam.toCPointer()))
+                guiWindow.onHScroll(Hwnd(lParam.toCPointer()))
             }
         }
         WM_VSCROLL -> memScoped {
@@ -76,77 +76,49 @@ fun wndProcGui(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRESULT
                 if(guiWindowMap.remove(Hwnd(hWnd)) == null) error("guiWindow ${Hwnd(hWnd)} remove failed")
             }
         }
+        WM_DROPFILES -> {
+            val path = memScoped {
+                val hDrop : HDROP? = wParam.toLong().toCPointer()
+                val buffer = allocArray<UShortVar>(MAX_PATH)
+                val fileCount = DragQueryFileA(hDrop, 0xFFFFFFFFu, null, 0u)
+
+                if (fileCount > 0u) {
+                    DragQueryFileW(hDrop, 0u, buffer, MAX_PATH.toUInt())
+                }
+                DragFinish(hDrop)
+                buffer.toKStringFromUtf16().ifBlank { return default() }
+            }
+            if(!guiWindow.onDropFile(path)) return default()
+        }
         else -> return default()
     }
     return 0
 }
 
-private val guiWindowMap = mutableMapOf<Hwnd,GuiWindow>()
+val guiWindowMap = mutableMapOf<Hwnd, WindowProcess>()
 private var creatingGuiWindow :GuiWindow? = null
 const val guiWindowClass = "gui_window"
 const val BN_LAST = 0x0FFF
 const val MY_DESTROY = BN_LAST + 1
 
-@OptIn(ExperimentalForeignApi::class)
-abstract class GuiWindow (
-    val windowName:String,
-    modifier: Modifier,
-    style: Int = 0,
-    val parent:GuiWindow? = null
-) {
-    internal var minW = modifier.minW
-    internal var minH = modifier.minH
-    open fun onSize(){
-        if(scrollableHeight == -1) return
-        hwnd.updateScrollSize(SB_VERT,scrollableHeight)
-    }
-    abstract val scrollableHeight: Int
-    abstract val scrollableWidth: Int
+interface WindowProcess{
+    fun onSize()
+    fun onWmCommand(id:UShort,nCode:Int)
+    fun onClose(): Boolean
+    fun onDestroy(): Boolean
+    fun onHScroll(hwnd: Hwnd)
+    @OptIn(ExperimentalForeignApi::class)
+    fun onEraseBkGnd(hdc:HDC?) = false
+    fun onDropFile(path:String) = false
+    val minW:Int
+    val minH:Int
+    val hwnd: Hwnd
+    val parent: WindowProcess?
+    val idIncrease: UShort
+    val onCommand:  MutableMap<UShort, () -> Unit>
 
-    var idIncrease = 0.toUShort()
-        get() {
-            do { field++ } while (onCommand.containsKey(field))
-            return field
-        }
-    val onCommand = mutableMapOf<UShort,()->Unit>()
-    fun onWmCommand(id:UShort,nCode:Int){
-        when(nCode){
-            BN_CLICKED -> {
-                onCommand[id]?.invoke() ?: error("no onClick found for id $id in $hwnd")
-            }
-            EN_CHANGE -> {
-                onCommand[id]?.invoke()// ?: warning("no onEdit found for id $id in $hwnd")
-            }
-            MY_DESTROY -> {
-                onCommand.remove(id)
-            }
-        }
-    }
-    private var backGndBrush: CPointer<HBRUSH__>? = null
-    var backGndColor :Color? = null
-        set(value) {
-            if(field == value) return
-            field = value
-            backGndBrush?.let { DeleteObject(it) }
-            value?.let { backGndBrush = CreateSolidBrush(it.toUInt()) }
-            hwnd.invalidateRect()
-        }
-
-    open fun onClose() = false
-    open fun onDestroy(): Boolean{
-        backGndBrush?.let { DeleteObject(it) }
-        return false
-    }
-    fun onEraseBkGnd(hdc:HDC?): Boolean{
-        return backGndBrush?.let { brush ->
-            hwnd.useRect { rect ->
-                FillRect(hdc,rect.ptr,brush)
-            }
-            true
-        } ?: false
-    }
-
-    private fun createSubHwnd(style:Int,className:String,windowName:String,onCommand:()->Unit = {}) = CreateWindowExW(
+    @OptIn(ExperimentalForeignApi::class)
+    private fun createSubHwnd(style:Int, className:String, windowName:String, onCommand:()->Unit = {}) = CreateWindowExW(
         0u,
         className,
         windowName,
@@ -157,7 +129,7 @@ abstract class GuiWindow (
         GetModuleHandleW(null),
         null
     ).let { Hwnd(it ?: error("sub hwnd create failed ${GetLastError()} class $className window $windowName parent $hwnd")) }.apply {
-        this@GuiWindow.onCommand[controlId] = onCommand
+        this@WindowProcess.onCommand[controlId] = onCommand
     }
 
     fun button(string:String, onClick:()->Unit) =
@@ -165,17 +137,15 @@ abstract class GuiWindow (
 
     fun edit(string:String, onEdit:(String)->Unit) =
         createSubHwnd(WS_TABSTOP or ES_LEFT or WS_BORDER, WC_EDITA,string).also {
-        onCommand[it.controlId] = { onEdit(it.name) }
-        onEdit(string)
-    }
+            onCommand[it.controlId] = { onEdit(it.name) }
+            onEdit(string)
+        }
 
     fun text(text:String,alignment: Alignment) = createSubHwnd(alignment.staticStyle, WC_STATICA,text)
 
-    fun onHScrollHwnd(hwnd: Hwnd){
-        onCommand[hwnd.controlId]?.invoke()
-    }
+    @OptIn(ExperimentalForeignApi::class)
     fun <T> trackBar(range: ClosedRange<T>, steps:Int = 1000, onChange:(T)->Unit) where T:Number, T:Comparable<T>
-    = createSubHwnd(0,"msctls_trackbar32","trackBar").apply {
+            = createSubHwnd(0,"msctls_trackbar32","trackBar").apply {
         SendMessage!!(HWND, TBM_SETRANGEMIN.toUInt(), FALSE.toULong(), 0)
         SendMessage!!(HWND, TBM_SETRANGEMAX.toUInt(), FALSE.toULong(), steps.toLong())
         SendMessage!!(HWND, TBM_SETPAGESIZE.toUInt(), 0u, steps.toLong() / 10)
@@ -194,8 +164,53 @@ abstract class GuiWindow (
             })
         }
     }
+}
 
-    val hwnd:Hwnd = run {
+@OptIn(ExperimentalForeignApi::class)
+abstract class GuiWindow (
+    val windowName:String,
+    modifier: Modifier,
+    style: Int = 0,
+    final override val parent: WindowProcess? = null
+): WindowProcess {
+    override var minW = modifier.minW
+    override var minH = modifier.minH
+    override fun onSize(){
+        if(scrollableHeight == -1) return
+        hwnd.updateScrollSize(SB_VERT,scrollableHeight)
+    }
+    abstract val scrollableHeight: Int
+    abstract val scrollableWidth: Int
+
+    override var idIncrease = 0.toUShort()
+        get() {
+            do { field++ } while (onCommand.containsKey(field))
+            return field
+        }
+    override val onCommand = mutableMapOf<UShort,()->Unit>()
+    override fun onWmCommand(id:UShort, nCode:Int){
+        when(nCode){
+            BN_CLICKED -> {
+                onCommand[id]?.invoke() ?: error("no onClick found for id $id in $hwnd")
+            }
+            EN_CHANGE -> {
+                onCommand[id]?.invoke()// ?: warning("no onEdit found for id $id in $hwnd")
+            }
+            MY_DESTROY -> {
+                onCommand.remove(id)
+            }
+        }
+    }
+
+    override fun onClose() = false
+    override fun onDestroy(): Boolean{
+        return false
+    }
+    override fun onHScroll(hwnd: Hwnd){
+        onCommand[hwnd.controlId]?.invoke()
+    }
+
+    override val hwnd:Hwnd = run {
         val styleEx = (WS_EX_TOPMOST).toUInt()
         creatingGuiWindow = this
         val wnd =  if(parent == null){

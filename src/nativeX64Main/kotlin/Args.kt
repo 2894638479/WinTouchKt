@@ -1,8 +1,10 @@
+import error.wrapExceptionName
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.toKString
 import kotlinx.serialization.json.Json
 import libs.Clib.freeStr
+import node.Container
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -19,17 +21,11 @@ val json = Json {
     ignoreUnknownKeys = true
 }
 
-
-class ArgParseResult(
-    val jsonStr:String,
-)
-
-fun processArgs(args:Array<String>):ArgParseResult{
-    if (args.size == 1) {
-        val path = args[0]
-        val json = readFile(path) ?: error("failed open file $path")
-        return ArgParseResult(json)
+fun createContainerFromFilePath(path: String): Container{
+    val jsonStr = readFile(path) ?: error("cannot open file $path")
+    val container = wrapExceptionName("json decode error"){
+        json.decodeFromString<Container>(jsonStr)
     }
-    if(args.isEmpty()) error("no args provided")
-    error("too many args")
+    container.drawScope.hwnd.showAndUpdate()
+    return container
 }

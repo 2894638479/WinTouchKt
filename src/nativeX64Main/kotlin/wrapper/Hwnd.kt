@@ -44,6 +44,7 @@ value class Hwnd(val value:CPointer<hwndHolder>){
     fun enable() = EnableWindow(HWND,TRUE)
     fun disable() = EnableWindow(HWND,FALSE)
     fun enable(bool: Boolean) = if(bool) enable() else disable()
+    fun dragAcceptFiles(bool: Boolean) = DragAcceptFiles(HWND,if(bool) TRUE else FALSE)
     val nameLength get() = GetWindowTextLengthW(HWND)
     var sel get() = memScoped {
             val start = alloc<IntVar>()

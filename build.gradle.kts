@@ -33,6 +33,7 @@ kotlin {
         binaries{
             executable(listOf(RELEASE)){
 //                linkerOpts += "-mwindows"
+                linkerOpts += "-lcomdlg32"
             }
         }
         tasks.named("linkReleaseExecutableNativeX64"){

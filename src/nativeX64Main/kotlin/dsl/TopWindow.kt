@@ -1,5 +1,6 @@
 package dsl
 
+import wrapper.WindowProcess
 import wrapper.scheduleGC
 
 class WindowManagerBuilder {
@@ -45,11 +46,22 @@ fun scopeWindows(block: WindowManagerBuilder.()->Unit) = object : WindowManager 
 }
 
 context(wm: WindowManager)
-fun GuiScope.Window(name: String, modifier: Modifier, block: BoxScope.() -> Unit)
-= TopWindow(name,modifier,block).also { wm.add(it) }
+fun GuiScope.Window(
+    name: String,
+    modifier: Modifier,
+    style: Int = 0,
+    windowProcess: (WindowProcess) -> WindowProcess = {it},
+    block: BoxScope.() -> Unit
+) = TopWindow(name,modifier,style,windowProcess,block).also { wm.add(it) }
 
-fun TopWindow(name: String, modifier: Modifier, block: BoxScope.() -> Unit): GuiScope{
-    val window = BoxScope(modifier,A,null,name).apply {
+fun TopWindow(
+    name: String,
+    modifier: Modifier,
+    style: Int = 0,
+    windowProcess: (WindowProcess) -> WindowProcess = {it},
+    block: BoxScope.() -> Unit
+): GuiScope{
+    val window = BoxScope(modifier,A,null,name,style,windowProcess).apply {
         _onDestroy += ::scheduleGC
         block()
         hwnd.show()

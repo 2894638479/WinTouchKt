@@ -2,10 +2,21 @@ package dsl
 
 import error.wrapExceptionName
 import geometry.Color
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ptr
+import logger.info
+import platform.windows.CreateSolidBrush
+import platform.windows.DeleteObject
+import platform.windows.FillRect
+import platform.windows.HBRUSH__
+import platform.windows.HDC
 import platform.windows.RECT
 import platform.windows.TBM_SETPOS
 import platform.windows.TRUE
 import wrapper.GuiWindow
+import wrapper.WindowProcess
+import wrapper.guiWindowMap
 import wrapper.height
 import wrapper.width
 import kotlin.math.max
@@ -14,11 +25,12 @@ import kotlin.math.roundToInt
 
 @Gui
 abstract class GuiScope(
-    parent: GuiWindow?, name:String,
+    parent: WindowProcess?,
+    name:String,
     modifier: Modifier,
     alignment: Alignment,
-    color:State<Color?> = stateNull(),
     style:Int = 0,
+    windowProcess:(WindowProcess)-> WindowProcess
 ): AbstractGuiComponent(modifier, alignment),State.Scope {
     override var _onDestroy = mutableListOf<()->Unit>()
     private inline fun <T> remapScope(scope: State.Scope, block:GuiScope.()->T):T{
@@ -26,7 +38,7 @@ abstract class GuiScope(
         _onDestroy = scope._onDestroy
         return block().also { _onDestroy = rem }
     }
-    private val window = object : GuiWindow(name,
+    private val window: WindowProcess = windowProcess(object : GuiWindow(name,
         if(parent == null) modifier else M,
         style,parent
     ){
@@ -43,12 +55,10 @@ abstract class GuiScope(
             onCommand.clear()
             return super.onDestroy()
         }
-    }
-    init {
-        color.listen(true) { window.backGndColor = it }
-    }
+    }).apply { guiWindowMap[hwnd] = this }
+
     fun reLayout(){
-        fun GuiWindow.layout(){
+        fun WindowProcess.layout(){
             parent?.layout()
             onSize()
         }
@@ -71,8 +81,36 @@ abstract class GuiScope(
         return children.also { children = rem }
     }
     abstract fun onSize()
-    fun Box(modifier: Modifier = M, alignment: Alignment = A,color:State<Color?> = stateNull(), block: BoxScope.()->Unit){
-        BoxScope(modifier, alignment, window,color = color).apply(block).addToChild()
+    fun Box(modifier: Modifier = M, alignment: Alignment = A, color:State<Color?> = stateNull(), block: BoxScope.()->Unit){
+        BoxScope(modifier, alignment, window, windowProcess = {
+            object:WindowProcess by it{
+                @OptIn(ExperimentalForeignApi::class)
+                private var backGndBrush: CPointer<HBRUSH__>? = null
+                private var currentColor:Color? = null
+                @OptIn(ExperimentalForeignApi::class)
+                override fun onDestroy(): Boolean {
+                    backGndBrush?.let { DeleteObject(it) }
+                    return it.onDestroy()
+                }
+                @OptIn(ExperimentalForeignApi::class)
+                override fun onEraseBkGnd(hdc:HDC?): Boolean{
+                    if(color.value != currentColor) {
+                        currentColor = color.value
+                        backGndBrush?.let { DeleteObject(it) }
+                        backGndBrush = currentColor?.let { CreateSolidBrush(it.toUInt()) }
+                    }
+                    return backGndBrush?.let { brush ->
+                        hwnd.useRect { rect ->
+                            FillRect(hdc,rect.ptr,brush)
+                        }
+                        true
+                    } ?: false
+                }
+                init {
+                    color.listen { hwnd.invalidateRect() }
+                }
+            }
+        }).apply(block).addToChild()
     }
     fun Column(modifier: Modifier = M, alignment: Alignment = A, block: ColumnScope.()->Unit){
         ColumnScope(modifier, alignment, window).apply(block).addToChild()

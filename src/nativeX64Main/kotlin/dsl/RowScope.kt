@@ -4,8 +4,15 @@ import error.wrapExceptionName
 import logger.warning
 import wrapper.*
 
-class RowScope(modifier: Modifier, alignment: Alignment, parent: GuiWindow?, name:String = "row"):
-    GuiScope(parent,name,modifier, alignment) {
+class RowScope(
+    modifier: Modifier,
+    alignment: Alignment,
+    parent: WindowProcess?,
+    name:String = "row",
+    style:Int = 0,
+    windowProcess:(WindowProcess)-> WindowProcess = {it}
+):
+    GuiScope(parent,name,modifier, alignment,style,windowProcess) {
     fun Modifier.weight(value:Float) = apply { weight = value }
     override fun onSize() = wrapExceptionName("RowScope onSize") {
         var totalW = 0
