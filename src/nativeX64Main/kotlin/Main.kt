@@ -60,10 +60,13 @@ fun openProtectWindow(container: Container) = TopWindow("WinTouchKt运行中",M.
 }){
     val topWindow = hwnd
     Column {
-        Text(M.padding(10),A,stateOf("WinTouchKt运行中"))
+        Text(M.padding(10),A,stateOf("WinTouchKt运行中，可以最小化此窗口"),A.left())
         Text(M.padding(10),A,stateOf("当前文件：${container.filePath}"),A.left())
         Row(M.weight(0f)) {
             Spacer(M)
+            Button(M.size(80,40).padding(10),A,combine { if(container.drawScope.showStatus) "隐藏按钮" else "显示按钮" }){
+                container.drawScope.run { showStatus = !showStatus }
+            }
             Button(M.size(80,40).padding(10),A,stateOf("编辑配置")){
                 openMainWindow(container)
             }

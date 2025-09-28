@@ -17,9 +17,15 @@ import platform.windows.LWA_COLORKEY
 import platform.windows.SetLayeredWindowAttributes
 import sendInput.Keys
 import wrapper.*
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 @OptIn(ExperimentalForeignApi::class)
-class DrawScope(private val buttons:Sequence<Button>,val cursorPos:()->Point?, val hwnd: Hwnd) {
+class DrawScope(
+    private val buttons:Sequence<Button>,
+    val cursorPos:()->Point?,
+    val hwnd: Hwnd
+): Destroyable {
     var alpha: UByte = 128u
         set(value) {
             field = value
@@ -50,7 +56,9 @@ class DrawScope(private val buttons:Sequence<Button>,val cursorPos:()->Point?, v
     fun onDraw() = d2dDraw {
         if(reDraw) {
             d2dClear(target.value)
-            buttons.forEach { it.onDraw(this) }
+            val shouldDraw = if(showStatus) buttons
+            else buttons.filter { it.key.contains(Keys.HIDE_SHOW.code) }
+            shouldDraw.forEach { it.onDraw(this) }
             drawCursor()
         } else {
             toErase.forEach{ it() }
@@ -77,18 +85,15 @@ class DrawScope(private val buttons:Sequence<Button>,val cursorPos:()->Point?, v
         toErase += block
         hwnd.invalidateRect()
     }
-
-    var showStatus = true
-        set(value) {
-            field = value
-            if(value) {
-                reDraw = true
-            } else {
-                buttons.filter { !it.key.contains(Keys.HIDE_SHOW.code) }.forEach{addToErase(it.onErase)}
-            }
+    private val showStatusState = mutStateOf(true)
+    var showStatus by object: ReadWriteProperty<Any?, Boolean> by showStatusState {
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+            showStatusState.setValue(thisRef,property,value)
+            reDraw = true
         }
+    }
 
-    fun destroy() {
+    override fun destroy() {
         cache.destroy()
         factory.free()
         target.free()
@@ -102,7 +107,11 @@ class DrawScope(private val buttons:Sequence<Button>,val cursorPos:()->Point?, v
         reDraw = true
     }
     val cache get() = _cache.apply { cacheNotifier }
-    class Cache(private val writeFactory: D2dWriteFactory, private val target: D2dTarget,val notifyCleared:()->Unit) {
+    class Cache(
+        private val writeFactory: D2dWriteFactory,
+        private val target: D2dTarget,
+        val notifyCleared:()->Unit
+    ): Destroyable {
         private val brushes = HashMap<Color, D2dBrush>(100)
         private val fonts = HashMap<Font, D2dFont>(100)
         private fun clearBrushes() {
@@ -121,7 +130,7 @@ class DrawScope(private val buttons:Sequence<Button>,val cursorPos:()->Point?, v
             if (brushes.count() >= 200) clearBrushes()
             if (fonts.count() >= 200) clearFonts()
         }
-        fun destroy(){
+        override fun destroy(){
             clearBrushes()
             clearFonts()
             transparentBrush.free()
