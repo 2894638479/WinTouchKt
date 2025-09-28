@@ -2,7 +2,6 @@ package wrapper
 
 import kotlinx.cinterop.*
 import libs.Clib.hwndHolder
-import logger.info
 import logger.warning
 import platform.windows.*
 import kotlin.math.max
@@ -30,11 +29,15 @@ value class Hwnd(val value:CPointer<hwndHolder>){
         invalidateRect()
     }
     fun sendMessage(p1:UInt,p2:ULong,p3:Long) = SendMessage!!(HWND,p1,p2,p3)
-    fun close() = CloseWindow(HWND)
+    fun postMessage(p1:UInt,p2:ULong,p3:Long) = PostMessage!!(HWND,p1,p2,p3)
+    fun minimize() = CloseWindow(HWND)
+    fun close(){
+        postMessage(WM_CLOSE.toUInt(),0u,0)
+    }
     fun destroy() {
         parent?.let {
-            SendMessage!!(
-                it.HWND, WM_COMMAND.toUInt(),
+            sendMessage(
+                WM_COMMAND.toUInt(),
                 (MY_DESTROY.toULong() shl 16) or controlId.toULong(),
                 HWND.toLong()
             )
@@ -49,14 +52,14 @@ value class Hwnd(val value:CPointer<hwndHolder>){
     var sel get() = memScoped {
             val start = alloc<IntVar>()
             val end = alloc<IntVar>()
-            SendMessage!!(HWND, EM_GETSEL.toUInt(), start.ptr.toLong().toULong(), end.ptr.toLong())
+            sendMessage(EM_GETSEL.toUInt(), start.ptr.toLong().toULong(), end.ptr.toLong())
             start.value to end.value
         }
         set(value) {
             val len = nameLength
             val start = min(len,value.first)
             val end = min(len,value.second)
-            SendMessage!!(HWND, EM_SETSEL.toUInt(),start.toULong(),end.toLong())
+            sendMessage(EM_SETSEL.toUInt(),start.toULong(),end.toLong())
         }
     var name:String
         get() {

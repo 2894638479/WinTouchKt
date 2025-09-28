@@ -15,9 +15,14 @@ import window.buttonsLayeredWindow
 import wrapper.Hwnd
 import wrapper.SerializerWrapper
 import geometry.plus
+import json
+import logger.infoBox
+import logger.warningBox
+import writeFile
 
 @Serializable(with = Container.ContainerSerializer::class)
 class Container :TouchReceiver, NodeWithChild<Group>(){
+    var filePath = ""
     enum class Status{
         NORMAL,DRAG_BUTTON,DRAG_GROUP,DRAG_CONTAINER,SELECT_BUTTON,SELECT_GROUP;
         val str get() = when(this){
@@ -113,6 +118,13 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
             val key = hwndContainer.firstNotNullOf { (k,v) -> k.takeIf { v == container } }
             hwndContainer.remove(key)
         }
+    }
+
+    fun saveToFile(path:String = filePath): Boolean{
+        val success = writeFile(path,json.encodeToString(this))
+        if(success) infoBox("配置已保存到$path")
+        else warningBox("配置无法保存到$path")
+        return success
     }
 
     object ContainerSerializer : SerializerWrapper<Container,ContainerSerializer.Descriptor>("Container",Descriptor) {

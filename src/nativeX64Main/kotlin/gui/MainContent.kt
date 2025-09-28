@@ -19,11 +19,16 @@ import dsl.stateOf
 import dsl.width
 import geometry.RoundedRect
 import group.NormalGroup
+import json
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.serialization.encodeToString
+import logger.infoBox
+import logger.warningBox
 import node.Button
 import node.Container
 import node.Group
 import node.Node
+import writeFile
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -79,7 +84,10 @@ fun GuiScope.MainContent(container: Container) = Row {
         }
         Row(M.weight(0f)){
             Spacer(M)
-            Button(M.weight(0f).size(80,40).padding(10),A,combine { container.status.str }){
+            Button(M.size(80,40).padding(10),A,stateOf("保存配置")){
+                container.saveToFile()
+            }
+            Button(M.size(80,40).padding(10),A,combine { container.status.str }){
                 with(scopeWindows {}){
                     Window("状态选择",M.minSize(200,300)){
                         Column {
@@ -90,7 +98,7 @@ fun GuiScope.MainContent(container: Container) = Row {
                     }
                 }
             }
-            Button(M.weight(0f).size(80,40).padding(10),A,stateOf("关于软件")){
+            Button(M.size(80,40).padding(10),A,stateOf("关于软件")){
                 with(scopeWindows {}){
                     Window("关于软件",M.minSize(400,300)){
                         Text(M,A,stateOf("???"))

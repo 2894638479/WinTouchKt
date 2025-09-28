@@ -22,28 +22,24 @@ char* readFile(char* path) {
     if (hFile == INVALID_HANDLE_VALUE) {
         return NULL;
     }
-    
+
     DWORD fileSize = GetFileSize(hFile, NULL);
     if (fileSize == INVALID_FILE_SIZE) {
         CloseHandle(hFile);
         return NULL;
     }
-
-    // 使用 malloc 分配足够大的内存来存储整个文件的内容
-    char* buffer = (char*)malloc(fileSize + 1); // +1 为了确保以 null 结尾
+    char* buffer = (char*)malloc(fileSize + 1);
     if (buffer == NULL) {
         CloseHandle(hFile);
         return NULL;
     }
-
-    // 从文件中读取内容
     DWORD bytesRead;
     BOOL readResult = ReadFile(
-        hFile,                // 文件句柄
-        buffer,               // 存储内容的缓冲区
-        fileSize,             // 读取字节数
-        &bytesRead,           // 实际读取字节数
-        NULL                  // 异步操作时使用重叠结构
+        hFile,
+        buffer,
+        fileSize,
+        &bytesRead,
+        NULL
     );
 
     if (!readResult || bytesRead != fileSize) {
@@ -51,65 +47,89 @@ char* readFile(char* path) {
         CloseHandle(hFile);
         return NULL;
     }
-
-    // 确保缓冲区以 null 结尾
     buffer[bytesRead] = '\0';
-
-    // 关闭文件句柄
     CloseHandle(hFile);
     return buffer;
+}
+
+int writeFile(char* path,char* content) {
+    if (path == NULL || content == NULL) {
+        return -1;
+    }
+
+    wchar_t* wpath = UTF8ToUTF16(path);
+    HANDLE hFile = CreateFileW(
+        wpath,
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+    free(wpath);
+    
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return -1;
+    }
+    
+    DWORD bytesWritten;
+    BOOL success = WriteFile(
+        hFile,
+        content,
+        (DWORD)strlen(content),
+        &bytesWritten,
+        NULL
+    );
+    
+    if (!success || bytesWritten != strlen(content)) {
+        CloseHandle(hFile);
+        return -1;
+    }
+    
+    CloseHandle(hFile);
+    return 0;
 }
 
 
 
 char* GBKToUTF8(char* gbkStr) {
     #define CP_GBK 936
-    // 先将GBK字符串转换为宽字符
     int wideCharLen = MultiByteToWideChar(CP_GBK, 0, gbkStr, -1, NULL, 0);
     if (wideCharLen == 0) {
-        return NULL; // 错误处理
+        return NULL;
     }
 
     wchar_t* wideCharStr = (wchar_t*)malloc(wideCharLen * sizeof(wchar_t));
     if (wideCharStr == NULL) {
-        return NULL; // 内存分配失败
+        return NULL;
     }
     MultiByteToWideChar(CP_GBK, 0, gbkStr, -1, wideCharStr, wideCharLen);
-
-    // 然后将宽字符转换为UTF-8
     int utf8Len = WideCharToMultiByte(CP_UTF8, 0, wideCharStr, -1, NULL, 0, NULL, NULL);
     if (utf8Len == 0) {
         free(wideCharStr);
-        return NULL; // 错误处理
+        return NULL;
     }
-
     char* utf8Str = (char*)malloc(utf8Len);
     if (utf8Str == NULL) {
         free(wideCharStr);
-        return NULL; // 内存分配失败
+        return NULL;
     }
     WideCharToMultiByte(CP_UTF8, 0, wideCharStr, -1, utf8Str, utf8Len, NULL, NULL);
-
     free(wideCharStr);
     return utf8Str;
 }
 
 wchar_t* UTF8ToUTF16(char* utf8Str) {
-    // 计算所需的宽字符长度
     int wideCharLen = MultiByteToWideChar(CP_UTF8, 0, utf8Str, -1, NULL, 0);
     if (wideCharLen == 0) {
-        return NULL; // 错误处理
+        return NULL;
     }
-
-    // 分配足够的空间来存储宽字符字符串
     wchar_t* wideCharStr = (wchar_t*)malloc(wideCharLen * sizeof(wchar_t));
     if (wideCharStr == NULL) {
-        return NULL; // 内存分配失败
+        return NULL;
     }
-
-    // 执行转换
     MultiByteToWideChar(CP_UTF8, 0, utf8Str, -1, wideCharStr, wideCharLen);
-
     return wideCharStr;
 }
 

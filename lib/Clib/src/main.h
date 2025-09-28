@@ -1,6 +1,7 @@
 
 
 char* readFile(char* path);
+int writeFile(char* path,char* content);
 char* GBKToUTF8(char* gbkStr);
 unsigned short* UTF8ToUTF16(char* utf8Str);
 void freeStr(char* str);

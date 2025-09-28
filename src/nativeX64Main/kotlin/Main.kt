@@ -1,45 +1,18 @@
 import dsl.*
 import error.catchInKotlin
+import error.exitProcess
 import error.wrapExceptionName
 import gui.MainContent
-import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.IntVar
-import kotlinx.cinterop.ShortVar
-import kotlinx.cinterop.UShortVar
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.convert
-import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.ptr
-import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.set
-import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.toKString
-import kotlinx.cinterop.toKStringFromUtf16
-import kotlinx.cinterop.wcstr
 import libs.Clib.GBKToUTF8
 import libs.Clib.freeStr
-import logger.info
-import logger.warning
 import node.Container
-import platform.posix.exit
-import platform.posix.wchar_t
-import platform.posix.wchar_tVar
-import platform.windows.GetOpenFileNameA
-import platform.windows.GetOpenFileNameW
-import platform.windows.MAX_PATH
-import platform.windows.OFN_FILEMUSTEXIST
-import platform.windows.OFN_PATHMUSTEXIST
-import platform.windows.OPENFILENAMEA
-import platform.windows.OPENFILENAMEW
 import window.loopWindowMessage
 import window.registerGui
 import window.registerLayered
-import wrapper.Hwnd
 import wrapper.WindowProcess
-import wrapper.alloc
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -56,46 +29,61 @@ fun main() = catchInKotlin {
     }).run { Unit }
 }
 
+fun openProtectWindow(container: Container) = TopWindow("WinTouchKt运行中",M.minSize(400,200), windowProcess = {
+    object : WindowProcess by it {
+        override fun onClose(): Boolean {
+            TopWindow("是否退出程序?",M.minSize(400,200)){
+                Column {
+                    Text(M.padding(10),A,stateOf("如果直接退出程序，对配置的修改将不会保存"),A.left())
+                    Row(M.weight(0f)) {
+                        Spacer(M)
+                        Button(M.size(80,40).padding(10),A,stateOf("保存并退出")){
+                            if(container.saveToFile()) exitProcess(0)
+                        }
+                        Button(M.size(80,40).padding(10),A,stateOf("另存并退出")){
+                            val path = chooseSaveFile(hwnd) ?: return@Button
+                            if(container.saveToFile(path)) exitProcess(0)
+                        }
+                        Button(M.size(80,40).padding(10),A,stateOf("直接退出")){
+                            exitProcess(0)
+                        }
+                    }
+                }
+            }
+            return true
+        }
+    }
+}){
+    val topWindow = hwnd
+    Column {
+        Text(M,A,stateOf("WinTouchKt运行中"))
+        Row(M.weight(0f)) {
+            Spacer(M)
+            Button(M.size(80,40).padding(10),A,stateOf("编辑配置")){
+                openMainWindow(container)
+            }
+            Button(M.size(80,40).padding(10),A,stateOf("退出")){
+                topWindow.close()
+            }
+        }
+    }
+}
+
 fun openMainWindow(container: Container) = TopWindow("配置主界面", M.minSize(800,600)) {
     wrapExceptionName("creating MainContent") {
         MainContent(container)
     }
 }
 
-@OptIn(ExperimentalForeignApi::class)
-fun chooseFile(parent: Hwnd) = memScoped {
-    val ofn = alloc<OPENFILENAMEW>()
-    val buffer = allocArray<UShortVar>(MAX_PATH)
 
-//    val s = "json\u0000*.json\u0000"
-//    val wcs: CPointer<wchar_tVar> = allocArray(s.length)
-//    for (i in s.indices) {
-//        wcs[i] = s[i].code.convert()
-//    }
-
-    ofn.lStructSize = sizeOf<OPENFILENAMEW>().toUInt()
-    ofn.hwndOwner = parent.HWND
-    ofn.lpstrFile = buffer
-    ofn.nMaxFile = MAX_PATH.toUInt()
-    ofn.lpstrFilter = "json\u0000*.json\u0000".wcstr.ptr
-    ofn.nFilterIndex = 1u
-    ofn.lpstrTitle = "选择文件".wcstr.ptr
-    ofn.Flags = (OFN_PATHMUSTEXIST or OFN_FILEMUSTEXIST).toUInt()
-
-
-    if (GetOpenFileNameW(ofn.ptr) != 0) buffer.toKStringFromUtf16() else null
-}
-
-fun openChooseFileWindow(onChoose:(String)->Unit) = TopWindow("选择配置文件",M.minSize(400,300), windowProcess = {
+fun openChooseFileWindow(onCreate:(String)->Unit,onChoose:(String)->Unit) = TopWindow("选择配置文件",M.minSize(400,200), windowProcess = {
     object : WindowProcess by it{
         override fun onDropFile(path: String): Boolean {
-            info(111)
             onChoose(path)
             return true
         }
         override fun onClose(): Boolean {
-            exit(0)
-            error(0)
+            exitProcess(0)
         }
     }
 }){
@@ -103,10 +91,14 @@ fun openChooseFileWindow(onChoose:(String)->Unit) = TopWindow("选择配置文�
     hwnd.dragAcceptFiles(true)
     Column {
         var chosen by mutStateOf("")
-        Text(M.height(50).padding(10),A,stateOf("拖拽文件到此处，输入文件路径，或者在下方的按钮中手动选择"),A.left())
+        Text(M.padding(10),A,stateOf("拖拽文件到此处，或者输入文件路径，或者在下方的按钮中手动选择"),A.left())
         Edit(M.height(30).padding(10),A,extract { chosen }){ chosen = it }
         Row(M.weight(0f)) {
             Spacer(M)
+            Button(M.size(80,40).padding(10),A,stateOf("新建")){
+                onCreate(chooseSaveFile(topHwnd) ?: return@Button)
+                topHwnd.destroy()
+            }
             Button(M.size(80,40).padding(10),A,stateOf("选择")){
                 onChoose(chooseFile(topHwnd) ?: return@Button)
                 topHwnd.destroy()
@@ -125,11 +117,14 @@ fun Main(args: Array<String>) {
 
     if(args.getOrNull(0) != null) {
         val container = createContainerFromFilePath(args[0])
-        openMainWindow(container)
+        openProtectWindow(container)
     } else {
-        openChooseFileWindow {
+        openChooseFileWindow({
+            val container = Container().apply { filePath = it }
+            openProtectWindow(container)
+        }) {
             val container = createContainerFromFilePath(it)
-            openMainWindow(container)
+            openProtectWindow(container)
         }
     }
 

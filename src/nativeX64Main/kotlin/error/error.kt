@@ -38,3 +38,8 @@ inline fun <T> wrapExceptionName(name:()->String,block: () -> T):T{
         throw Exception(name(),e)
     }
 }
+
+fun exitProcess(code:Int): Nothing{
+    exit(code)
+    error("this code should not be reached. exit code $code")
+}

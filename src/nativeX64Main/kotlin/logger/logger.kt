@@ -47,23 +47,34 @@ fun printError(content:Any){
 
 
 @OptIn(ExperimentalForeignApi::class)
-fun errorBox(content:String){
-    memScoped {
-        val p1 = content.wcstr.ptr
-        val p2 =  "WinTouchKt".wcstr.ptr
-        val res = MessageBox!!(null, p1,p2, (MB_OK or MB_ICONERROR).toUInt())
-        info("shown error box(return value $res): $content")
-    }
+fun errorBox(content:String) = memScoped {
+    val res = MessageBox!!(
+        null,
+        content.wcstr.ptr,
+        "WinTouchKt".wcstr.ptr,
+        (MB_OK or MB_ICONERROR or MB_SYSTEMMODAL).toUInt()
+    )
+    info("shown error box(return value $res): $content")
 }
 
 @OptIn(ExperimentalForeignApi::class)
 fun infoBox(info:String) = memScoped {
-    val res = MessageBox!!(null, info.wcstr.ptr, "WinTouchKt: info".wcstr.ptr, (MB_OK or MB_ICONINFORMATION).toUInt())
+    val res = MessageBox!!(
+        null,
+        info.wcstr.ptr,
+        "WinTouchKt: info".wcstr.ptr,
+        (MB_OK or MB_ICONINFORMATION or MB_SYSTEMMODAL).toUInt()
+    )
     info("shown info box(return value $res): $info")
 }
 
 @OptIn(ExperimentalForeignApi::class)
 fun warningBox(warning:String) = memScoped {
-    val res = MessageBox!!(null, warning.wcstr.ptr, "WinTouchKt: info".wcstr.ptr, (MB_OK or MB_ICONWARNING).toUInt())
+    val res = MessageBox!!(
+        null,
+        warning.wcstr.ptr,
+        "WinTouchKt: info".wcstr.ptr,
+        (MB_OK or MB_ICONWARNING or MB_SYSTEMMODAL).toUInt()
+    )
     info("shown warning box(return value $res): $warning")
 }
