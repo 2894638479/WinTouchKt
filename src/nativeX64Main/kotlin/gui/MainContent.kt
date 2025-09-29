@@ -1,5 +1,6 @@
 package gui
 
+import copy
 import dsl.A
 import dsl.GuiScope
 import dsl.M
@@ -18,9 +19,11 @@ import dsl.size
 import dsl.stateOf
 import dsl.width
 import geometry.RoundedRect
+import group.GroupType.Companion.type
 import group.NormalGroup
 import json
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import logger.infoBox
 import logger.warningBox
@@ -44,7 +47,7 @@ fun GuiScope.MainContent(container: Container) = Row {
                     Button::class -> "按钮："
                     else -> "未知："
                 }
-                prefix + (buttonNode.name ?: "")
+                prefix + (buttonNode.name ?: "未命名")
             },
             enable = combine { buttonNode != node }
         ){ node = buttonNode }
@@ -52,7 +55,9 @@ fun GuiScope.MainContent(container: Container) = Row {
     ScrollableColumn(M.weight(1f)) {
         Row {
             NodeButton(M,container)
-            Button(M.size(30,30).padding(5),A.middleY(),stateOf("+")){ container.children += Group(NormalGroup()) }
+            Button(M.size(30,30).padding(5),A.middleY(),stateOf("+")){
+                container.children += Group(NormalGroup())
+            }
         }
         List(container.children){
             Column {
@@ -69,6 +74,36 @@ fun GuiScope.MainContent(container: Container) = Row {
                     if(!fold) List(it.children){ button ->
                         Row{
                             NodeButton(M.padding(left = 40),button)
+                            with(scopeWindows {}){
+                                Button(M.size(30,30).padding(5),A.middleY(),stateOf("...")){
+                                    Window("按钮选项",M.minSize(400,300)){
+                                        Column {
+                                            Text(M.weight(0f),A,combine { "移动按钮: ${button.name?:"未命名"}到其它分组" })
+                                            ScrollableColumn {
+                                                val curGroup = it
+                                                By(container.children){
+                                                    it.chunked(3).forEach {
+                                                        Row {
+                                                            it.forEach {
+                                                                Button(M.padding(10),A,combine { it.name ?: "未命名" },stateOf(it!=curGroup)){
+                                                                    curGroup.children -= button
+                                                                    it.children += button
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            Row(M.weight(0f)) {
+                                                Spacer(M)
+                                                Button(M.size(80,40).padding(10),A,stateOf("复制按钮")){
+                                                    it.children += json.copy(button)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             Button(M.size(30,30).padding(5),A.middleY(),stateOf("-")){ it.children -= button }
                         }
                     }

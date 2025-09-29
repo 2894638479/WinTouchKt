@@ -40,6 +40,11 @@ abstract class Node : State.Scope {
         val offset = offset ?: Point.origin
         parentOffset + (offset * parentScale)
     }
+    val displayOutlineWidth:Float by combine {
+        outlineWidth
+            ?: parent?.displayOutlineWidth
+            ?: 0f
+    }
 
 
     val displayStyle = DisplayStyle(this,false)
@@ -93,7 +98,7 @@ abstract class Node : State.Scope {
             return drawScope.cache.brush(textColor)
         }
         val outlineBrush : D2dBrush? get() {
-            if (node.outlineWidth.let { (it ?: 0f) <= 0f }) return null
+            if (node.displayOutlineWidth <= 0f) return null
             val drawScope = node.context?.drawScope ?: return null
             return drawScope.cache.brush(outlineColor)
         }

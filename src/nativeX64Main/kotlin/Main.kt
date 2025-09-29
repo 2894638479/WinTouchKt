@@ -106,7 +106,7 @@ fun openChooseFileWindow(onCreate:(String)->Unit,onChoose:(String)->Unit) = TopW
     hwnd.dragAcceptFiles(true)
     Column {
         var chosen by mutStateOf("")
-        Text(M.padding(10),A,stateOf("拖拽文件到此处，或者输入文件路径，或者在下方的按钮中手动选择"),A.left())
+        Text(M.padding(10),A,stateOf("拖拽文件到此处，或者输入文件路径，或者在下方的按钮中手动选择。也可以在启动软件时直接将文件拖到exe上"),A.left())
         Edit(M.height(30).padding(10),A,extract { chosen }){ chosen = it }
         Row(M.weight(0f)) {
             Spacer(M)

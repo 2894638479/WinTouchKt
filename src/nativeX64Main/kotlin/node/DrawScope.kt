@@ -86,12 +86,7 @@ class DrawScope(
         hwnd.invalidateRect()
     }
     private val showStatusState = mutStateOf(true)
-    var showStatus by object: ReadWriteProperty<Any?, Boolean> by showStatusState {
-        override fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
-            showStatusState.setValue(thisRef,property,value)
-            reDraw = true
-        }
-    }
+    var showStatus by showStatusState.onSet { reDraw = true }
 
     override fun destroy() {
         cache.destroy()

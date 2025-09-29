@@ -29,7 +29,7 @@ class Button(
     val onErase by combine<DrawScope.()->Unit> {
         val shape = displayGeometry.first
         val offset = displayGeometry.second
-        val outlineWidth = outlineWidth ?: 0f
+        val outlineWidth = displayOutlineWidth
         {
             with(offset){
                 shape.d2dFill(target,cache.transparentBrush)
@@ -53,7 +53,7 @@ class Button(
             val style = displayStyle(pressed)
             val brush = style.brush ?: return@combine {}
             val textBrush = style.textBrush ?: return@combine {}
-            val outlineWidth = outlineWidth ?: 0f
+            val outlineWidth = displayOutlineWidth
             val outlineBrush = style.outlineBrush
             val textBound = shape.padding(outlineWidth/2)?.outerRect
             val font = style.font ?: return@combine {}

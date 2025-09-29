@@ -13,3 +13,10 @@ class Delegate<T>(val state: State<T>,val set:(T)->Unit):
 class RODelegate<T>(val get:()->T): ReadOnlyProperty<Any?,T>{
     override fun getValue(thisRef: Any?, property: KProperty<*>) = get()
 }
+
+fun <T,V> ReadWriteProperty<T,V>.onSet(onSet:(V)->Unit) = object : ReadWriteProperty<T,V> by this {
+    override fun setValue(thisRef: T, property: KProperty<*>, value: V) {
+        this@onSet.setValue(thisRef,property,value)
+        onSet(value)
+    }
+}

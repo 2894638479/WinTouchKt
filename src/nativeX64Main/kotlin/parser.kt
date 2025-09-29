@@ -1,5 +1,6 @@
 import error.wrapExceptionName
 import kotlinx.cinterop.*
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import libs.Clib.freeStr
 import node.Container
@@ -34,6 +35,8 @@ val json = Json {
     explicitNulls = false
     ignoreUnknownKeys = true
 }
+
+inline fun <reified T> Json.copy(instance:T) = decodeFromString<T>(encodeToString(instance))
 
 fun createContainerFromFilePath(path: String): Container{
     val jsonStr = readFile(path) ?: error("cannot open file $path")

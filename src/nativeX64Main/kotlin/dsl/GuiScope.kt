@@ -81,9 +81,9 @@ abstract class GuiScope(
         return children.also { children = rem }
     }
     abstract fun onSize()
-    fun Box(modifier: Modifier = M, alignment: Alignment = A, color:State<Color?> = stateNull(), block: BoxScope.()->Unit){
+    fun Box(modifier: Modifier = M, alignment: Alignment = A, color:State<Color>? = null, block: BoxScope.()->Unit){
         BoxScope(modifier, alignment, window, windowProcess = {
-            object:WindowProcess by it{
+            if(color == null) it else object:WindowProcess by it {
                 @OptIn(ExperimentalForeignApi::class)
                 private var backGndBrush: CPointer<HBRUSH__>? = null
                 private var currentColor:Color? = null

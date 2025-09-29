@@ -17,13 +17,13 @@ import wrapper.RODelegate
 
 fun GuiScope.Node(get:State<Node>) = Column {
     val node by get
-    val scale by combine { node.scale }
     Row(M.padding(10)){
-        Column(M.padding(h = 5)) {
-            Text(M.padding(bottom = 10),A, stateOf("名称"))
-            Edit(M,A,combine{ node.name ?: ""}){ node.name = it.takeIf { it.isNotBlank() } }
-        }
+        Text(M.padding(h = 5),A, stateOf("名称"))
+        Edit(M.padding(h = 5).weight(2f),A,combine{ node.name ?: ""}){ node.name = it.takeIf { it.isNotBlank() } }
+    }
+    Row(M.padding(10)) {
         Column {
+            val scale by combine { node.scale }
             Row {
                 Text(M.padding(h = 5).weight(0.3f),A, stateOf("缩放"))
                 EditFloat(M.padding(h = 5).weight(1f),A,extract { scale }){ node.scale = it }
@@ -31,6 +31,17 @@ fun GuiScope.Node(get:State<Node>) = Column {
             }
             TrackBar(M.padding(h = 5),A,combine { scale ?: 1f },0.2f..5f){
                 node.scale = it
+            }
+        }
+        Column {
+            val outlineWidth by combine { node.outlineWidth }
+            Row {
+                Text(M.padding(h = 5).weight(0.6f),A, stateOf("边框宽度"))
+                EditFloat(M.padding(h = 5).weight(1f),A,extract { outlineWidth }){ node.outlineWidth = it }
+                DefaultButton(M.padding(h = 5).weight(0.4f),active = combine{ outlineWidth != null }){ node.outlineWidth = null }
+            }
+            TrackBar(M.padding(h = 5),A,combine { outlineWidth ?: node.displayOutlineWidth },0f..5f){
+                node.outlineWidth = it
             }
         }
     }

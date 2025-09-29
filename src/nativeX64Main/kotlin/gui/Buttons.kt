@@ -27,7 +27,7 @@ fun GuiScope.CreateButton(
 ) {
     Button(
         modifier.minHeight(25).minWidth(50), alignment.middle(),
-        stateOf("创建"), active, onClick
+        stateOf("新建"), active, onClick
     )
 }
 
