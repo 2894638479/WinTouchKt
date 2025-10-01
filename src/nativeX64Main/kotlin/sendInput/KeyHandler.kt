@@ -49,7 +49,7 @@ class KeyHandler(val onHideKeyUp:()->Unit,val onExitKeyUp:()->Unit) {
             characterKeys to "字母键",
             fKeys to "F键",
             browserKeys to "浏览器键",
-            musicKeys to "阴影键",
+            musicKeys to "音量键",
             mouseKeys to "鼠标键",
             functionKeys to "功能键",
             otherKeys to "其它"
