@@ -3,6 +3,8 @@ package node
 import dsl.mutStateOf
 import error.wrapExceptionName
 import geometry.Point
+import geometry.minus
+import geometry.plus
 import geometry.Rect
 import geometry.Round
 import geometry.RoundedRect
@@ -97,6 +99,22 @@ class Button(
     } ?: error("context is null")
 
     fun containPoint(x:Float, y:Float) = with(displayOffset){ Point(x,y) in shape.rescaled(displayScale) }
+
+
+    fun snapTo(buttons:List<Button>){
+        val outerRect = shape.outerRect
+        var x: Float? = null
+        var y: Float? = null
+        buttons.forEach {
+            if(it == this) return@forEach
+            val otherRect = it.shape.outerRect
+            val relaPos = (it.offset - offset) ?: return@forEach
+            if(x == null)  x = outerRect.autoSnapToX(relaPos,otherRect,5f)
+            if(y == null)  y = outerRect.autoSnapToY(relaPos,otherRect,5f)
+        }
+        offset += Point(x?:0f,y?:0f)
+    }
+
     object ButtonSerializer : SerializerWrapper<Button, ButtonSerializer.Descriptor>("Button", Descriptor){
         object Descriptor: Node.Descriptor<Button>() {
             val key = "key" from {key}

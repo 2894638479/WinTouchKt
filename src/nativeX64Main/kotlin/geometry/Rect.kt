@@ -3,7 +3,9 @@ package geometry
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import node.Button
 import wrapper.*
+import kotlin.math.absoluteValue
 
 
 @Serializable
@@ -34,4 +36,26 @@ data class Rect(
     override val outerRect: Rect get() = this
     override val isValid get() = width > 0 && height > 0
     override fun toString() = "Rect${Json.encodeToString(this)}"
+
+
+    fun autoSnapToX(relaPos:Point,other:Rect,threshold: Float):Float? = with(relaPos){
+        val yRange = (height + other.height) / 2
+        if(y.absoluteValue > yRange + threshold) return null
+        floatArrayOf(
+            x - (width + other.width) / 2,
+            x - (width - other.width) / 2,
+            x - (-width + other.width) / 2,
+            x - (-width - other.width) / 2
+        ).firstOrNull { it.absoluteValue < threshold }
+    }
+    fun autoSnapToY(relaPos:Point,other:Rect,threshold: Float):Float? = with(relaPos){
+        val xRange = (width + other.width) / 2
+        if(x.absoluteValue > xRange + threshold) return null
+        floatArrayOf(
+            y - (height + other.height) / 2,
+            y - (height - other.height) / 2,
+            y - (-height + other.height) / 2,
+            y - (-height - other.height) / 2
+        ).firstOrNull { it.absoluteValue < threshold }
+    }
 }

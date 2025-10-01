@@ -15,8 +15,16 @@ data class Point (
     operator fun plus(other: Point) = Point(x + other.x,y + other.y)
     operator fun minus(other: Point) = Point(x - other.x,y - other.y)
     operator fun times(scale: Float) = Point(x*scale,y*scale)
+    operator fun unaryMinus() = Point(-x,-y)
     operator fun div(scale:Float) = times(1/scale)
     override fun toString() = "Point${Json.encodeToString(this)}"
 }
 
-operator fun Point?.plus(other:Point) = this?.plus(other) ?: other
+operator fun Point?.unaryMinus() = this?.unaryMinus()
+
+operator fun Point?.plus(other:Point?):Point? {
+    return this?.plus(other ?: return null) ?: other
+}
+operator fun Point?.minus(other:Point?):Point? {
+    return this?.minus(other ?: return null) ?: -other
+}

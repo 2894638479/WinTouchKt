@@ -35,6 +35,7 @@ class Group(dispatcher: GroupTouchDispatcher): NodeWithChild<Button>() {
                 override fun move(event: TouchReceiver.TouchEvent): Boolean {
                     val button = pointers[event.id]?.getOrNull(0) ?: return false
                     button.offset += (event.point - (lastTouchPoint ?: error("no lastTouchPoint"))) / displayScale
+                    button.snapTo(buttons)
                     lastTouchPoint = event.point
                     return true
                 }

@@ -71,6 +71,7 @@ fun openProtectWindow(container: Container) = TopWindow("WinTouchKt运行中",M.
             }
             Button(M.size(80,40).padding(10),A,stateOf("编辑配置")){
                 openMainWindow(container)
+                this@TopWindow.hwnd.minimize()
             }
             Button(M.size(80,40).padding(10),A,stateOf("退出")){
                 this@TopWindow.hwnd.close()
