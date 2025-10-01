@@ -18,7 +18,7 @@ var printError = true
     get() = field && !disablePrint
 
 
-var disablePrint = false
+var disablePrint = true
 
 
 object AnsiColor {

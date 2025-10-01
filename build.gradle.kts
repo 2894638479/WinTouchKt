@@ -32,7 +32,7 @@ kotlin {
         }
         binaries{
             executable(listOf(RELEASE)){
-//                linkerOpts += "-mwindows"
+                linkerOpts += "-mwindows"
                 linkerOpts += "-lcomdlg32"
             }
         }
