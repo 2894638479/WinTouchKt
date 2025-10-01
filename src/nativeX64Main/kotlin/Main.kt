@@ -14,6 +14,7 @@ import window.registerLayered
 
 
 const val VERSION = "4.0"
+const val VERSION_SUFFIX = ".0"
 
 @OptIn(ExperimentalForeignApi::class)
 fun main() = catchInKotlin {
