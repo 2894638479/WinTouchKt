@@ -7,6 +7,7 @@ import dsl.State
 import dsl.Window
 import dsl.height
 import dsl.minSize
+import dsl.mutStateOf
 import dsl.padding
 import dsl.scopeWindows
 import dsl.size
@@ -23,7 +24,7 @@ fun GuiScope.KeyEdit(get:State<Set<UByte>>,set:(Set<UByte>)->Unit){
             Text(M,A,stateOf("键值"))
             EditButton {
                 with(scopeWindows {}){
-                    Window("编辑键值",M.minSize(600,400)){
+                    Window("编辑键值",M.minSize(600,300)){
                         Row {
                             ScrollableColumn(M.width(100)) {
                                 By(get){
@@ -32,7 +33,7 @@ fun GuiScope.KeyEdit(get:State<Set<UByte>>,set:(Set<UByte>)->Unit){
                                             Row {
                                                 Text(M.height(25).padding(top = 5),A,stateOf(it.toString()))
                                                 Button(M.size(25,25).padding(h = 5),A,stateOf("x")){
-                                                    keys = keys - it
+                                                    keys -= it
                                                 }
                                             }
                                             Text(M.height(25).padding(bottom = 5),A,stateOf(Keys.name(it)))
@@ -40,21 +41,21 @@ fun GuiScope.KeyEdit(get:State<Set<UByte>>,set:(Set<UByte>)->Unit){
                                     }
                                 }
                             }
+                            var keyRange by mutStateOf<KeyHandler.Companion.KeyRange>(emptyList())
                             ScrollableColumn {
-                                KeyHandler.keyCategory.entries.chunked(3).forEach {
-                                    Row {
-                                        it.forEach {
-                                            with(scopeWindows {}){
-                                                Button(M.padding(10),A,stateOf(it.value)){
-                                                    Window("选择键值",M.minSize(200,300)){
-                                                        ScrollableColumn {
-                                                            it.key.forEach {
-                                                                Button(M.height(40).padding(10),A,stateOf(Keys.name(it))){
-                                                                    keys = keys + it
-                                                                }
-                                                            }
-                                                        }
-                                                    }
+                                KeyHandler.keyCategory.forEach {
+                                    Button(M.height(40).padding(5), A, stateOf(it.value),combine { keyRange !== it.key }) {
+                                        keyRange = it.key
+                                    }
+                                }
+                            }
+                            ScrollableColumn(M.weight(2f)) {
+                                By(extract { keyRange }){
+                                    it.chunked(3).forEach {
+                                        Row {
+                                            it.forEach {
+                                                Button(M.height(30).padding(5),A,stateOf(Keys.name(it))){
+                                                    keys += it
                                                 }
                                             }
                                         }

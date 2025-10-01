@@ -45,17 +45,17 @@ fun wndProcLayered(hWnd: HWND?, uMsg: UINT, wParam: WPARAM, lParam: LPARAM): LRE
             container?.move(it.toEvent())
         }
         WM_POINTERUP -> pointerInput(wParam) { container?.up(it.toEvent()) }
-        WM_LBUTTONDOWN -> {
-            SetCapture(hWnd)
-            mouseInput(lParam) { container?.down(it.toEvent()) }
-        }
-        WM_MOUSEMOVE -> mouseInput(lParam) {
-            container?.move(it.toEvent())
-        }
-        WM_LBUTTONUP -> {
-            ReleaseCapture()
-            mouseInput(lParam) { container?.up(it.toEvent()) }
-        }
+//        WM_LBUTTONDOWN -> {
+//            SetCapture(hWnd)
+//            mouseInput(lParam) { container?.down(it.toEvent()) }
+//        }
+//        WM_MOUSEMOVE -> mouseInput(lParam) {
+//            container?.move(it.toEvent())
+//        }
+//        WM_LBUTTONUP -> {
+//            ReleaseCapture()
+//            mouseInput(lParam) { container?.up(it.toEvent()) }
+//        }
         else -> {
             return default()
         }
