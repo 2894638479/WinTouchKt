@@ -1,5 +1,6 @@
 package sendInput
 
+import logger.info
 import platform.windows.*
 
 class KeyHandler(val onHideKeyUp:()->Unit,val onExitKeyUp:()->Unit) {
@@ -63,7 +64,8 @@ class KeyHandler(val onHideKeyUp:()->Unit,val onExitKeyUp:()->Unit) {
     fun sendKeyEvent(key: UByte, keyEvent: UInt){
         val vsc = MapVirtualKeyA(key.toUInt(), MAPVK_VK_TO_VSC.toUInt()).toUByte()
         if(processSpecialKey(key, keyEvent)) return
-        keybd_event(key,vsc,keyEvent, 0u)
+        val extend = if(Keys.map[key]?.scExtend == true) KEYEVENTF_EXTENDEDKEY else 0
+        keybd_event(key,vsc,keyEvent or KEYEVENTF_SCANCODE.toUInt() or extend.toUInt(), 0u)
     }
 
     private fun processSpecialKey(key:UByte, keyEvent:UInt):Boolean {

@@ -24,7 +24,7 @@ fun GuiScope.KeyEdit(get:State<Set<UByte>>,set:(Set<UByte>)->Unit){
             Text(M,A,stateOf("键值"))
             EditButton {
                 with(scopeWindows {}){
-                    Window("编辑键值",M.minSize(600,300)){
+                    Window("编辑键值",M.minSize(600,300).height(400)){
                         Row {
                             ScrollableColumn(M.width(100)) {
                                 By(get){

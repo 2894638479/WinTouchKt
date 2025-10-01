@@ -2,7 +2,7 @@ package sendInput
 
 import logger.info
 
-enum class Keys(val code: UByte,val extraName: String? = null) {
+enum class Keys(val code: UByte,val extraName: String? = null,val scExtend: Boolean = false) {
     HIDE_SHOW(0x00u),
     LBUTTON(0x01u),
     RBUTTON(0x02u),
@@ -15,12 +15,12 @@ enum class Keys(val code: UByte,val extraName: String? = null) {
     TAB(0x09u),
 
     CLEAR(0x0Cu),
-    RETURN(0x0Du),
+    RETURN(0x0Du, scExtend = true),
 
     SHIFT(0x10u),
     CONTROL(0x11u),
     MENU(0x12u),
-    PAUSE(0x13u),
+    PAUSE(0x13u, scExtend = true),
     CAPITAL(0x14u),
     KANA_HANGUEL_HANGUL(0x15u),
     JUNJA(0x17u),
@@ -33,20 +33,20 @@ enum class Keys(val code: UByte,val extraName: String? = null) {
     MODECHANGE(0x1Fu),
 
     SPACE(0x20u),
-    PRIOR(0x21u),
-    NEXT(0x22u),
-    END(0x23u),
-    HOME(0x24u),
-    LEFT(0x25u),
-    UP(0x26u),
-    RIGHT(0x27u),
-    DOWN(0x28u),
+    PRIOR(0x21u, scExtend = true),
+    NEXT(0x22u, scExtend = true),
+    END(0x23u, scExtend = true),
+    HOME(0x24u, scExtend = true),
+    LEFT(0x25u, scExtend = true),
+    UP(0x26u, scExtend = true),
+    RIGHT(0x27u, scExtend = true),
+    DOWN(0x28u, scExtend = true),
     SELECT(0x29u),
-    PRINT(0x2Au),
+    PRINT(0x2Au, scExtend = true),
     EXECUTE(0x2Bu),
     SNAPSHOT(0x2Cu),
-    INSERT(0x2Du),
-    DELETE(0x2Eu),
+    INSERT(0x2Du, scExtend = true),
+    DELETE(0x2Eu, scExtend = true),
     HELP(0x2Fu),
 
     `0`(0x30u), `1`(0x31u), `2`(0x32u), `3`(0x33u), `4`(0x34u),
@@ -59,9 +59,9 @@ enum class Keys(val code: UByte,val extraName: String? = null) {
     U(0x55u), V(0x56u), W(0x57u), X(0x58u), Y(0x59u),
     Z(0x5Au),
 
-    LWIN(0x5Bu),
-    RWIN(0x5Cu),
-    APPS(0x5Du),
+    LWIN(0x5Bu, scExtend = true),
+    RWIN(0x5Cu, scExtend = true),
+    APPS(0x5Du, scExtend = true),
     SLEEP(0x5Fu),
 
     NUMPAD0(0x60u), NUMPAD1(0x61u), NUMPAD2(0x62u), NUMPAD3(0x63u),
@@ -73,7 +73,7 @@ enum class Keys(val code: UByte,val extraName: String? = null) {
     SEPARATOR(0x6Cu),
     SUBTRACT(0x6Du),
     DECIMAL(0x6Eu),
-    DIVIDE(0x6Fu),
+    DIVIDE(0x6Fu, scExtend = true),
 
     F1(0x70u), F2(0x71u), F3(0x72u), F4(0x73u), F5(0x74u), F6(0x75u),
     F7(0x76u), F8(0x77u), F9(0x78u), F10(0x79u), F11(0x7Au), F12(0x7Bu),
@@ -87,9 +87,9 @@ enum class Keys(val code: UByte,val extraName: String? = null) {
     LSHIFT(0xA0u),
     RSHIFT(0xA1u),
     LCONTROL(0xA2u),
-    RCONTROL(0xA3u),
+    RCONTROL(0xA3u, scExtend = true),
     LMENU(0xA4u),
-    RMENU(0xA5u),
+    RMENU(0xA5u, scExtend = true),
 
     BROWSER_BACK(0xA6u),
     BROWSER_FORWARD(0xA7u),
@@ -172,7 +172,7 @@ enum class Keys(val code: UByte,val extraName: String? = null) {
         init {
             require(Keys.entries.map { it.code }.toSet().size == Keys.entries.size) { "detected duplicate keys in enum Keys" }
         }
-        private val names = entries.associate { it.code to (it.extraName ?: it.name) }
-        fun name(code: UByte) = names[code] ?: code.toString()
+        val map = entries.associateBy { it.code }
+        fun name(code: UByte) = map[code]?.run { extraName ?: name } ?: code.toString()
     }
 }
