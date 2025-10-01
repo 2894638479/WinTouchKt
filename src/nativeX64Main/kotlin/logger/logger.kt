@@ -51,7 +51,7 @@ fun errorBox(content:String) = memScoped {
     val res = MessageBox!!(
         null,
         content.wcstr.ptr,
-        "WinTouchKt".wcstr.ptr,
+        "WinTouchKt: error".wcstr.ptr,
         (MB_OK or MB_ICONERROR or MB_SYSTEMMODAL).toUInt()
     )
     info("shown error box(return value $res): $content")
@@ -73,7 +73,7 @@ fun warningBox(warning:String) = memScoped {
     val res = MessageBox!!(
         null,
         warning.wcstr.ptr,
-        "WinTouchKt: info".wcstr.ptr,
+        "WinTouchKt: warning".wcstr.ptr,
         (MB_OK or MB_ICONWARNING or MB_SYSTEMMODAL).toUInt()
     )
     info("shown warning box(return value $res): $warning")

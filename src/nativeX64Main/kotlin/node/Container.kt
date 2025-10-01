@@ -4,21 +4,20 @@ import dsl.mutStateNull
 import dsl.mutStateOf
 import error.wrapExceptionName
 import geometry.Point
+import geometry.plus
+import gui.window.openExitWindow
+import json
+import VERSION
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import logger.info
-import platform.posix.exit
+import logger.infoBox
+import logger.warningBox
 import sendInput.KeyHandler
 import touch.TouchReceiver
 import window.buttonsLayeredWindow
 import wrapper.Hwnd
 import wrapper.SerializerWrapper
-import geometry.plus
-import json
-import logger.infoBox
-import logger.warningBox
-import openExitWindow
 import writeFile
 
 @Serializable(with = Container.ContainerSerializer::class)
@@ -138,10 +137,14 @@ class Container :TouchReceiver, NodeWithChild<Group>(){
 
     object ContainerSerializer : SerializerWrapper<Container,ContainerSerializer.Descriptor>("Container",Descriptor) {
         object Descriptor : Node.Descriptor<Container>() {
+            val version = "version" from {VERSION}
             val alpha = "alpha" from {alpha}
             val groups = "groups" from {groups}
         }
         override fun Descriptor.generate(): Container {
+            if(version.nullable != VERSION){
+                warningBox("配置文件版本：${version.nullable}，当前软件版本：$VERSION，可能造成配置内容丢失。")
+            }
             return Container().also {
                 it.addNodeInfo()
                 it.alpha = alpha.nullable

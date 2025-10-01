@@ -6,32 +6,24 @@ import dsl.GuiScope
 import dsl.M
 import dsl.Modifier
 import dsl.Window
-import dsl.WindowManagerBuilder
 import dsl.height
 import dsl.middleY
 import dsl.minHeight
 import dsl.minSize
 import dsl.mutStateOf
 import dsl.padding
-import dsl.right
 import dsl.scopeWindows
 import dsl.size
 import dsl.stateOf
-import dsl.width
 import geometry.RoundedRect
-import group.GroupType.Companion.type
 import group.NormalGroup
 import json
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import logger.infoBox
-import logger.warningBox
 import node.Button
 import node.Container
 import node.Group
 import node.Node
-import writeFile
+import VERSION
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -136,7 +128,7 @@ fun GuiScope.MainContent(container: Container) = Row {
             Button(M.size(80,40).padding(10),A,stateOf("关于软件")){
                 with(scopeWindows {}){
                     Window("关于软件",M.minSize(400,300)){
-                        Text(M,A,stateOf("???"))
+                        Text(M,A,stateOf("作者：酷安@游侠侠  版本$VERSION"))
                     }
                 }
             }
