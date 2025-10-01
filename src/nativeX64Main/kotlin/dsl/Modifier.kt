@@ -10,13 +10,11 @@ class Modifier internal constructor(
     internal var paddingLeft:Int,
     internal var paddingBottom:Int,
     internal var paddingRight:Int,
-    minW:Int,
-    minH:Int
+    internal var _minW:Int,
+    internal var _minH:Int
 ){
-    internal var minW = minW
-        get() = max(field,width)
-    internal var minH = minH
-        get() = max(field,height)
+    internal val minW get() = max(_minW,width)
+    internal val minH get() = max(_minH,height)
     constructor():this(0,0,1f,0,0,0,0,0,0)
     internal val paddingW get() = paddingLeft + paddingRight
     internal val paddingH get() = paddingTop + paddingBottom
@@ -26,8 +24,8 @@ val M get() = Modifier()
 fun Modifier.size(width: Int, height: Int) = apply { this.width = width; this.height = height }
 fun Modifier.width(width: Int) = apply { this.width = width }
 fun Modifier.height(height: Int) = apply { this.height = height }
-fun Modifier.minWidth(width: Int) = apply { minW = max(minW,width) }
-fun Modifier.minHeight(height: Int) = apply { minH = max(minH,height) }
+fun Modifier.minWidth(width: Int) = apply { _minW = max(_minW,width) }
+fun Modifier.minHeight(height: Int) = apply { _minH = max(_minH,height) }
 fun Modifier.minSize(width: Int,height: Int) = minWidth(width).minHeight(height)
 fun Modifier.padding(value:Int) = padding(value,value,value,value)
 

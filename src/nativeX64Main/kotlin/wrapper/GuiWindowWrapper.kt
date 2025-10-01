@@ -173,8 +173,8 @@ abstract class GuiWindow (
     style: Int = 0,
     final override val parent: WindowProcess? = null
 ): WindowProcess {
-    override var minW = modifier.minW
-    override var minH = modifier.minH
+    override var minW = modifier._minW
+    override var minH = modifier._minH
     override fun onSize(){
         if(scrollableHeight == -1) return
         hwnd.updateScrollSize(SB_VERT,scrollableHeight)
@@ -224,6 +224,8 @@ abstract class GuiWindow (
                 minW = right - left
                 minH = bottom - top
 
+                left = 0
+                top = 0
                 right = modifier.width
                 bottom = modifier.height
                 AdjustWindowRectEx(ptr,style,FALSE,styleEx)
