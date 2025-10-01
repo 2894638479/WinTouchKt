@@ -24,6 +24,7 @@ import node.Container
 import node.Group
 import node.Node
 import VERSION
+import VERSION_SUFFIX
 import dsl.left
 
 
@@ -129,7 +130,7 @@ fun GuiScope.MainContent(container: Container) = Row {
             Button(M.size(80,40).padding(10),A,stateOf("关于软件")){
                 with(scopeWindows {}){
                     Window("关于软件",M.minSize(400,300)){
-                        Text(M,A,stateOf("作者：酷安@游侠侠  版本$VERSION \n 源码：https://github.com/2894638479/WinTouchKt"),A.left())
+                        Text(M,A,stateOf("作者：酷安@游侠侠  版本$VERSION$VERSION_SUFFIX \n 源码：https://github.com/2894638479/WinTouchKt"),A.left())
                     }
                 }
             }
