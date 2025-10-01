@@ -24,7 +24,7 @@ open class GroupTouchReceiver(group: Group) : TouchReceiver {
     }
 
     private fun firstOrNull(x: Float, y: Float): Button? {
-        return buttons.firstOrNull { it.containPoint(x,y) }
+        return buttons.asReversed().firstOrNull { it.containPoint(x,y) }
     }
     protected val TouchReceiver.TouchEvent.touched: Button? get() = firstOrNull(x,y)
     protected fun alreadyDown(button: Button, id: UInt):Boolean {
