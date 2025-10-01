@@ -23,6 +23,7 @@ import writeFile
 @Serializable(with = Container.ContainerSerializer::class)
 class Container :TouchReceiver, NodeWithChild<Group>(){
     var filePath = ""
+    override val defaultName: String get() = filePath.substringAfterLast("\\")
     enum class Status{
         NORMAL,DRAG_BUTTON,DRAG_GROUP,DRAG_CONTAINER,SELECT_BUTTON,SELECT_GROUP;
         val str get() = when(this){

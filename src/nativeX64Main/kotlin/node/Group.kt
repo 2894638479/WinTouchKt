@@ -18,6 +18,7 @@ import wrapper.SerializerWrapper
 @Serializable(with = Group.GroupSerializer::class)
 class Group(dispatcher: GroupTouchDispatcher): NodeWithChild<Button>() {
     var dispatcher by mutStateOf(dispatcher)
+    override val defaultName get() = dispatcher.type.groupName
     val touchReceiver by combine {
         val group = this@Group
         val parent = (parent as? Container) ?: return@combine null

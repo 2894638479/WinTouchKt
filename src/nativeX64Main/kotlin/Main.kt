@@ -5,6 +5,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
 import kotlinx.cinterop.toKString
 import libs.Clib.GBKToUTF8
+import libs.Clib.PrepareForUIAccess
 import libs.Clib.freeStr
 import node.Container
 import window.loopWindowMessage
@@ -16,7 +17,7 @@ const val VERSION = "4.0"
 
 @OptIn(ExperimentalForeignApi::class)
 fun main() = catchInKotlin {
-//    PrepareForUIAccess()
+    PrepareForUIAccess()
     val argc = platform.posix.__argc
     val argv = platform.posix.__argv
     Main(Array(argc - 1){ i ->

@@ -19,7 +19,7 @@ fun GuiScope.Node(get:State<Node>) = Column {
     val node by get
     Row(M.padding(10)){
         Text(M.padding(h = 5),A, stateOf("名称"))
-        Edit(M.padding(h = 5).weight(2f),A,combine{ node.name ?: ""}){ node.name = it.takeIf { it.isNotBlank() } }
+        Edit(M.padding(h = 5).weight(2f),A,combine{ node.name ?: "" }){ node.name = it.takeIf { it.isNotEmpty() } }
     }
     Row(M.padding(10)) {
         Column {

@@ -39,7 +39,7 @@ fun GuiScope.MainContent(container: Container) = Row {
                     Button::class -> "按钮："
                     else -> "未知："
                 }
-                prefix + (buttonNode.name ?: "未命名")
+                prefix + (buttonNode.name ?: buttonNode.defaultName)
             },
             enable = combine { buttonNode != node }
         ){ node = buttonNode }

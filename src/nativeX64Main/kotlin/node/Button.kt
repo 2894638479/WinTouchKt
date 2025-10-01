@@ -13,19 +13,25 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import logger.info
-import logger.warning
+import sendInput.Keys
 import wrapper.SerializerWrapper
 import wrapper.d2dDrawText
 
 @Serializable(with = Button.ButtonSerializer::class)
 class Button(
-    key:Set<UByte>,
+    initKey:Set<UByte>,
     initShape: Shape,
 ): Node(){
-    var key by mutStateOf(key)
+    var key by mutStateOf(initKey)
     var shape by mutStateOf(initShape)
     var count by mutStateOf(0)
     val pressed by combine { count > 0 }
+    override val defaultName by combine {
+        if(key.isEmpty()) {
+            val parent = parent ?: return@combine "未命名"
+            parent.children.track.indexOf(this@Button).let { "未命名${it+1}" }
+        } else key.joinToString(" ") { Keys.name(it) }
+    }
 
     val displayGeometry by combine { shape.rescaled(displayScale) to displayOffset }
     val onErase by combine<DrawScope.()->Unit> {
@@ -50,7 +56,7 @@ class Button(
             context ?: return@combine {}
             val shape = displayGeometry.first
             val offset = displayGeometry.second
-            val name = name
+            val name = name ?: defaultName
             val pressed = pressed
             val style = displayStyle(pressed)
             val brush = style.brush ?: return@combine {}
@@ -63,8 +69,7 @@ class Button(
                 with(offset) {
                     shape.d2dFill(target,brush)
                     if(outlineBrush != null) shape.d2dDraw(target,outlineBrush,outlineWidth)
-                    if(textBound != null && name != null)
-                        target.d2dDrawText(textBrush,font,textBound,name)
+                    if(textBound != null) target.d2dDrawText(textBrush,font,textBound,name)
                 }
             }
         }

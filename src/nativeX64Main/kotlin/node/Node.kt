@@ -20,6 +20,7 @@ abstract class Node : State.Scope {
     val context: Container.Context? by combine { parent?.context }
 
     var name by mutStateNull<String>()
+    abstract val defaultName: String
     var scale by mutStateNull<Float>(constraint = { it?.let { if (it == 0f) 0.1f else abs(it) } })
     var offset by mutStateNull<Point>()
     var style by mutStateNull<ButtonStyle>()
