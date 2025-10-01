@@ -34,7 +34,10 @@ fun openExitWindow(container:Container){
         Column {
             Text(M.padding(10),A,stateOf("如果直接退出程序，对配置的修改将不会保存"),A.left())
             Row(M.weight(0f)) {
-                Spacer(M)
+                Button(M.size(80,40).padding(10),A,stateOf("编辑配置")){
+                    openMainWindow(container)
+                    this@TopWindow.hwnd.destroy()
+                }
                 Button(M.size(80,40).padding(10),A,stateOf("保存并退出")){
                     if(container.saveToFile()) exitProcess(0)
                 }
@@ -58,7 +61,6 @@ fun openProtectWindow(container: Container) = TopWindow("WinTouchKt运行中",M.
         }
     }
 }){
-    val topWindow = hwnd
     Column {
         Text(M.padding(10),A,stateOf("WinTouchKt运行中，可以最小化此窗口"),A.left())
         Text(M.padding(10),A,stateOf("当前文件：${container.filePath}"),A.left())
@@ -71,7 +73,7 @@ fun openProtectWindow(container: Container) = TopWindow("WinTouchKt运行中",M.
                 openMainWindow(container)
             }
             Button(M.size(80,40).padding(10),A,stateOf("退出")){
-                topWindow.close()
+                this@TopWindow.hwnd.close()
             }
         }
     }
@@ -102,13 +104,13 @@ fun openChooseFileWindow(onCreate:(String)->Unit,onChoose:(String)->Unit) = TopW
         }
     }
 }){
-    val topHwnd = hwnd
     hwnd.dragAcceptFiles(true)
     Column {
         var chosen by mutStateOf("")
         Text(M.padding(10),A,stateOf("拖拽文件到此处，或者输入文件路径，或者在下方的按钮中手动选择。也可以在启动软件时直接将文件拖到exe上"),A.left())
         Edit(M.height(30).padding(10),A,extract { chosen }){ chosen = it }
         Row(M.weight(0f)) {
+            val topHwnd = this@TopWindow.hwnd
             Spacer(M)
             Button(M.size(80,40).padding(10),A,stateOf("新建")){
                 onCreate(chooseSaveFile(topHwnd) ?: return@Button)

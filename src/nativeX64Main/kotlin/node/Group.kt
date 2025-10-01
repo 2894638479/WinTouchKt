@@ -23,7 +23,7 @@ class Group(dispatcher: GroupTouchDispatcher): NodeWithChild<Button>() {
         val parent = (parent as? Container) ?: return@combine null
         when(parent.status) {
             NORMAL -> {
-                dispatcher.create(group)
+                group.dispatcher.create(group)
             }
             DRAG_BUTTON -> object : GroupTouchReceiver(group) {
                 var lastTouchPoint: Point? = null
