@@ -27,16 +27,17 @@ class KeyHandler(val onHideKeyUp:()->Unit,val onExitKeyUp:()->Unit) {
         val directionKeys: KeyRange = UByteRange(0x21u,0x28u)
         val numberKeys: KeyRange = UByteRange(0x30u,0x39u)
         val smallNumberKeys: KeyRange = UByteRange(0x60u,0x69u)
-        val symbolKeys: KeyRange = UByteRange(0x6Au,0x6Fu) + UByteRange(0xBAu,0xBFu) + 0xC0u + UByteRange(0xDBu,0xDEu) + 0xE2u
+        val symbolKeys: KeyRange = listOf(0x20u.toUByte()) + UByteRange(0x6Au,0x6Fu) +
+                UByteRange(0xBAu,0xBFu) + 0xC0u + UByteRange(0xDBu,0xDEu) + 0xE2u
         val characterKeys: KeyRange = UByteRange(0x41u,0x5Au)
         val fKeys: KeyRange = UByteRange(0x70u,0x87u)
         val browserKeys: KeyRange = UByteRange(0xA6u,0xACu)
         val musicKeys: KeyRange = UByteRange(0xADu,0xB3u)
         val mouseKeys: KeyRange = listOf(1u,2u,4u,5u,6u)
-        val functionKeys: KeyRange = listOf<UByte>(0x08u,0x09u) +
+        val functionKeys: KeyRange = listOf<UByte>(0x08u,0x09u,0x0Du) +
                 UByteRange(0x10u,0x14u) + listOf(0x1Bu,0x2Cu,0x2Du,0x2Eu,0x5Bu,0x5Cu,0x5Du,0x5Fu) +
                 UByteRange(0xA0u,0xA5u)
-        val otherKeys: KeyRange = listOf<UByte>(0x03u,0x0Cu,0x0Du) +
+        val otherKeys: KeyRange = listOf<UByte>(0x03u,0x0Cu) +
                 UByteRange(0x15u,0x1Au) + UByteRange(0x1Cu,0x1Fu) +
                 listOf(0x29u,0x2Au,0x2Bu,0x2Fu,0x90u,0x91u,0xB6u,0xB7u) + UByteRange(0xBAu,0xC0u) + UByteRange(0xE7u,0xFEu)
 

@@ -15,11 +15,11 @@ enum class Keys(val code: UByte,val extraName: String? = null,val scExtend: Bool
     TAB(0x09u),
 
     CLEAR(0x0Cu),
-    RETURN(0x0Du, scExtend = true),
+    RETURN(0x0Du,"ENTER"),
 
     SHIFT(0x10u),
     CONTROL(0x11u),
-    MENU(0x12u),
+    MENU(0x12u,"ALT"),
     PAUSE(0x13u, scExtend = true),
     CAPITAL(0x14u),
     KANA_HANGUEL_HANGUL(0x15u),
