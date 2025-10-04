@@ -3,6 +3,7 @@ package group
 import dsl.mutStateOf
 import node.Group
 import geometry.Point
+import logger.info
 import platform.windows.GetTickCount64
 import sendInput.moveCursor
 import touch.GroupTouchDispatcher
@@ -65,6 +66,7 @@ class TouchPadGroup(sensitivity:Float? = null, ms:ULong? = null): GroupTouchDisp
                     }
                 }
             } ?: return false
+            pointers.remove(event.id)
             return true
         }
     }

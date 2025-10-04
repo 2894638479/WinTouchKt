@@ -11,6 +11,7 @@ import logger.info
 import logger.warning
 import platform.windows.*
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 
 @OptIn(ExperimentalForeignApi::class)
@@ -160,6 +161,7 @@ interface WindowProcess{
                 Float::class -> value.toFloat() as T
                 Double::class -> value as T
                 Byte::class -> value.roundToInt().toByte() as T
+                Long::class -> value.roundToLong() as T
                 else -> error("unsupported trackbar type: ${range.start::class}")
             })
         }
